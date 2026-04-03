@@ -20,5 +20,12 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@apollo/server": "^5.5.0",
+    "@as-integrations/express5": "^1.1.2",
+    "@nestjs/apollo": "^13.2.4",
+    "@nestjs/graphql": "^13.2.4",
+    "graphql": "^16.13.2"
+  }
 }

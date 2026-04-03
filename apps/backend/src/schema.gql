@@ -1,0 +1,16 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Practice {
+  id: Int!
+  message: String!
+}
+
+type Query {
+  getPracticeList: [Practice!]!
+}
+
+type Mutation {
+  createPracticeData(message: String!): Practice!
+}
