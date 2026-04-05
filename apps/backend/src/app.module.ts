@@ -4,11 +4,16 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
-import { PracticeModule } from './practice/practice.module'; // 👈 追加
+import { ConfigModule } from '@nestjs/config';
 import { SurveyModule } from './survey/survey.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      envFilePath: '.env.local', // 読み込むファイルを指定
+      isGlobal: true,            // アプリ全体でどこからでも使えるようにする
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',      // MySQLが動いているサーバー（WSL内ならlocalhost）
@@ -25,7 +30,7 @@ import { SurveyModule } from './survey/survey.module';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // スキーマを自動生成
     }),
-    SurveyModule,
+    SurveyModule,AuthModule,
   ],
 })
 export class AppModule {}
