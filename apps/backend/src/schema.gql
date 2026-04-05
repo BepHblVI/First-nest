@@ -2,15 +2,23 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Practice {
+type Question {
   id: Int!
-  message: String!
+  qtext: String!
+  survey: Survey!
+}
+
+type Survey {
+  id: Int!
+  title: String!
+  owner: String!
+  questions: [Question!]!
 }
 
 type Query {
-  getPracticeList: [Practice!]!
+  getSurvey(user: String!): [Survey!]!
 }
 
 type Mutation {
-  createPracticeData(message: String!): Practice!
+  createSurvey(title: String!, user: String!, qtexts: [String!]!): Survey!
 }
