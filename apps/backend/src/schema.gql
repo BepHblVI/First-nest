@@ -2,23 +2,113 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Question {
-  id: Int!
-  qtext: String!
-  survey: Survey!
+type User {
+  id: ID!
+  username: String!
+  surveys: [Survey!]!
 }
+
+type Submission {
+  id: Int!
+  submitted_at: DateTime!
+  survey: Survey!
+  answers: [Answer!]!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
 
 type Survey {
   id: Int!
+  shareId: String!
   title: String!
-  owner: String!
+  owner: User!
   questions: [Question!]!
+  published: Boolean!
+  created_at: DateTime!
+  submissions: [Submission!]!
+}
+
+type QuestionOption {
+  id: Int!
+  text: String!
+  order: Int!
+  question: Question!
+}
+
+type Question {
+  id: Int!
+  type: String!
+  qtext: String!
+  options: [QuestionOption!]!
+  survey: Survey!
+  answers: [Answer!]!
+}
+
+type Answer {
+  id: Int!
+  text: String
+  selectedOptions: [QuestionOption!]
+  question: Question!
+  submission: Submission!
+}
+
+type OptionResult {
+  optionId: Int!
+  text: String!
+  count: Int!
+  percentage: Float!
+}
+
+type QuestionResult {
+  questionId: Int!
+  qtext: String!
+  type: String!
+  totalAnswersForThisQuestion: Int!
+  options: [OptionResult!]!
+}
+
+type CorrelationResult {
+  option1Id: Int!
+  option2Id: Int!
+  coOccurrenceCount: Int!
+}
+
+type SurveyResult {
+  surveyId: Int!
+  title: String!
+  totalSubmissions: Int!
+  questions: [QuestionResult!]!
+  correlations: [CorrelationResult!]
+}
+
+type LoginResponse {
+  access_token: String!
 }
 
 type Query {
-  getSurvey(user: String!): [Survey!]!
+  getSurvey: [Survey!]!
+  getSurveyForAnswer(shareId: String!): Survey!
+  getSurveyResults(shareId: String!): SurveyResult!
 }
 
 type Mutation {
-  createSurvey(title: String!, user: String!, qtexts: [String!]!): Survey!
+  createSurvey(title: String!, questions: [QuestionInput!]!): Survey!
+  submitSurveyAnswer(surveyId: Int!, answers: [AnswerInputType!]!): Submission!
+  signUpPractice(username: String!, password: String!): User!
+  loginPractice(username: String!, password: String!): LoginResponse!
+}
+
+input QuestionInput {
+  qtext: String!
+  type: String!
+  options: [String!]
+}
+
+input AnswerInputType {
+  questionId: Int!
+  text: String
+  selectionIds: [Int!]
 }
