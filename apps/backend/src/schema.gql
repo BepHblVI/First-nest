@@ -95,16 +95,27 @@ type Query {
 }
 
 type Mutation {
-  createSurvey(title: String!, questions: [QuestionInput!]!): Survey!
-  submitSurveyAnswer(surveyId: Int!, answers: [AnswerInputType!]!): Submission!
-  signUpPractice(username: String!, password: String!): User!
-  loginPractice(username: String!, password: String!): LoginResponse!
+  createSurvey(input: CreateSurveyInput!): Survey!
+  deleteSurvey(id: Int!): Boolean!
+  submitSurveyAnswer(input: SubmitSurveyAnswerInput!): Submission!
+  signUp(username: String!, password: String!): User!
+  login(username: String!, password: String!): LoginResponse!
+}
+
+input CreateSurveyInput {
+  title: String!
+  questions: [QuestionInput!]!
 }
 
 input QuestionInput {
   qtext: String!
   type: String!
   options: [String!]
+}
+
+input SubmitSurveyAnswerInput {
+  surveyId: Int!
+  answers: [AnswerInputType!]!
 }
 
 input AnswerInputType {

@@ -2,6 +2,7 @@
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import depthLimit from 'graphql-depth-limit';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
@@ -29,6 +30,8 @@ import { AuthModule } from './auth/auth.module';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // スキーマを自動生成
+      context: ({ req, res }) => ({ req, res }),
+      validationRules: [depthLimit(5)],
     }),
     SurveyModule,AuthModule,
   ],

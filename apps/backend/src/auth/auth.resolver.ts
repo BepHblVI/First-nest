@@ -1,6 +1,7 @@
-import { Args, Mutation, ObjectType, Field, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, ObjectType, Field, Resolver, Context } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { User } from './user.model';
+import { Response } from 'express';
 
 @ObjectType()
 class LoginResponse {
@@ -13,7 +14,7 @@ export class AuthResolver {
   constructor(private authService: AuthService) {}
 
   @Mutation(() => User)
-  async signUpPractice(
+  async signUp(
     @Args('username') username: string,
     @Args('password') password: string,
   ) {
@@ -21,10 +22,19 @@ export class AuthResolver {
   }
 
   @Mutation(() => LoginResponse)
-  async loginPractice(
+  async login(
     @Args('username') username: string,
     @Args('password') password: string,
+    @Context() context: { res: Response }
   ) {
-    return this.authService.login(username, password);
+    const {access_token , refresh_token} = await this.authService.login(username,password);
+
+    context.res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'lax', 
+      maxAge: 24 * 60 * 60 * 1000, 
+    });
+    return {access_token};
   }
 }

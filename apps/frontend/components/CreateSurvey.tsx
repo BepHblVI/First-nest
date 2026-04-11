@@ -105,7 +105,7 @@ const removeOption = (qIndex: number, oIndex: number) => {
         body: JSON.stringify({
           query: `
             mutation CreateSurvey($title: String!, $questions: [QuestionInput!]!) {
-              createSurvey(title: $title, questions: $questions) {
+              createSurvey(input: $input) {
                 id
                 title
                 shareId
@@ -113,13 +113,15 @@ const removeOption = (qIndex: number, oIndex: number) => {
             }
           `,
           variables: {
-            title: newTitle,
-            questions: questions.map((q) => ({
-              qtext: q.qtext,
-              type: q.type,
-              options: q.type !== 'TEXT' ? q.options : [],
-            })),
-          },
+            input:{
+              title: newTitle,
+              questions: questions.map((q) => ({
+                qtext: q.qtext,
+                type: q.type,
+                options: q.type !== 'TEXT' ? q.options : [],
+              })),
+            },
+          }
         }),
       });
 

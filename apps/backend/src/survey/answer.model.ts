@@ -1,5 +1,12 @@
 import { Field, ObjectType, Int } from '@nestjs/graphql';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 import { Question } from './question.model';
 import { Submission } from './submission.model';
 import { QuestionOption } from './options.model';
@@ -11,8 +18,8 @@ export class Answer {
   @PrimaryGeneratedColumn()
   id!: number; //回答ID
 
-  @Field({nullable:true})
-  @Column({nullable:true})
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   text?: string; //回答テキスト
 
   @Field(() => [QuestionOption], { nullable: true })
@@ -21,11 +28,12 @@ export class Answer {
   selectedOptions?: QuestionOption[];
 
   @Field(() => Question)
-  @ManyToOne(() => Question, (question) => question.answers)
+  @ManyToOne(() => Question, (question) => question.answers, {
+    onDelete: 'CASCADE',
+  })
   question!: Question; //親設問
 
   @Field(() => Submission)
   @ManyToOne(() => Submission, (sub) => sub.answers)
   submission!: Submission;
-
 }

@@ -13,10 +13,10 @@ export default function LoginPage() {
 
     const query = isLoginMode
       ? `mutation Login($username: String!, $password: String!) {
-           loginPractice(username: $username, password: $password) { access_token }
+           login(username: $username, password: $password) { access_token }
          }`
       : `mutation SignUp($username: String!, $password: String!) {
-           signUpPractice(username: $username, password: $password) { id username }
+           signUp(username: $username, password: $password) { id username }
          }`;
 
     try {
@@ -26,6 +26,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           query,
           variables: { username, password },
+          credentials: 'include',
         }),
       });
 
@@ -38,7 +39,7 @@ export default function LoginPage() {
 
       if (isLoginMode) {
         // ログイン成功時：トークンを保存してトップページへ
-        const token = result.data.loginPractice.access_token;
+        const token = result.data.login.access_token;
         localStorage.setItem('access_token', token); // 🎫 ブラウザにチケットを保存！
         alert('ログイン成功！');
         router.push('/');
@@ -49,7 +50,7 @@ export default function LoginPage() {
         setPassword('');
       }
     } catch (error) {
-      alert('通信エラーが発生しました');
+      alert(error);
     }
   };
 

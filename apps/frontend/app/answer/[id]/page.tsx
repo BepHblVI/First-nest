@@ -148,15 +148,17 @@ export default function AnswerPage() {
         body: JSON.stringify({
           query: `
             mutation SubmitSurveyAnswer($surveyId: Int!, $answers: [AnswerInputType!]!) {
-              submitSurveyAnswer(surveyId: $surveyId, answers: $answers) {
+              submitSurveyAnswer(input:$input) {
                 id
                 submitted_at
               }
             }
           `,
           variables: {
+            input:{
             surveyId: survey.id,
             answers: formattedAnswers,
+            },
           },
         }),
       });
