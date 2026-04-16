@@ -21,7 +21,6 @@ type SurveyData = {
   questions: Question[];
 };
 
-// 各質問への回答を管理する型
 type AnswerState = {
   [questionId: number]: {
     text?: string;
@@ -29,14 +28,16 @@ type AnswerState = {
   };
 };
 
+// ページの状態を管理する型
+type PageStatus = 'loading' | 'ready' | 'unpublished' | 'notfound' | 'submitted';
+
 export default function AnswerPage() {
   const params = useParams();
   const shareId = params.id;
 
   const [survey, setSurvey] = useState<SurveyData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [pageStatus, setPageStatus] = useState<PageStatus>('loading');
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [answers, setAnswers] = useState<AnswerState>({});
 
   // アンケートデータを取得
@@ -69,15 +70,24 @@ export default function AnswerPage() {
         });
 
         const result = await response.json();
+
         if (result.data?.getSurveyForAnswer) {
           setSurvey(result.data.getSurveyForAnswer);
+          setPageStatus('ready');
+        } else if (result.errors) {
+          const errorMessage = result.errors[0]?.message || '';
+
+          if (errorMessage === 'このアンケートは非公開です') {
+            setPageStatus('unpublished');
+          } else {
+            setPageStatus('notfound');
+          }
         } else {
-          alert('アンケートが見つかりませんでした');
+          setPageStatus('notfound');
         }
       } catch (error) {
         console.error('取得エラー:', error);
-      } finally {
-        setLoading(false);
+        setPageStatus('notfound');
       }
     };
 
@@ -104,9 +114,7 @@ export default function AnswerPage() {
   const handleMultipleSelect = (questionId: number, optionId: number, checked: boolean) => {
     setAnswers((prev) => {
       const current = prev[questionId]?.selectionIds || [];
-      const updated = checked
-        ? [...current, optionId]
-        : current.filter((id) => id !== optionId);
+      const updated = checked ? [...current, optionId] : current.filter((id) => id !== optionId);
       return {
         ...prev,
         [questionId]: { ...prev[questionId], selectionIds: updated },
@@ -119,12 +127,12 @@ export default function AnswerPage() {
     e.preventDefault();
     if (!survey) return;
 
-    // バリデーション
     const unanswered = survey.questions.filter((q) => {
       const answer = answers[q.id];
       if (!answer) return true;
       if (q.type === 'TEXT' && !answer.text?.trim()) return true;
-      if (q.type !== 'TEXT' && (!answer.selectionIds || answer.selectionIds.length === 0)) return true;
+      if (q.type !== 'TEXT' && (!answer.selectionIds || answer.selectionIds.length === 0))
+        return true;
       return false;
     });
 
@@ -135,7 +143,6 @@ export default function AnswerPage() {
     setSubmitting(true);
 
     try {
-      // バックエンドの AnswerInputType に合わせて整形
       const formattedAnswers = survey.questions.map((q) => ({
         questionId: q.id,
         text: answers[q.id]?.text || null,
@@ -147,17 +154,17 @@ export default function AnswerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: `
-            mutation SubmitSurveyAnswer($surveyId: Int!, $answers: [AnswerInputType!]!) {
-              submitSurveyAnswer(input:$input) {
+            mutation SubmitSurveyAnswer($input: SubmitSurveyAnswerInput!) {
+              submitSurveyAnswer(input: $input) {
                 id
                 submitted_at
               }
             }
           `,
           variables: {
-            input:{
-            surveyId: survey.id,
-            answers: formattedAnswers,
+            input: {
+              surveyId: survey.id,
+              answers: formattedAnswers,
             },
           },
         }),
@@ -171,7 +178,7 @@ export default function AnswerPage() {
       }
 
       if (result.data?.submitSurveyAnswer) {
-        setSubmitted(true);
+        setPageStatus('submitted');
       }
     } catch (error) {
       console.error('送信エラー:', error);
@@ -181,16 +188,109 @@ export default function AnswerPage() {
     }
   };
 
-  // --- 表示 ---
+  // ===================================
+  // ページ状態ごとの表示
+  // ===================================
 
-  if (loading) return <p style={{ padding: '20px' }}>読み込み中...</p>;
-  if (!survey) return <p style={{ padding: '20px' }}>アンケートが存在しないか、削除されました。</p>;
-
-  // 送信完了画面
-  if (submitted) {
+  // 読み込み中
+  if (pageStatus === 'loading') {
     return (
-      <main style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif', textAlign: 'center' }}>
-        <div style={{ padding: '40px', border: '1px solid #ddd', borderRadius: '12px', backgroundColor: '#f0fff0' }}>
+      <main
+        style={{
+          padding: '40px',
+          maxWidth: '600px',
+          margin: '0 auto',
+          fontFamily: 'sans-serif',
+          textAlign: 'center',
+        }}
+      >
+        <p>読み込み中...</p>
+      </main>
+    );
+  }
+
+  // 非公開
+  if (pageStatus === 'unpublished') {
+    return (
+      <main
+        style={{
+          padding: '40px',
+          maxWidth: '600px',
+          margin: '0 auto',
+          fontFamily: 'sans-serif',
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            padding: '40px',
+            border: '1px solid #ddd',
+            borderRadius: '12px',
+            backgroundColor: '#fff8f0',
+          }}
+        >
+          <h1 style={{ color: '#e67e22', marginBottom: '15px' }}>🔒 非公開のアンケートです</h1>
+          <p style={{ color: '#666', lineHeight: '1.8' }}>
+            このアンケートは現在公開されていません。
+            <br />
+            作成者が公開設定にするまでお待ちください。
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  // 見つからない
+  if (pageStatus === 'notfound') {
+    return (
+      <main
+        style={{
+          padding: '40px',
+          maxWidth: '600px',
+          margin: '0 auto',
+          fontFamily: 'sans-serif',
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            padding: '40px',
+            border: '1px solid #ddd',
+            borderRadius: '12px',
+            backgroundColor: '#fff0f0',
+          }}
+        >
+          <h1 style={{ color: '#e74c3c', marginBottom: '15px' }}>❌ アンケートが見つかりません</h1>
+          <p style={{ color: '#666', lineHeight: '1.8' }}>
+            このアンケートは存在しないか、削除された可能性があります。
+            <br />
+            URLが正しいかご確認ください。
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  // 送信完了
+  if (pageStatus === 'submitted') {
+    return (
+      <main
+        style={{
+          padding: '40px',
+          maxWidth: '600px',
+          margin: '0 auto',
+          fontFamily: 'sans-serif',
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            padding: '40px',
+            border: '1px solid #ddd',
+            borderRadius: '12px',
+            backgroundColor: '#f0fff0',
+          }}
+        >
           <h1 style={{ color: '#28a745', marginBottom: '15px' }}>✅ 回答を送信しました！</h1>
           <p style={{ color: '#666' }}>ご協力ありがとうございました。</p>
         </div>
@@ -198,20 +298,29 @@ export default function AnswerPage() {
     );
   }
 
+  // 回答フォーム
   return (
-    <main style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      <div style={{ padding: '30px', border: '1px solid #ddd', borderRadius: '12px', backgroundColor: '#f9f9f9' }}>
-        <h1 style={{ color: '#0070f3', marginBottom: '10px' }}>{survey.title}</h1>
-        <p style={{ color: '#666', marginBottom: '30px' }}>作成者: {survey.owner.username}</p>
+    <main
+      style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}
+    >
+      <div
+        style={{
+          padding: '30px',
+          border: '1px solid #ddd',
+          borderRadius: '12px',
+          backgroundColor: '#f9f9f9',
+        }}
+      >
+        <h1 style={{ color: '#0070f3', marginBottom: '10px' }}>{survey!.title}</h1>
+        <p style={{ color: '#666', marginBottom: '30px' }}>作成者: {survey!.owner.username}</p>
 
         <form onSubmit={handleSubmit}>
-          {survey.questions.map((q, index) => (
+          {survey!.questions.map((q, index) => (
             <div key={q.id} style={{ marginBottom: '25px' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>
                 Q{index + 1}. {q.qtext}
               </label>
 
-              {/* テキスト入力 */}
               {q.type === 'TEXT' && (
                 <textarea
                   placeholder="回答を入力してください..."
@@ -228,11 +337,18 @@ export default function AnswerPage() {
                 />
               )}
 
-              {/* 単一選択（ラジオボタン） */}
               {q.type === 'SINGLE' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {q.options.map((option) => (
-                    <label key={option.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <label
+                      key={option.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                      }}
+                    >
                       <input
                         type="radio"
                         name={`question-${q.id}`}
@@ -245,11 +361,18 @@ export default function AnswerPage() {
                 </div>
               )}
 
-              {/* 複数選択（チェックボックス） */}
               {q.type === 'MULTIPLE' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {q.options.map((option) => (
-                    <label key={option.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <label
+                      key={option.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={answers[q.id]?.selectionIds?.includes(option.id) || false}
@@ -263,7 +386,6 @@ export default function AnswerPage() {
             </div>
           ))}
 
-          {/* 送信ボタン */}
           <button
             type="submit"
             disabled={submitting}

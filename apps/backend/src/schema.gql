@@ -96,6 +96,7 @@ type Query {
 
 type Mutation {
   createSurvey(input: CreateSurveyInput!): Survey!
+  editSurvey(input: EditSurveyInput!): Survey!
   deleteSurvey(id: Int!): Boolean!
   submitSurveyAnswer(input: SubmitSurveyAnswerInput!): Submission!
   signUp(username: String!, password: String!): User!
@@ -111,6 +112,13 @@ input QuestionInput {
   qtext: String!
   type: String!
   options: [String!]
+}
+
+input EditSurveyInput {
+  id: Float!
+  title: String!
+  questions: [QuestionInput!]!
+  published: Boolean!
 }
 
 input SubmitSurveyAnswerInput {

@@ -8,23 +8,28 @@ import { join } from 'path';
 import { ConfigModule } from '@nestjs/config';
 import { SurveyModule } from './survey/survey.module';
 import { AuthModule } from './auth/auth.module';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env.local', // 読み込むファイルを指定
-      isGlobal: true,            // アプリ全体でどこからでも使えるようにする
+      envFilePath: join(__dirname, '../../../.env'),
+      isGlobal: true, // アプリ全体でどこからでも使えるようにする
     }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',      // MySQLが動いているサーバー（WSL内ならlocalhost）
-      port: 3306,             // MySQLのデフォルトポート
-      username: 'root',       // ご自身のMySQLのユーザー名に変更してください
-      password: 'password',   // ご自身のMySQLのパスワードに変更してください
-      database: 'practice_db',// 使用するデータベース名（あらかじめMySQLに作っておく必要があります）
-      autoLoadEntities: true, // モジュールで登録したエンティティを自動で読み込む
-      synchronize: true,      // 【重要】エンティティの変更を自動でDBのテーブルに反映する（※開発環境のみ）
-      logging: true,          // 【便利】裏で発行されたSQLをターミナルに表示する
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        autoLoadEntities: true,
+        synchronize: true,
+        logging: false,
+      }),
+      inject: [ConfigService],
     }),
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -33,7 +38,8 @@ import { AuthModule } from './auth/auth.module';
       context: ({ req, res }) => ({ req, res }),
       validationRules: [depthLimit(5)],
     }),
-    SurveyModule,AuthModule,
+    SurveyModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

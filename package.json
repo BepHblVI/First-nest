@@ -7,7 +7,8 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "test:e2e": "turbo run test:e2e"
+    "test:e2e": "turbo run test:e2e",
+    "api": "npx graphql-markdown http://localhost:3001/graphql > api.md"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

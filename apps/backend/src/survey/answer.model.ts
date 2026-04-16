@@ -24,7 +24,7 @@ export class Answer {
 
   @Field(() => [QuestionOption], { nullable: true })
   @ManyToMany(() => QuestionOption)
-  @JoinTable() // 👈 これをつけるだけで、裏側で中間テーブルを自動作成してくれます
+  @JoinTable()
   selectedOptions?: QuestionOption[];
 
   @Field(() => Question)

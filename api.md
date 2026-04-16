@@ -1,39 +1,40 @@
-Need to install the following packages:
-graphql-markdown@7.3.0
-Ok to proceed? (y) 
 # Schema Types
 
 <details>
   <summary><strong>Table of Contents</strong></summary>
 
-  * [Query](#query)
-  * [Mutation](#mutation)
-  * [Objects](#objects)
-    * [Answer](#answer)
-    * [CorrelationResult](#correlationresult)
-    * [LoginResponse](#loginresponse)
-    * [OptionResult](#optionresult)
-    * [Question](#question)
-    * [QuestionOption](#questionoption)
-    * [QuestionResult](#questionresult)
-    * [Submission](#submission)
-    * [Survey](#survey)
-    * [SurveyResult](#surveyresult)
-    * [User](#user)
-  * [Inputs](#inputs)
-    * [AnswerInputType](#answerinputtype)
-    * [QuestionInput](#questioninput)
-  * [Scalars](#scalars)
-    * [Boolean](#boolean)
-    * [DateTime](#datetime)
-    * [Float](#float)
-    * [ID](#id)
-    * [Int](#int)
-    * [String](#string)
+- [Query](#query)
+- [Mutation](#mutation)
+- [Objects](#objects)
+  - [Answer](#answer)
+  - [CorrelationResult](#correlationresult)
+  - [LoginResponse](#loginresponse)
+  - [OptionResult](#optionresult)
+  - [Question](#question)
+  - [QuestionOption](#questionoption)
+  - [QuestionResult](#questionresult)
+  - [Submission](#submission)
+  - [Survey](#survey)
+  - [SurveyResult](#surveyresult)
+  - [User](#user)
+- [Inputs](#inputs)
+  - [AnswerInputType](#answerinputtype)
+  - [CreateSurveyInput](#createsurveyinput)
+  - [EditSurveyInput](#editsurveyinput)
+  - [QuestionInput](#questioninput)
+  - [SubmitSurveyAnswerInput](#submitsurveyanswerinput)
+- [Scalars](#scalars)
+  - [Boolean](#boolean)
+  - [DateTime](#datetime)
+  - [Float](#float)
+  - [ID](#id)
+  - [Int](#int)
+  - [String](#string)
 
 </details>
 
 ## Query
+
 <table>
 <thead>
 <tr>
@@ -73,6 +74,7 @@ Ok to proceed? (y)
 </table>
 
 ## Mutation
+
 <table>
 <thead>
 <tr>
@@ -89,13 +91,28 @@ Ok to proceed? (y)
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">title</td>
-<td valign="top"><a href="#string">String</a>!</td>
+<td colspan="2" align="right" valign="top">input</td>
+<td valign="top"><a href="#createsurveyinput">CreateSurveyInput</a>!</td>
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">questions</td>
-<td valign="top">[<a href="#questioninput">QuestionInput</a>!]!</td>
+<td colspan="2" valign="top"><strong id="mutation.editsurvey">editSurvey</strong></td>
+<td valign="top"><a href="#survey">Survey</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">input</td>
+<td valign="top"><a href="#editsurveyinput">EditSurveyInput</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="mutation.deletesurvey">deleteSurvey</strong></td>
+<td valign="top"><a href="#boolean">Boolean</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">id</td>
+<td valign="top"><a href="#int">Int</a>!</td>
 <td></td>
 </tr>
 <tr>
@@ -104,17 +121,12 @@ Ok to proceed? (y)
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">surveyId</td>
-<td valign="top"><a href="#int">Int</a>!</td>
+<td colspan="2" align="right" valign="top">input</td>
+<td valign="top"><a href="#submitsurveyanswerinput">SubmitSurveyAnswerInput</a>!</td>
 <td></td>
 </tr>
 <tr>
-<td colspan="2" align="right" valign="top">answers</td>
-<td valign="top">[<a href="#answerinputtype">AnswerInputType</a>!]!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong id="mutation.signuppractice">signUpPractice</strong></td>
+<td colspan="2" valign="top"><strong id="mutation.signup">signUp</strong></td>
 <td valign="top"><a href="#user">User</a>!</td>
 <td></td>
 </tr>
@@ -129,7 +141,7 @@ Ok to proceed? (y)
 <td></td>
 </tr>
 <tr>
-<td colspan="2" valign="top"><strong id="mutation.loginpractice">loginPractice</strong></td>
+<td colspan="2" valign="top"><strong id="mutation.login">login</strong></td>
 <td valign="top"><a href="#loginresponse">LoginResponse</a>!</td>
 <td></td>
 </tr>
@@ -584,6 +596,59 @@ Ok to proceed? (y)
 </tbody>
 </table>
 
+### CreateSurveyInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong id="createsurveyinput.title">title</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="createsurveyinput.questions">questions</strong></td>
+<td valign="top">[<a href="#questioninput">QuestionInput</a>!]!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+### EditSurveyInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong id="editsurveyinput.id">id</strong></td>
+<td valign="top"><a href="#float">Float</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="editsurveyinput.title">title</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="editsurveyinput.questions">questions</strong></td>
+<td valign="top">[<a href="#questioninput">QuestionInput</a>!]!</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
 ### QuestionInput
 
 <table>
@@ -608,6 +673,30 @@ Ok to proceed? (y)
 <tr>
 <td colspan="2" valign="top"><strong id="questioninput.options">options</strong></td>
 <td valign="top">[<a href="#string">String</a>!]</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+### SubmitSurveyAnswerInput
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong id="submitsurveyanswerinput.surveyid">surveyId</strong></td>
+<td valign="top"><a href="#int">Int</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="submitsurveyanswerinput.answers">answers</strong></td>
+<td valign="top">[<a href="#answerinputtype">AnswerInputType</a>!]!</td>
 <td></td>
 </tr>
 </tbody>
@@ -638,4 +727,3 @@ The `Int` scalar type represents non-fractional signed whole numeric values. Int
 ### String
 
 The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
-

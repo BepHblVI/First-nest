@@ -1,22 +1,25 @@
 import { InputType, Field, Int } from '@nestjs/graphql';
-import { 
-  IsString, 
-  IsNotEmpty, 
+import {
+  IsString,
+  IsNotEmpty,
   IsIn,
-  IsArray, 
-  ValidateNested, 
+  IsArray,
+  ValidateNested,
   ArrayMinSize,
-  IsInt
+  IsInt,
+  IsBoolean,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
 @InputType()
 export class QuestionInput {
   @Field()
-  @IsNotEmpty({message:'質問文は空にしないでください！'})
+  @IsNotEmpty({ message: '質問文は空にしないでください！' })
   qtext!: string;
 
   @Field()
-  @IsIn(['TEXT','SINGLE','MULTIPLE'],{message:'質問タイプが不正です！'})
+  @IsIn(['TEXT', 'SINGLE', 'MULTIPLE'], { message: '質問タイプが不正です！' })
   type!: string;
 
   @Field(() => [String], { nullable: true })
@@ -29,10 +32,13 @@ export class AnswerInputType {
   questionId!: number;
 
   @Field({ nullable: true })
-  @IsNotEmpty({message:'回答は必須です'})
+  @ValidateIf((o) => !o.selectionIds || o.selectionIds.length === 0)
+  @IsNotEmpty({ message: '回答は必須です' })
   text?: string;
 
   @Field(() => [Int], { nullable: true })
+  @ValidateIf((o) => !o.text || o.text.trim() === '')
+  @ArrayMinSize(1, { message: '回答は必須です' })
   selectionIds?: number[];
 }
 
@@ -52,6 +58,30 @@ export class CreateSurveyInput {
   questions!: QuestionInput[];
 }
 
+@InputType()
+export class EditSurveyInput {
+  @Field()
+  @IsNotEmpty({ message: 'IDは必須です' })
+  @IsInt()
+  id!: number;
+
+  @Field()
+  @IsString()
+  @IsNotEmpty({ message: 'タイトルは必須です' })
+  title!: string;
+
+  @Field(() => [QuestionInput])
+  @IsArray()
+  @ArrayMinSize(1, { message: 'アンケートには最低1つの質問が必要です' })
+  @ValidateNested({ each: true })
+  @Type(() => QuestionInput)
+  questions!: QuestionInput[];
+
+  @Field()
+  @IsBoolean({ message: '公開または非公開の設定は必須です' })
+  published!: boolean;
+}
+
 // 📦 2. submitSurveyAnswer用のInputType
 @InputType()
 export class SubmitSurveyAnswerInput {
@@ -62,7 +92,6 @@ export class SubmitSurveyAnswerInput {
 
   @Field(() => [AnswerInputType])
   @IsArray()
-  
   @ArrayMinSize(1, { message: '最低1つの回答が必要です' })
   @ValidateNested({ each: true })
   @Type(() => AnswerInputType)

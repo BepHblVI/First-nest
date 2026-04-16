@@ -1,5 +1,13 @@
 import { Field, ObjectType, Int } from '@nestjs/graphql';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, Generated, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+  Generated,
+  CreateDateColumn,
+} from 'typeorm';
 import { Question } from './question.model';
 import { User } from '../auth/user.model';
 import { Submission } from './submission.model';
@@ -25,11 +33,15 @@ export class Survey {
   owner!: User; //作成者
 
   @Field(() => [Question])
-  @OneToMany(() => Question, (q) => q.survey, {cascade:true})
+  @OneToMany(() => Question, (q) => q.survey, {
+    cascade: true,
+    eager: true,
+    orphanedRowAction: 'delete',
+  })
   questions!: Question[]; //設問群
 
   @Field()
-  @Column( {default: false})
+  @Column({ default: false })
   published!: boolean;
 
   @Field()
@@ -37,6 +49,6 @@ export class Survey {
   created_at!: Date;
 
   @Field(() => [Submission])
-  @OneToMany(() => Submission, (sub) => sub.survey, {cascade:true})
+  @OneToMany(() => Submission, (sub) => sub.survey, { cascade: true })
   submissions!: Submission[];
 }

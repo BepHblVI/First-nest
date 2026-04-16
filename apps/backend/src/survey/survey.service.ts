@@ -9,6 +9,8 @@ import { Repository } from 'typeorm';
 import { DeepPartial } from 'typeorm';
 import { Answer } from './answer.model';
 import { Survey } from './survey.model';
+import { Question } from './question.model';
+import { QuestionOption } from './options.model';
 import { User } from '../auth/user.model';
 import { Submission } from './submission.model';
 import { SurveyResult } from './dto/result.output';
@@ -34,6 +36,10 @@ export class SurveyService {
     private submitRepo: Repository<Submission>,
     @InjectRepository(Answer)
     private answerRepo: Repository<Answer>,
+    @InjectRepository(Question)
+    private questionRepo: Repository<Question>, // ← 追加
+    @InjectRepository(QuestionOption)
+    private optionRepo: Repository<QuestionOption>,
   ) {}
 
   // 1. 作成したものを取得
@@ -59,10 +65,52 @@ export class SurveyService {
         options:
           q.options?.map((t, index) => ({ text: t, order: index })) || [],
       })),
+      published: true,
     });
 
     return await this.surveyRepo.save(newSurvey);
   }
+
+  async editData(
+    id: number,
+    title: string,
+    user: User,
+    questions: QuestionInput[],
+    published: boolean,
+  ): Promise<Survey> {
+    // 1. 既存データを取得（questionsも含めて）
+    const survey = await this.surveyRepo.findOne({
+      where: { id: id },
+      relations: ['owner', 'questions', 'questions.options'],
+    });
+
+    if (!survey) {
+      throw new NotFoundException('アンケートが見つかりません');
+    }
+
+    if (survey.owner.id !== user.id) {
+      throw new ForbiddenException(
+        '他人のアンケートを操作する権限がありません',
+      );
+    }
+
+    const editedsurvey = this.surveyRepo.create({
+      id: id,
+      title: title,
+      owner: { id: user.id },
+      questions: questions.map((q) => ({
+        qtext: q.qtext,
+        type: q.type,
+        options:
+          q.options?.map((t, index) => ({ text: t, order: index })) || [],
+      })),
+      published: published,
+    });
+
+    // 4. save() で保存（エンティティを直接渡す）
+    return await this.surveyRepo.save(editedsurvey);
+  }
+
   async deleteData(id: number, currentUser: User) {
     const survey = await this.surveyRepo.findOne({
       where: { id: id },
@@ -84,6 +132,15 @@ export class SurveyService {
     surveyId: number,
     answers: AnswerInput[],
   ): Promise<Submission> {
+    const survey = await this.surveyRepo.findOne({
+      where: { id: surveyId },
+    });
+    if (!survey) {
+      throw new NotFoundException('アンケートが見つかりません');
+    }
+    if (!survey.published) {
+      throw new ForbiddenException('このアンケートは非公開です');
+    }
     const newSubmission = this.submitRepo.create({
       survey: { id: surveyId },
       answers: answers.map(
@@ -106,6 +163,10 @@ export class SurveyService {
 
     if (!survey) {
       throw new Error('アンケートが見つかりません');
+    }
+
+    if (!survey.published) {
+      throw new ForbiddenException('このアンケートは非公開です');
     }
     return survey;
   }

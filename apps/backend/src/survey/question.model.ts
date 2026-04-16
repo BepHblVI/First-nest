@@ -28,6 +28,8 @@ export class Question {
   @Field(() => [QuestionOption])
   @OneToMany(() => QuestionOption, (option) => option.question, {
     cascade: true,
+    eager: true,
+    orphanedRowAction: 'delete',
   })
   options?: QuestionOption[];
 

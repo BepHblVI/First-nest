@@ -1,20 +1,14 @@
 // apps/backend/src/practice/practice.resolver.ts
-import {
-  Resolver,
-  Query,
-  Mutation,
-  Args,
-  Context,
-  InputType,
-  Field,
-  Int,
-  ObjectType,
-} from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Context, Int } from '@nestjs/graphql';
 import { SurveyService } from './survey.service';
 import { Survey } from './survey.model';
 import { Submission } from './submission.model';
 import { SurveyResult } from './dto/result.output';
-import { CreateSurveyInput, SubmitSurveyAnswerInput } from './dto/input';
+import {
+  CreateSurveyInput,
+  SubmitSurveyAnswerInput,
+  EditSurveyInput,
+} from './dto/input';
 
 import { UseGuards } from '@nestjs/common';
 import { SurveyAuthGuard } from '../auth/auth.guard';
@@ -41,6 +35,22 @@ export class SurveyResolver {
       input.title,
       currentUser,
       input.questions,
+    );
+  }
+
+  @Mutation(() => Survey)
+  @UseGuards(SurveyAuthGuard)
+  async editSurvey(
+    @Args('input') input: EditSurveyInput,
+    @Context() context: any,
+  ): Promise<Survey> {
+    const currentUser = context.req.user;
+    return this.surveyService.editData(
+      input.id,
+      input.title,
+      currentUser,
+      input.questions,
+      input.published,
     );
   }
 
