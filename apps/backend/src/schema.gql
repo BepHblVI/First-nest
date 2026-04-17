@@ -13,6 +13,7 @@ type Submission {
   submitted_at: DateTime!
   survey: Survey!
   answers: [Answer!]!
+  respondentId: String
 }
 
 """
@@ -27,6 +28,7 @@ type Survey {
   owner: User!
   questions: [Question!]!
   published: Boolean!
+  auth: String!
   created_at: DateTime!
   submissions: [Submission!]!
 }
@@ -106,6 +108,8 @@ type Mutation {
 input CreateSurveyInput {
   title: String!
   questions: [QuestionInput!]!
+  auth: String!
+  tokens: Float!
 }
 
 input QuestionInput {
@@ -119,11 +123,15 @@ input EditSurveyInput {
   title: String!
   questions: [QuestionInput!]!
   published: Boolean!
+  auth: String!
+  tokens: Float!
 }
 
 input SubmitSurveyAnswerInput {
   surveyId: Int!
   answers: [AnswerInputType!]!
+  token: String
+  respondentId: String
 }
 
 input AnswerInputType {

@@ -8,6 +8,7 @@ import { ValidationPipe } from '@nestjs/common';
 describe('Survey GraphQL API (e2e)', () => {
   let app: INestApplication;
   let validToken: string;
+  let validTokenB: string;
   let otherUserSurveyId: number;
   let otherUserSurveyshareId: string;
 
@@ -71,7 +72,7 @@ describe('Survey GraphQL API (e2e)', () => {
           }
         `,
       });
-    const validTokenB = loginB.body.data.login.access_token;
+    validTokenB = loginB.body.data.login.access_token;
 
     const createSurveyResponse = await request(app.getHttpServer())
       .post('/graphql')
@@ -79,7 +80,7 @@ describe('Survey GraphQL API (e2e)', () => {
       .send({
         query: `
           mutation {
-            createSurvey(input:{title: "ユーザーBの秘密のアンケート",questions:[{qtext:"秘密の質問",type:"TEXT"}]}) {
+            createSurvey(input:{title: "ユーザーBの秘密のアンケート",questions:[{qtext:"秘密の質問",type:"TEXT"}],auth:"NONE",tokens:0}) {
             id
               shareId
             }
@@ -91,9 +92,11 @@ describe('Survey GraphQL API (e2e)', () => {
     otherUserSurveyId = createSurveyResponse.body.data.createSurvey.id;
   });
 
-  // 🧹 テストが終わった後の片付け
   afterAll(async () => {
-    await app.close();
+    // appが存在する時だけ閉じるように変更
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('セキュリティチェック', () => {
@@ -1289,6 +1292,122 @@ describe('Survey GraphQL API (e2e)', () => {
 
       expect(answerResponse.body.errors).toBeUndefined();
       expect(answerResponse.body.data.submitSurveyAnswer.id).toBeDefined();
+    });
+  });
+  describe('回答者の認証', () => {
+    // テスト間で共有する変数
+    let inviteSurveyId: number;
+    let generatedTokens: { token: string }[];
+
+    // ---------------------------------------------------------
+    // ここからテストケース
+    // ---------------------------------------------------------
+
+    it('1. 招待制アンケートを作成し、指定した数のトークンが取得できること（作成者本人のみ）', async () => {
+      const createRes = await request(app.getHttpServer())
+        .post('/graphql')
+        .set('Authorization', `Bearer ${validToken}`) // testuser (ユーザーA)
+        .send({
+          query: `
+          mutation {
+            createSurvey(input: {
+              title: "招待者限定アンケート",
+              questions: [{ qtext: "好きな言語は？", type: "TEXT" }],
+              auth: "INVITE_ONLY",
+              tokensCount: 2
+            }) {
+              id
+              tokens {
+                token
+              }
+            }
+          }
+        `,
+        });
+
+      const data = createRes.body.data.createSurvey;
+      expect(data.id).toBeDefined();
+      expect(data.tokens).toBeDefined();
+      expect(data.tokens.length).toBe(2); // トークンが2つ発行されていること
+
+      // 後続のテストのために保存しておく
+      inviteSurveyId = data.id;
+      generatedTokens = data.tokens;
+    });
+
+    it('2. 作成者以外がアンケートを取得した際、トークン情報が隠蔽されること（ResolveFieldの権限テスト）', async () => {
+      // ユーザーAが作成したアンケート(inviteSurveyId)を、ユーザーB(validTokenB)が取得しようとする
+      const fetchRes = await request(app.getHttpServer())
+        .post('/graphql')
+        .set('Authorization', `Bearer ${validTokenB}`) // testuserB (ユーザーB)
+        .send({
+          query: `
+          query {
+            getSurvey(id: ${inviteSurveyId}) {
+              title
+              tokens {
+                token
+              }
+            }
+          }
+        `,
+        });
+
+      const survey = fetchRes.body.data.getSurvey;
+      expect(survey.title).toBe('招待者限定アンケート');
+
+      expect(survey.tokens).toEqual([]);
+    });
+
+    it('3. 有効な招待トークンを使用してアンケートに回答できること', async () => {
+      const validInviteToken = generatedTokens[0].token; // 発行された1つ目のトークンを使用
+
+      const submitRes = await request(app.getHttpServer())
+        .post('/graphql')
+        // 回答者は未ログイン状態を想定（Authorizationヘッダーなし）
+        .send({
+          query: `
+          mutation {
+            submitSurveyAnswer(input: {
+              surveyId: ${inviteSurveyId},
+              token: "${validInviteToken}",
+              answers: [{ questionId: 1, text: "TypeScript" }]
+            }) {
+              id
+            }
+          }
+        `,
+        });
+
+      // エラーがなく、回答データ（Submission）のIDが返ってくること
+      expect(submitRes.body.errors).toBeUndefined();
+      expect(submitRes.body.data.submitSurveyAnswer.id).toBeDefined();
+    });
+
+    it('4. 使用済みのトークンでは回答が拒否されること（排他制御・重複防止テスト）', async () => {
+      const usedToken = generatedTokens[0].token; // 先ほど使用したトークンを再利用
+
+      const submitRes = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+          mutation {
+            submitSurveyAnswer(input: {
+              surveyId: ${inviteSurveyId},
+              token: "${usedToken}",
+              answers: [{ questionId: 1, text: "Python" }]
+            }) {
+              id
+            }
+          }
+        `,
+        });
+
+      // 意図的にエラーが返ってくること（BadRequestExceptionなど）
+      expect(submitRes.body.errors).toBeDefined();
+      expect(submitRes.body.errors[0].message).toMatch(
+        /使用済み|無効|すでに回答|Invalid|Used/,
+      ); // 実装したエラーメッセージに合わせて調整
     });
   });
 });

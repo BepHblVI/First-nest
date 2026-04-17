@@ -1,8 +1,8 @@
 // apps/backend/src/practice/practice.resolver.ts
 import { Resolver, Query, Mutation, Args, Context, Int } from '@nestjs/graphql';
 import { SurveyService } from './survey.service';
-import { Survey } from './survey.model';
-import { Submission } from './submission.model';
+import { Survey } from './models/survey.model';
+import { Submission } from './models/submission.model';
 import { SurveyResult } from './dto/result.output';
 import {
   CreateSurveyInput,
@@ -31,11 +31,7 @@ export class SurveyResolver {
     @Context() context: any,
   ): Promise<Survey> {
     const currentUser = context.req.user;
-    return this.surveyService.createData(
-      input.title,
-      currentUser,
-      input.questions,
-    );
+    return this.surveyService.createData(input, currentUser);
   }
 
   @Mutation(() => Survey)
@@ -45,13 +41,7 @@ export class SurveyResolver {
     @Context() context: any,
   ): Promise<Survey> {
     const currentUser = context.req.user;
-    return this.surveyService.editData(
-      input.id,
-      input.title,
-      currentUser,
-      input.questions,
-      input.published,
-    );
+    return this.surveyService.editData(input, currentUser);
   }
 
   @Mutation(() => Boolean)
@@ -73,7 +63,7 @@ export class SurveyResolver {
   async submitSurveyAnswer(
     @Args('input') input: SubmitSurveyAnswerInput,
   ): Promise<Submission> {
-    return this.surveyService.submitAnswer(input.surveyId, input.answers);
+    return this.surveyService.submitAnswer(input);
   }
 
   @Query(() => SurveyResult)

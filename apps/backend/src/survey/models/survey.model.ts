@@ -9,8 +9,9 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { Question } from './question.model';
-import { User } from '../auth/user.model';
+import { User } from '../../auth/user.model';
 import { Submission } from './submission.model';
+import { SurveyToken } from './survey-token.model';
 
 @ObjectType()
 @Entity()
@@ -22,7 +23,7 @@ export class Survey {
   @Field(() => String)
   @Column({ unique: true })
   @Generated('uuid')
-  shareId!: string;
+  shareId!: string; //URL用の識別子
 
   @Field()
   @Column()
@@ -42,7 +43,11 @@ export class Survey {
 
   @Field()
   @Column({ default: false })
-  published!: boolean;
+  published!: boolean; //公開状態
+
+  @Field()
+  @Column({ default: false })
+  auth!: string; //回答時にユーザー認証するかどうか
 
   @Field()
   @CreateDateColumn()
@@ -51,4 +56,11 @@ export class Survey {
   @Field(() => [Submission])
   @OneToMany(() => Submission, (sub) => sub.survey, { cascade: true })
   submissions!: Submission[];
+
+  @OneToMany(() => SurveyToken, (token) => token.survey, {
+    cascade: true,
+    eager: true,
+    orphanedRowAction: 'delete',
+  })
+  tokens!: SurveyToken[];
 }

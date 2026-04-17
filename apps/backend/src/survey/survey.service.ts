@@ -7,25 +7,17 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DeepPartial } from 'typeorm';
-import { Answer } from './answer.model';
-import { Survey } from './survey.model';
-import { Question } from './question.model';
-import { QuestionOption } from './options.model';
+import { Answer } from './models/answer.model';
+import { Survey } from './models/survey.model';
 import { User } from '../auth/user.model';
-import { Submission } from './submission.model';
+import { Submission } from './models/submission.model';
+import { SurveyToken } from './models/survey-token.model';
 import { SurveyResult } from './dto/result.output';
-import { deleteMetadata } from 'reflect-metadata/no-conflict';
-
-type QuestionInput = {
-  qtext: string;
-  type: string;
-  options?: string[];
-};
-type AnswerInput = {
-  questionId: number; // どの設問か
-  text?: string; // 自由記述用
-  selectionIds?: number[]; // 選んだ選択肢のIDリスト
-};
+import {
+  CreateSurveyInput,
+  SubmitSurveyAnswerInput,
+  EditSurveyInput,
+} from './dto/input';
 
 @Injectable()
 export class SurveyService {
@@ -36,10 +28,8 @@ export class SurveyService {
     private submitRepo: Repository<Submission>,
     @InjectRepository(Answer)
     private answerRepo: Repository<Answer>,
-    @InjectRepository(Question)
-    private questionRepo: Repository<Question>, // ← 追加
-    @InjectRepository(QuestionOption)
-    private optionRepo: Repository<QuestionOption>,
+    @InjectRepository(SurveyToken)
+    private tokenRepo: Repository<SurveyToken>,
   ) {}
 
   // 1. 作成したものを取得
@@ -52,10 +42,13 @@ export class SurveyService {
 
   // 2. アンケート作成
   async createData(
-    title: string,
+    { title, questions, auth, tokens }: CreateSurveyInput,
     user: User,
-    questions: QuestionInput[],
   ): Promise<Survey> {
+    const tokenEntities =
+      auth === 'INVITE_ONLY' && tokens > 0
+        ? Array.from({ length: tokens }).map(() => ({}))
+        : [];
     const newSurvey = this.surveyRepo.create({
       title: title,
       owner: { id: user.id },
@@ -66,17 +59,16 @@ export class SurveyService {
           q.options?.map((t, index) => ({ text: t, order: index })) || [],
       })),
       published: true,
+      auth: auth,
+      tokens: tokenEntities,
     });
 
     return await this.surveyRepo.save(newSurvey);
   }
 
   async editData(
-    id: number,
-    title: string,
+    { id, title, questions, published, auth, tokens }: EditSurveyInput,
     user: User,
-    questions: QuestionInput[],
-    published: boolean,
   ): Promise<Survey> {
     // 1. 既存データを取得（questionsも含めて）
     const survey = await this.surveyRepo.findOne({
@@ -94,6 +86,11 @@ export class SurveyService {
       );
     }
 
+    const tokenEntities =
+      auth === 'INVITE_ONLY' && tokens > 0
+        ? Array.from({ length: tokens }).map(() => ({}))
+        : [];
+
     const editedsurvey = this.surveyRepo.create({
       id: id,
       title: title,
@@ -105,6 +102,8 @@ export class SurveyService {
           q.options?.map((t, index) => ({ text: t, order: index })) || [],
       })),
       published: published,
+      auth: auth,
+      tokens: tokenEntities,
     });
 
     // 4. save() で保存（エンティティを直接渡す）
@@ -128,18 +127,29 @@ export class SurveyService {
     return true;
   }
 
-  async submitAnswer(
-    surveyId: number,
-    answers: AnswerInput[],
-  ): Promise<Submission> {
+  async submitAnswer({
+    surveyId,
+    answers,
+    token,
+    respondentId,
+  }: SubmitSurveyAnswerInput): Promise<Submission> {
     const survey = await this.surveyRepo.findOne({
       where: { id: surveyId },
     });
-    if (!survey) {
-      throw new NotFoundException('アンケートが見つかりません');
-    }
-    if (!survey.published) {
+    if (!survey) throw new NotFoundException('アンケートが見つかりません');
+    if (!survey.published)
       throw new ForbiddenException('このアンケートは非公開です');
+    if (survey.auth == 'PRIVATE') {
+      if (!token)
+        throw new ForbiddenException('このアンケートへの回答権限がありません');
+      const tokenRecord = await this.tokenRepo.findOne({
+        where: {
+          token: token,
+          survey: { id: surveyId }, // 念のため「このアンケートのトークンか」も確認
+        },
+      });
+      if (tokenRecord?.isUsed)
+        throw new ForbiddenException('すでに回答済みです');
     }
     const newSubmission = this.submitRepo.create({
       survey: { id: surveyId },
@@ -150,6 +160,7 @@ export class SurveyService {
           selectedOptions: ans.selectionIds?.map((id) => ({ id })) || [],
         }),
       ),
+      respondentId: respondentId,
     });
 
     return await this.submitRepo.save(newSubmission);

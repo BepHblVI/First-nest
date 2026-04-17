@@ -1,0 +1,11 @@
+# .tbls.yml
+# DBへの接続情報（ご自身のパスワードに書き換えてください）
+# ※ 127.0.0.1はlocalhostのIPアドレスです
+dsn: mysql://root:${DB_PASSWORD}@127.0.0.1:3306/${DB_DATABASE}
+
+# 生成されたドキュメントの保存先フォルダ
+docPath: docs/database
+
+# ER図の出力フォーマットをMermaidに指定
+er:
+  format: mermaid

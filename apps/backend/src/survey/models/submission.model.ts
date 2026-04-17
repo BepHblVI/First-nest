@@ -1,5 +1,12 @@
 import { Field, ObjectType, Int } from '@nestjs/graphql';
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  ManyToOne,
+  OneToMany,
+  Column,
+} from 'typeorm';
 import { Survey } from './survey.model';
 import { Answer } from './answer.model';
 
@@ -8,7 +15,7 @@ import { Answer } from './answer.model';
 export class Submission {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
-  id!: number; 
+  id!: number;
 
   @Field()
   @CreateDateColumn()
@@ -19,6 +26,10 @@ export class Submission {
   survey!: Survey;
 
   @Field(() => [Answer])
-  @OneToMany(() => Answer, (ans) => ans.submission,{ cascade: true })
+  @OneToMany(() => Answer, (ans) => ans.submission, { cascade: true })
   answers!: Answer[];
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  respondentId?: string;
 }

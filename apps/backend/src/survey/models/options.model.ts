@@ -1,5 +1,11 @@
 import { Field, ObjectType, Int } from '@nestjs/graphql';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { Question } from './question.model';
 
 @ObjectType()
@@ -14,7 +20,7 @@ export class QuestionOption {
   text!: string; //テキスト
 
   @Field(() => Int)
-  @Column( {default:0} )
+  @Column({ default: 0 })
   order!: Number;
 
   @Field(() => Question)

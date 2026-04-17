@@ -11,6 +11,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { InitCommand } from 'typeorm/commands/InitCommand.js';
 
 @InputType()
 export class QuestionInput {
@@ -56,6 +57,17 @@ export class CreateSurveyInput {
   @ValidateNested({ each: true })
   @Type(() => QuestionInput)
   questions!: QuestionInput[];
+
+  @Field()
+  @IsNotEmpty()
+  @IsIn(['NONE', 'PUBLIC', 'PRIVATE'], {
+    message: '公開レベルを設定してください',
+  })
+  auth!: string;
+
+  @Field()
+  @IsInt()
+  tokens!: number;
 }
 
 @InputType()
@@ -78,8 +90,20 @@ export class EditSurveyInput {
   questions!: QuestionInput[];
 
   @Field()
+  @IsNotEmpty()
   @IsBoolean({ message: '公開または非公開の設定は必須です' })
   published!: boolean;
+
+  @Field()
+  @IsNotEmpty()
+  @IsIn(['NONE', 'PUBLIC', 'PRIVATE'], {
+    message: '公開レベルを設定してください',
+  })
+  auth!: string;
+
+  @Field()
+  @IsInt()
+  tokens!: number;
 }
 
 // 📦 2. submitSurveyAnswer用のInputType
@@ -96,4 +120,10 @@ export class SubmitSurveyAnswerInput {
   @ValidateNested({ each: true })
   @Type(() => AnswerInputType)
   answers!: AnswerInputType[];
+
+  @Field({ nullable: true })
+  token?: string;
+
+  @Field({ nullable: true })
+  respondentId?: string;
 }
