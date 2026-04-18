@@ -39,6 +39,9 @@ import { ConfigService } from '@nestjs/config';
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // スキーマを自動生成
       context: ({ req, res }) => ({ req, res }),
       validationRules: [depthLimit(5)],
+      subscriptions: {
+        'graphql-ws': true,
+      },
     }),
     SurveyModule,
     AuthModule,

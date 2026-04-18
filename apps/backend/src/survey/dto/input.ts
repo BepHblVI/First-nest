@@ -58,8 +58,8 @@ export class CreateSurveyInput {
   @Type(() => QuestionInput)
   questions!: QuestionInput[];
 
-  @Field({ nullable: true, defaultValue: 'NONE' })
-  @IsIn(['NONE', 'PUBLIC', 'PRIVATE'], {
+  @Field({ nullable: true, defaultValue: 'PUBLIC' })
+  @IsIn(['PUBLIC', 'PRIVATE'], {
     message: '公開レベルを設定してください',
   })
   auth!: string;
@@ -93,8 +93,8 @@ export class EditSurveyInput {
   @IsBoolean({ message: '公開または非公開の設定は必須です' })
   published!: boolean;
 
-  @Field({ nullable: true, defaultValue: 'NONE' })
-  @IsIn(['NONE', 'PUBLIC', 'PRIVATE'], {
+  @Field({ nullable: true, defaultValue: 'PUBLIC' })
+  @IsIn(['PUBLIC', 'PRIVATE'], {
     message: '公開レベルを設定してください',
   })
   auth!: string;

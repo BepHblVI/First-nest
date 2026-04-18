@@ -117,7 +117,7 @@ type Mutation {
 input CreateSurveyInput {
   title: String!
   questions: [QuestionInput!]!
-  auth: String = "NONE"
+  auth: String = "PUBLIC"
   tokens: Float = 0
 }
 
@@ -132,7 +132,7 @@ input EditSurveyInput {
   title: String!
   questions: [QuestionInput!]!
   published: Boolean!
-  auth: String = "NONE"
+  auth: String = "PUBLIC"
   tokens: Float = 0
 }
 

@@ -1,5 +1,5 @@
 // apps/backend/src/practice/practice.resolver.ts
-import { Resolver, Query, Mutation, Args, Context, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { SurveyService } from './survey.service';
 import { Survey } from './models/survey.model';
 import { Submission } from './models/submission.model';
@@ -10,17 +10,19 @@ import {
   EditSurveyInput,
 } from './dto/input';
 
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { SurveyAuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 @Resolver(() => Survey)
+@UseInterceptors(LoggingInterceptor)
 export class SurveyResolver {
   constructor(private readonly surveyService: SurveyService) {}
 
   @Query(() => [Survey])
   @UseGuards(SurveyAuthGuard)
-  async getSurvey(@Context() context: any): Promise<Survey[]> {
-    const currentUser = context.req.user;
+  async getSurvey(@CurrentUser() currentUser: any): Promise<Survey[]> {
     return this.surveyService.getData(currentUser);
   }
 
@@ -28,9 +30,8 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async createSurvey(
     @Args('input') input: CreateSurveyInput,
-    @Context() context: any,
+    @CurrentUser() currentUser: any,
   ): Promise<Survey> {
-    const currentUser = context.req.user;
     return this.surveyService.createData(input, currentUser);
   }
 
@@ -38,9 +39,8 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async editSurvey(
     @Args('input') input: EditSurveyInput,
-    @Context() context: any,
+    @CurrentUser() currentUser: any,
   ): Promise<Survey> {
-    const currentUser = context.req.user;
     return this.surveyService.editData(input, currentUser);
   }
 
@@ -48,9 +48,8 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async deleteSurvey(
     @Args('id', { type: () => Int }) id: number,
-    @Context() context: any,
+    @CurrentUser() currentUser: any,
   ) {
-    const currentUser = context.req.user;
     return await this.surveyService.deleteData(id, currentUser);
   }
 
@@ -70,9 +69,8 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async getSurveyResults(
     @Args('shareId') shareId: string,
-    @Context() context: any,
+    @CurrentUser() currentUser: any,
   ): Promise<SurveyResult> {
-    const currentUser = context.req.user;
     return this.surveyService.getResults(shareId, currentUser);
   }
 }

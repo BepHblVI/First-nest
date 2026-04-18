@@ -72,7 +72,14 @@ describe('Survey GraphQL API (e2e)', () => {
           }
         `,
       });
-    validTokenB = loginB.body.data.login.access_token;
+    if (loginB.body.errors) {
+      console.error(
+        '🚨 loginB エラー:',
+        JSON.stringify(loginB.body.errors, null, 2),
+      );
+    } else {
+      validTokenB = loginB.body.data.login.access_token;
+    }
 
     const createSurveyResponse = await request(app.getHttpServer())
       .post('/graphql')
@@ -80,13 +87,19 @@ describe('Survey GraphQL API (e2e)', () => {
       .send({
         query: `
           mutation {
-            createSurvey(input:{title: "ユーザーBの秘密のアンケート",questions:[{qtext:"秘密の質問",type:"TEXT"}],auth:"NONE",tokens:0}) {
+            createSurvey(input:{title: "ユーザーBの秘密のアンケート",questions:[{qtext:"秘密の質問",type:"TEXT"}]}) {
             id
               shareId
             }
           }
         `,
       });
+    if (createSurveyResponse.body.errors) {
+      console.error(
+        '🚨 createSurvey エラー:',
+        JSON.stringify(createSurveyResponse.body.errors, null, 2),
+      );
+    }
     otherUserSurveyshareId =
       createSurveyResponse.body.data.createSurvey.shareId;
     otherUserSurveyId = createSurveyResponse.body.data.createSurvey.id;
@@ -1325,8 +1338,6 @@ describe('Survey GraphQL API (e2e)', () => {
           }
         `,
         });
-
-      console.log(createRes.body);
       const data = createRes.body.data.createSurvey;
       expect(data.id).toBeDefined();
       expect(data.tokens).toBeDefined();
