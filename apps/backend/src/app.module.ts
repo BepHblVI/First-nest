@@ -26,7 +26,9 @@ import { ConfigService } from '@nestjs/config';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: false,
+        migrationsRun: true, // 🚀 起動時に未実行のマイグレーションを自動実行
+        migrations: [join(__dirname, 'migrations/*{.ts,.js}')], // マイグレーションファイルの場所
         logging: false,
       }),
       inject: [ConfigService],

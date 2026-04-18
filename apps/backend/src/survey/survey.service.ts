@@ -36,7 +36,7 @@ export class SurveyService {
   async getData(user: User): Promise<Survey[]> {
     return await this.surveyRepo.find({
       where: { owner: { id: user.id } },
-      relations: ['owner', 'questions', 'questions.options'],
+      relations: ['owner', 'questions', 'questions.options', 'tokens'],
     });
   }
 
@@ -46,7 +46,7 @@ export class SurveyService {
     user: User,
   ): Promise<Survey> {
     const tokenEntities =
-      auth === 'INVITE_ONLY' && tokens > 0
+      auth === 'PRIVATE' && tokens > 0
         ? Array.from({ length: tokens }).map(() => ({}))
         : [];
     const newSurvey = this.surveyRepo.create({
@@ -142,14 +142,21 @@ export class SurveyService {
     if (survey.auth == 'PRIVATE') {
       if (!token)
         throw new ForbiddenException('このアンケートへの回答権限がありません');
-      const tokenRecord = await this.tokenRepo.findOne({
-        where: {
+      const updateResult = await this.tokenRepo.update(
+        {
           token: token,
-          survey: { id: surveyId }, // 念のため「このアンケートのトークンか」も確認
+          survey: { id: surveyId },
+          isUsed: false,
         },
-      });
-      if (tokenRecord?.isUsed)
-        throw new ForbiddenException('すでに回答済みです');
+        {
+          isUsed: true,
+        },
+      );
+      if (updateResult.affected === 0) {
+        throw new ForbiddenException(
+          '無効なトークン、またはすでに回答済みです',
+        );
+      }
     }
     const newSubmission = this.submitRepo.create({
       survey: { id: surveyId },
@@ -201,47 +208,55 @@ export class SurveyService {
       where: { survey: { id: survey.id } },
     });
 
-    const questionResults = await Promise.all(
-      survey.questions.map(async (question) => {
-        // この設問に対する回答総数
-        const totalAnswers = await this.answerRepo.count({
-          where: { question: { id: question.id } },
-        });
+    const rawQuestionsAnswerCounts = await this.answerRepo
+      .createQueryBuilder('answer')
+      .innerJoin('answer.question', 'question') // 中間テーブルを結合
+      .select('question.id', 'questionId')
+      .addSelect('COUNT(answer.id)', 'count')
+      .where('question.surveyId = :sId', { sId: survey.id })
+      .groupBy('question.id')
+      .getRawMany();
 
-        const rawOptionCounts = await this.answerRepo
-          .createQueryBuilder('answer')
-          .innerJoin('answer.selectedOptions', 'option') // 中間テーブルを結合
-          .select('option.id', 'optionId') // 選択肢IDを取得
-          .addSelect('COUNT(answer.id)', 'count') // その選択肢が含まれる回答数をカウント
-          .where('answer.questionId = :qId', { qId: question.id }) // 現在の設問に絞る
-          .groupBy('option.id') // 選択肢ごとにまとめる
-          .getRawMany(); // 生データとして取得
+    const rawOptionCounts = await this.answerRepo
+      .createQueryBuilder('answer')
+      .innerJoin('answer.selectedOptions', 'option') // 中間テーブルを結合
+      .select('option.id', 'optionId') // 選択肢IDを取得
+      .innerJoin('answer.question', 'question') // 中間テーブルを結合
+      .addSelect('COUNT(answer.id)', 'count') // その選択肢が含まれる回答数をカウント
+      .where('question.surveyId = :sId', { sId: survey.id }) // 現在の設問に絞る
+      .groupBy('option.id') // 選択肢ごとにまとめる
+      .getRawMany(); // 生データとして取得
 
-        const optionsResults =
-          question.options?.map((opt) => {
-            const found = rawOptionCounts.find((r) => r.optionId === opt.id);
+    const questionResults = survey.questions.map((question) => {
+      // この設問に対する回答総数
+      const totalAnswers = Number(
+        rawQuestionsAnswerCounts.find((q) => q.questionId === question.id)
+          ?.count ?? 0,
+      );
+      const optionsResults =
+        question.options?.map((opt) => {
+          const found = rawOptionCounts.find((r) => r.optionId === opt.id);
 
-            const count = found ? Number(found.count) : 0;
-            const percentage =
-              totalAnswers > 0 ? (count / totalAnswers) * 100 : 0;
+          const count = found ? Number(found.count) : 0;
+          const percentage =
+            totalAnswers > 0 ? (count / totalAnswers) * 100 : 0;
 
-            return {
-              optionId: opt.id,
-              text: opt.text,
-              count: count,
-              percentage: percentage,
-            };
-          }) || [];
+          return {
+            optionId: opt.id,
+            text: opt.text,
+            count: count,
+            percentage: percentage,
+          };
+        }) || [];
 
-        return {
-          questionId: question.id,
-          qtext: question.qtext,
-          type: question.type,
-          totalAnswersForThisQuestion: totalAnswers,
-          options: optionsResults,
-        };
-      }),
-    );
+      return {
+        questionId: question.id,
+        qtext: question.qtext,
+        type: question.type,
+        totalAnswersForThisQuestion: totalAnswers,
+        options: optionsResults,
+      };
+    });
 
     return {
       surveyId: survey.id,

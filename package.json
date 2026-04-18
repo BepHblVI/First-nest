@@ -3,13 +3,14 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "docker compose up -d && turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test:e2e": "turbo run test:e2e",
     "api": "npx graphql-markdown http://localhost:3001/graphql > api.md",
-    "db:doc": "docker run --rm --network host --env-file .env -v $(pwd):/work -w /work ghcr.io/k1low/tbls doc --force"
+    "db:doc": "docker run --rm --network host --env-file .env -v $(pwd):/work -w /work ghcr.io/k1low/tbls doc --force",
+    "m:gen": "turbo run m:gen --filter=backend --"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

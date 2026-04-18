@@ -57,6 +57,7 @@ export class Survey {
   @OneToMany(() => Submission, (sub) => sub.survey, { cascade: true })
   submissions!: Submission[];
 
+  @Field(() => [SurveyToken])
   @OneToMany(() => SurveyToken, (token) => token.survey, {
     cascade: true,
     eager: true,

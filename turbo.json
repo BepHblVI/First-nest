@@ -20,6 +20,10 @@
     "test:e2e": {
       "dependsOn": [],
       "outputs": []
-    }
+    },
+    "m:gen": {
+      "cache": false // マイグレーション生成は毎回中身が違うので、キャッシュさせない
+    },
+    "m:run": { "cache": false }
   }
 }

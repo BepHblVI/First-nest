@@ -1,0 +1,9 @@
+// apps/backend/tsconfig.migration.json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2017"
+  }
+}

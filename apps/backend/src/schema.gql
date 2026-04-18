@@ -21,6 +21,14 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type SurveyToken {
+  token: String!
+  isUsed: Boolean!
+  survey: Survey!
+  createdAt: DateTime!
+  expiredAt: DateTime!
+}
+
 type Survey {
   id: Int!
   shareId: String!
@@ -31,6 +39,7 @@ type Survey {
   auth: String!
   created_at: DateTime!
   submissions: [Submission!]!
+  tokens: [SurveyToken!]!
 }
 
 type QuestionOption {
@@ -108,8 +117,8 @@ type Mutation {
 input CreateSurveyInput {
   title: String!
   questions: [QuestionInput!]!
-  auth: String!
-  tokens: Float!
+  auth: String = "NONE"
+  tokens: Float = 0
 }
 
 input QuestionInput {
@@ -123,8 +132,8 @@ input EditSurveyInput {
   title: String!
   questions: [QuestionInput!]!
   published: Boolean!
-  auth: String!
-  tokens: Float!
+  auth: String = "NONE"
+  tokens: Float = 0
 }
 
 input SubmitSurveyAnswerInput {

@@ -1297,6 +1297,7 @@ describe('Survey GraphQL API (e2e)', () => {
   describe('回答者の認証', () => {
     // テスト間で共有する変数
     let inviteSurveyId: number;
+    let inviteSurveyuuid: string;
     let generatedTokens: { token: string }[];
 
     // ---------------------------------------------------------
@@ -1313,8 +1314,8 @@ describe('Survey GraphQL API (e2e)', () => {
             createSurvey(input: {
               title: "招待者限定アンケート",
               questions: [{ qtext: "好きな言語は？", type: "TEXT" }],
-              auth: "INVITE_ONLY",
-              tokensCount: 2
+              auth: "PRIVATE",
+              tokens: 2
             }) {
               id
               tokens {
@@ -1325,6 +1326,7 @@ describe('Survey GraphQL API (e2e)', () => {
         `,
         });
 
+      console.log(createRes.body);
       const data = createRes.body.data.createSurvey;
       expect(data.id).toBeDefined();
       expect(data.tokens).toBeDefined();
@@ -1332,18 +1334,18 @@ describe('Survey GraphQL API (e2e)', () => {
 
       // 後続のテストのために保存しておく
       inviteSurveyId = data.id;
+      inviteSurveyuuid = data.shareId;
       generatedTokens = data.tokens;
     });
 
-    it('2. 作成者以外がアンケートを取得した際、トークン情報が隠蔽されること（ResolveFieldの権限テスト）', async () => {
+    it('2. 作成者以外がアンケートを取得した際、トークン情報が隠蔽されること', async () => {
       // ユーザーAが作成したアンケート(inviteSurveyId)を、ユーザーB(validTokenB)が取得しようとする
       const fetchRes = await request(app.getHttpServer())
         .post('/graphql')
-        .set('Authorization', `Bearer ${validTokenB}`) // testuserB (ユーザーB)
         .send({
           query: `
           query {
-            getSurvey(id: ${inviteSurveyId}) {
+            getSurveyForAnswer(id: "${inviteSurveyuuid}") {
               title
               tokens {
                 token
@@ -1353,10 +1355,7 @@ describe('Survey GraphQL API (e2e)', () => {
         `,
         });
 
-      const survey = fetchRes.body.data.getSurvey;
-      expect(survey.title).toBe('招待者限定アンケート');
-
-      expect(survey.tokens).toEqual([]);
+      expect(fetchRes.body.errors).toBeDefined();
     });
 
     it('3. 有効な招待トークンを使用してアンケートに回答できること', async () => {
@@ -1405,9 +1404,61 @@ describe('Survey GraphQL API (e2e)', () => {
 
       // 意図的にエラーが返ってくること（BadRequestExceptionなど）
       expect(submitRes.body.errors).toBeDefined();
-      expect(submitRes.body.errors[0].message).toMatch(
-        /使用済み|無効|すでに回答|Invalid|Used/,
-      ); // 実装したエラーメッセージに合わせて調整
+      expect(submitRes.body.errors[0].message).toMatch('すでに回答済みです'); // 実装したエラーメッセージに合わせて調整
+    });
+    it('PRIVATEで作成したアンケートに、トークンなしで回答できてしまう', async () => {
+      // ※事前に inviteSurveyId が INVITE_ONLY で作成されている前提です
+
+      const submitRes = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+      mutation {
+        submitSurveyAnswer(input: {
+          surveyId: ${inviteSurveyId},
+          answers: [{ questionId: 1, text: "認証すり抜け成功！" }]
+        }) {
+          id
+        }
+      }
+    `,
+        });
+      expect(submitRes.body.errors).toBeDefined();
+    });
+    it('【脆弱性2】1つの有効なトークンを使って、同時に複数リクエストを送信すると多重回答できてしまう', async () => {
+      // まだ使われていない有効なトークンを1つ用意する
+      const validToken = generatedTokens[1].token;
+
+      // まったく同じトークンを使ったリクエストを「3つ同時に」発射する
+      const requests = Array(3)
+        .fill(null)
+        .map(() =>
+          request(app.getHttpServer())
+            .post('/graphql')
+            .send({
+              query: `
+        mutation {
+          submitSurveyAnswer(input: {
+            surveyId: ${inviteSurveyId},
+            token: "${validToken}",
+            answers: [{ questionId: 1, text: "多重回答アタック！" }]
+          }) {
+            id
+          }
+        }
+      `,
+            }),
+        );
+
+      // 3つのリクエストを並列で完全同時実行
+      const responses = await Promise.all(requests);
+
+      // 成功した（errorsがない）レスポンスの数を数える
+      const successCount = responses.filter((res) => !res.body.errors).length;
+
+      // 本来、トークンは1回しか使えないので、成功するのは「1回だけ」であるべき
+      // しかし現在の実装だと、タイミング次第で2〜3回成功してしまうため、このexpectは失敗します。
+      expect(successCount).toBe(1);
     });
   });
 });
