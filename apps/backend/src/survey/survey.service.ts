@@ -87,7 +87,7 @@ export class SurveyService {
     }
 
     const tokenEntities =
-      auth === 'INVITE_ONLY' && tokens > 0
+      auth === 'PRIVATE' && tokens > 0
         ? Array.from({ length: tokens }).map(() => ({}))
         : [];
 

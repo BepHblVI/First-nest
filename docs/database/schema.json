@@ -90,7 +90,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `answer` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(255) DEFAULT NULL,\n  `questionId` int DEFAULT NULL,\n  `submissionId` int DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_a4013f10cd6924793fbd5f0d637` (`questionId`),\n  KEY `FK_1398cb4bf7f1ccc37fa0dd538ff` (`submissionId`),\n  CONSTRAINT `FK_1398cb4bf7f1ccc37fa0dd538ff` FOREIGN KEY (`submissionId`) REFERENCES `submission` (`id`),\n  CONSTRAINT `FK_a4013f10cd6924793fbd5f0d637` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `answer` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(255) DEFAULT NULL,\n  `questionId` int DEFAULT NULL,\n  `submissionId` int DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_a4013f10cd6924793fbd5f0d637` (`questionId`),\n  KEY `FK_1398cb4bf7f1ccc37fa0dd538ff` (`submissionId`),\n  CONSTRAINT `FK_1398cb4bf7f1ccc37fa0dd538ff` FOREIGN KEY (`submissionId`) REFERENCES `submission` (`id`),\n  CONSTRAINT `FK_a4013f10cd6924793fbd5f0d637` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "answer_selected_options_question_option",
@@ -173,6 +173,50 @@
         }
       ],
       "def": "CREATE TABLE `answer_selected_options_question_option` (\n  `answerId` int NOT NULL,\n  `questionOptionId` int NOT NULL,\n  PRIMARY KEY (`answerId`,`questionOptionId`),\n  KEY `IDX_7c36f35a3fcb6c5fe610023447` (`answerId`),\n  KEY `IDX_a28062e701efff0f2680f6eafd` (`questionOptionId`),\n  CONSTRAINT `FK_7c36f35a3fcb6c5fe6100234479` FOREIGN KEY (`answerId`) REFERENCES `answer` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  CONSTRAINT `FK_a28062e701efff0f2680f6eafd1` FOREIGN KEY (`questionOptionId`) REFERENCES `question_option` (`id`) ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+    },
+    {
+      "name": "migrations",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "nullable": false,
+          "extra_def": "auto_increment"
+        },
+        {
+          "name": "timestamp",
+          "type": "bigint",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "varchar(255)",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "migrations",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "migrations",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `migrations` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `timestamp` bigint NOT NULL,\n  `name` varchar(255) NOT NULL,\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "question",
@@ -314,7 +358,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `question_option` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(255) NOT NULL,\n  `order` int NOT NULL DEFAULT '0',\n  `questionId` int DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_ba19747af180520381a117f5986` (`questionId`),\n  CONSTRAINT `FK_ba19747af180520381a117f5986` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `question_option` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(255) NOT NULL,\n  `order` int NOT NULL DEFAULT '0',\n  `questionId` int DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_ba19747af180520381a117f5986` (`questionId`),\n  CONSTRAINT `FK_ba19747af180520381a117f5986` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "submission",
@@ -334,13 +378,13 @@
           "extra_def": "DEFAULT_GENERATED"
         },
         {
-          "name": "surveyId",
-          "type": "int",
+          "name": "respondentId",
+          "type": "varchar(255)",
           "nullable": true
         },
         {
-          "name": "respondentId",
-          "type": "varchar(255)",
+          "name": "surveyId",
+          "type": "int",
           "nullable": true
         }
       ],
@@ -386,7 +430,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `submission` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `submitted_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `surveyId` int DEFAULT NULL,\n  `respondentId` varchar(255) DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_445eeaad33ae6464ac85f6ea46b` (`surveyId`),\n  CONSTRAINT `FK_445eeaad33ae6464ac85f6ea46b` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `submission` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `submitted_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `respondentId` varchar(255) DEFAULT NULL,\n  `surveyId` int DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_445eeaad33ae6464ac85f6ea46b` (`surveyId`),\n  CONSTRAINT `FK_445eeaad33ae6464ac85f6ea46b` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "survey",
@@ -415,6 +459,12 @@
           "default": "0"
         },
         {
+          "name": "auth",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": "0"
+        },
+        {
           "name": "created_at",
           "type": "datetime(6)",
           "nullable": false,
@@ -425,12 +475,6 @@
           "name": "ownerId",
           "type": "int",
           "nullable": true
-        },
-        {
-          "name": "auth",
-          "type": "varchar(255)",
-          "nullable": false,
-          "default": "0"
         }
       ],
       "indexes": [
@@ -492,7 +536,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `survey` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `shareId` varchar(36) NOT NULL,\n  `title` varchar(255) NOT NULL,\n  `published` tinyint NOT NULL DEFAULT '0',\n  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `ownerId` int DEFAULT NULL,\n  `auth` varchar(255) NOT NULL DEFAULT '0',\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `IDX_76268d52f6deafc75cb9987c21` (`shareId`),\n  KEY `FK_a2e6e9ab8f1ff04cbf31da646e7` (`ownerId`),\n  CONSTRAINT `FK_a2e6e9ab8f1ff04cbf31da646e7` FOREIGN KEY (`ownerId`) REFERENCES `user` (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `survey` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `shareId` varchar(36) NOT NULL,\n  `title` varchar(255) NOT NULL,\n  `published` tinyint NOT NULL DEFAULT '0',\n  `auth` varchar(255) NOT NULL DEFAULT '0',\n  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `ownerId` int DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `IDX_76268d52f6deafc75cb9987c21` (`shareId`),\n  KEY `FK_a2e6e9ab8f1ff04cbf31da646e7` (`ownerId`),\n  CONSTRAINT `FK_a2e6e9ab8f1ff04cbf31da646e7` FOREIGN KEY (`ownerId`) REFERENCES `user` (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "survey_token",

@@ -17,6 +17,7 @@ type Question = {
 type SurveyData = {
   id: number;
   title: string;
+  auth: string;
   owner: { username: string };
   questions: Question[];
 };
@@ -28,8 +29,7 @@ type AnswerState = {
   };
 };
 
-// ページの状態を管理する型
-type PageStatus = 'loading' | 'ready' | 'unpublished' | 'notfound' | 'submitted';
+type PageStatus = 'loading' | 'ready' | 'unpublished' | 'notfound' | 'submitted' | 'needToken';
 
 export default function AnswerPage() {
   const params = useParams();
@@ -39,8 +39,8 @@ export default function AnswerPage() {
   const [pageStatus, setPageStatus] = useState<PageStatus>('loading');
   const [submitting, setSubmitting] = useState(false);
   const [answers, setAnswers] = useState<AnswerState>({});
+  const [inviteToken, setInviteToken] = useState('');
 
-  // アンケートデータを取得
   useEffect(() => {
     if (!shareId) return;
 
@@ -55,6 +55,7 @@ export default function AnswerPage() {
                 getSurveyForAnswer(shareId: $shareId) {
                   id
                   title
+                  auth
                   owner { username }
                   questions {
                     id
@@ -72,11 +73,16 @@ export default function AnswerPage() {
         const result = await response.json();
 
         if (result.data?.getSurveyForAnswer) {
-          setSurvey(result.data.getSurveyForAnswer);
-          setPageStatus('ready');
+          const surveyData = result.data.getSurveyForAnswer;
+          setSurvey(surveyData);
+
+          if (surveyData.auth === 'PRIVATE') {
+            setPageStatus('needToken');
+          } else {
+            setPageStatus('ready');
+          }
         } else if (result.errors) {
           const errorMessage = result.errors[0]?.message || '';
-
           if (errorMessage === 'このアンケートは非公開です') {
             setPageStatus('unpublished');
           } else {
@@ -94,7 +100,11 @@ export default function AnswerPage() {
     fetchSurvey();
   }, [shareId]);
 
-  // テキスト回答を更新
+  const handleTokenSubmit = () => {
+    if (!inviteToken.trim()) return alert('招待トークンを入力してください');
+    setPageStatus('ready');
+  };
+
   const handleTextChange = (questionId: number, text: string) => {
     setAnswers((prev) => ({
       ...prev,
@@ -102,7 +112,6 @@ export default function AnswerPage() {
     }));
   };
 
-  // 単一選択（ラジオ）を更新
   const handleSingleSelect = (questionId: number, optionId: number) => {
     setAnswers((prev) => ({
       ...prev,
@@ -110,7 +119,6 @@ export default function AnswerPage() {
     }));
   };
 
-  // 複数選択（チェックボックス）を更新
   const handleMultipleSelect = (questionId: number, optionId: number, checked: boolean) => {
     setAnswers((prev) => {
       const current = prev[questionId]?.selectionIds || [];
@@ -122,7 +130,6 @@ export default function AnswerPage() {
     });
   };
 
-  // 回答を送信
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!survey) return;
@@ -136,9 +143,7 @@ export default function AnswerPage() {
       return false;
     });
 
-    if (unanswered.length > 0) {
-      return alert('未回答の質問があります');
-    }
+    if (unanswered.length > 0) return alert('未回答の質問があります');
 
     setSubmitting(true);
 
@@ -148,6 +153,16 @@ export default function AnswerPage() {
         text: answers[q.id]?.text || null,
         selectionIds: answers[q.id]?.selectionIds || null,
       }));
+
+      const input: any = {
+        surveyId: survey.id,
+        answers: formattedAnswers,
+      };
+
+      // PRIVATE の場合はトークンを含める
+      if (survey.auth === 'PRIVATE' && inviteToken) {
+        input.token = inviteToken;
+      }
 
       const response = await fetch('http://localhost:3001/graphql', {
         method: 'POST',
@@ -161,12 +176,7 @@ export default function AnswerPage() {
               }
             }
           `,
-          variables: {
-            input: {
-              surveyId: survey.id,
-              answers: formattedAnswers,
-            },
-          },
+          variables: { input },
         }),
       });
 
@@ -188,39 +198,19 @@ export default function AnswerPage() {
     }
   };
 
-  // ===================================
-  // ページ状態ごとの表示
-  // ===================================
+  // === 表示 ===
 
-  // 読み込み中
   if (pageStatus === 'loading') {
     return (
-      <main
-        style={{
-          padding: '40px',
-          maxWidth: '600px',
-          margin: '0 auto',
-          fontFamily: 'sans-serif',
-          textAlign: 'center',
-        }}
-      >
+      <main style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
         <p>読み込み中...</p>
       </main>
     );
   }
 
-  // 非公開
   if (pageStatus === 'unpublished') {
     return (
-      <main
-        style={{
-          padding: '40px',
-          maxWidth: '600px',
-          margin: '0 auto',
-          fontFamily: 'sans-serif',
-          textAlign: 'center',
-        }}
-      >
+      <main style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
         <div
           style={{
             padding: '40px',
@@ -229,29 +219,16 @@ export default function AnswerPage() {
             backgroundColor: '#fff8f0',
           }}
         >
-          <h1 style={{ color: '#e67e22', marginBottom: '15px' }}>🔒 非公開のアンケートです</h1>
-          <p style={{ color: '#666', lineHeight: '1.8' }}>
-            このアンケートは現在公開されていません。
-            <br />
-            作成者が公開設定にするまでお待ちください。
-          </p>
+          <h1 style={{ color: '#e67e22' }}>🔒 非公開のアンケートです</h1>
+          <p style={{ color: '#666' }}>作成者が公開設定にするまでお待ちください。</p>
         </div>
       </main>
     );
   }
 
-  // 見つからない
   if (pageStatus === 'notfound') {
     return (
-      <main
-        style={{
-          padding: '40px',
-          maxWidth: '600px',
-          margin: '0 auto',
-          fontFamily: 'sans-serif',
-          textAlign: 'center',
-        }}
-      >
+      <main style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
         <div
           style={{
             padding: '40px',
@@ -260,29 +237,16 @@ export default function AnswerPage() {
             backgroundColor: '#fff0f0',
           }}
         >
-          <h1 style={{ color: '#e74c3c', marginBottom: '15px' }}>❌ アンケートが見つかりません</h1>
-          <p style={{ color: '#666', lineHeight: '1.8' }}>
-            このアンケートは存在しないか、削除された可能性があります。
-            <br />
-            URLが正しいかご確認ください。
-          </p>
+          <h1 style={{ color: '#e74c3c' }}>❌ アンケートが見つかりません</h1>
+          <p style={{ color: '#666' }}>URLが正しいかご確認ください。</p>
         </div>
       </main>
     );
   }
 
-  // 送信完了
   if (pageStatus === 'submitted') {
     return (
-      <main
-        style={{
-          padding: '40px',
-          maxWidth: '600px',
-          margin: '0 auto',
-          fontFamily: 'sans-serif',
-          textAlign: 'center',
-        }}
-      >
+      <main style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
         <div
           style={{
             padding: '40px',
@@ -291,8 +255,67 @@ export default function AnswerPage() {
             backgroundColor: '#f0fff0',
           }}
         >
-          <h1 style={{ color: '#28a745', marginBottom: '15px' }}>✅ 回答を送信しました！</h1>
+          <h1 style={{ color: '#28a745' }}>✅ 回答を送信しました！</h1>
           <p style={{ color: '#666' }}>ご協力ありがとうございました。</p>
+        </div>
+      </main>
+    );
+  }
+
+  // トークン入力画面
+  if (pageStatus === 'needToken') {
+    return (
+      <main
+        style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}
+      >
+        <div
+          style={{
+            padding: '30px',
+            border: '1px solid #ddd',
+            borderRadius: '12px',
+            backgroundColor: '#f9f9f9',
+          }}
+        >
+          <h1 style={{ color: '#0070f3', marginBottom: '10px' }}>{survey!.title}</h1>
+          <p style={{ color: '#666', marginBottom: '20px' }}>
+            このアンケートは招待者のみ回答できます。
+          </p>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+              🔑 招待トークンを入力してください
+            </label>
+            <input
+              type="text"
+              value={inviteToken}
+              onChange={(e) => setInviteToken(e.target.value)}
+              placeholder="トークンを貼り付け..."
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '6px',
+                border: '1px solid #ccc',
+                boxSizing: 'border-box',
+                fontSize: '14px',
+              }}
+            />
+          </div>
+
+          <button
+            onClick={handleTokenSubmit}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: '#0070f3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '16px',
+              cursor: 'pointer',
+            }}
+          >
+            回答を開始する
+          </button>
         </div>
       </main>
     );
@@ -313,6 +336,12 @@ export default function AnswerPage() {
       >
         <h1 style={{ color: '#0070f3', marginBottom: '10px' }}>{survey!.title}</h1>
         <p style={{ color: '#666', marginBottom: '30px' }}>作成者: {survey!.owner.username}</p>
+
+        {survey!.auth === 'PRIVATE' && (
+          <p style={{ color: '#e67e22', fontSize: '14px', marginBottom: '20px' }}>
+            🔑 招待トークンで認証済み
+          </p>
+        )}
 
         <form onSubmit={handleSubmit}>
           {survey!.questions.map((q, index) => (
@@ -398,7 +427,6 @@ export default function AnswerPage() {
               borderRadius: '6px',
               fontSize: '16px',
               cursor: submitting ? 'not-allowed' : 'pointer',
-              marginTop: '10px',
             }}
           >
             {submitting ? '送信中...' : '回答を送信する'}

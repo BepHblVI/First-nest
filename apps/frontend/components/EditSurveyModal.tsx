@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useAuthfetch } from '../utils/authfetch';
 
 type QuestionState = {
   qtext: string;
@@ -10,6 +11,8 @@ type QuestionState = {
 type Survey = {
   id: number;
   title: string;
+  published: boolean;
+  auth: string;
   questions: {
     id: number;
     qtext: string;
@@ -25,8 +28,10 @@ type Props = {
 };
 
 export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
+  const { authFetch } = useAuthfetch();
   const [title, setTitle] = useState(survey.title);
-  const [isPublish, setIsPublish] = useState(false);
+  const [isPublished, setIsPublished] = useState(survey.published);
+  const [auth, setAuth] = useState(survey.auth);
   const [questions, setQuestions] = useState<QuestionState[]>(
     survey.questions.map((q) => ({
       qtext: q.qtext,
@@ -36,7 +41,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
   );
   const [saving, setSaving] = useState(false);
 
-  // 質問テキスト更新
   const updateQuestionText = (index: number, val: string) => {
     const updated = [...questions];
     const target = updated[index];
@@ -45,7 +49,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
     setQuestions(updated);
   };
 
-  // 質問タイプ更新
   const updateQuestionType = (index: number, val: string) => {
     const updated = [...questions];
     const target = updated[index];
@@ -55,11 +58,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
     setQuestions(updated);
   };
 
-  // 選択肢の操作
-
-  const changePublish = () => {
-    isPublish ? setIsPublish(false) : setIsPublish(true);
-  };
   const addOption = (qIndex: number) => {
     const updated = [...questions];
     const target = updated[qIndex];
@@ -84,7 +82,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
     setQuestions(updated);
   };
 
-  // 質問の追加・削除
   const addQuestion = () => {
     setQuestions([...questions, { qtext: '', type: 'TEXT', options: [] }]);
   };
@@ -94,7 +91,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
     setQuestions(questions.filter((_, i) => i !== index));
   };
 
-  // 保存
   const handleSave = async () => {
     if (!title.trim()) return alert('タイトルを入力してください');
     if (questions.some((q) => !q.qtext.trim())) return alert('未入力の質問があります');
@@ -106,58 +102,41 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
       return alert('選択式の質問には選択肢を入力してください');
     }
 
-    const token = localStorage.getItem('access_token');
-    if (!token) return alert('ログインが必要です');
-
     setSaving(true);
 
-    try {
-      const response = await fetch('http://localhost:3001/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+    const result = await authFetch(
+      `
+        mutation EditSurvey($input: EditSurveyInput!) {
+          editSurvey(input: $input) {
+            id
+            title
+            published
+            auth
+            questions { id qtext type options { id text } }
+          }
+        }
+      `,
+      {
+        input: {
+          id: survey.id,
+          title,
+          questions: questions.map((q) => ({
+            qtext: q.qtext,
+            type: q.type,
+            options: q.type !== 'TEXT' ? q.options : [],
+          })),
+          published: isPublished,
+          auth,
         },
-        body: JSON.stringify({
-          query: `
-            mutation EditSurvey($input: EditSurveyInput!) {
-              editSurvey(input: $input) {
-                id
-                title
-                questions { id qtext type options { id text }}
-                published
-              }
-            }
-          `,
-          variables: {
-            input: {
-              id: survey.id,
-              title,
-              questions: questions.map((q) => ({
-                qtext: q.qtext,
-                type: q.type,
-                options: q.type !== 'TEXT' ? q.options : [],
-              })),
-              published: isPublish,
-            },
-          },
-        }),
-      });
+      },
+    );
 
-      const result = await response.json();
+    setSaving(false);
 
-      if (result.errors) {
-        alert(`エラー: ${result.errors[0].message}`);
-        return;
-      }
-
+    if (result?.data) {
       alert('アンケートを更新しました！');
       onUpdated();
       onClose();
-    } catch (error) {
-      alert('更新に失敗しました');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -222,6 +201,38 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
           />
         </div>
 
+        {/* 公開設定 */}
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <div>
+            <label style={{ fontWeight: 'bold', marginRight: '10px' }}>公開状態:</label>
+            <button
+              onClick={() => setIsPublished(!isPublished)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: isPublished ? '#28a745' : '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              {isPublished ? '🔓 公開中' : '🔒 非公開'}
+            </button>
+          </div>
+
+          <div>
+            <label style={{ fontWeight: 'bold', marginRight: '10px' }}>回答認証:</label>
+            <select
+              value={auth}
+              onChange={(e) => setAuth(e.target.value)}
+              style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value="PUBLIC">誰でも回答可能</option>
+              <option value="PRIVATE">招待者のみ</option>
+            </select>
+          </div>
+        </div>
+
         {/* 質問リスト */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
@@ -239,7 +250,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
                 backgroundColor: '#fafafa',
               }}
             >
-              {/* 質問テキスト + 削除ボタン */}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input
                   placeholder={`質問 ${qIndex + 1}`}
@@ -262,7 +272,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
                 </button>
               </div>
 
-              {/* タイプ選択 */}
               <div style={{ marginTop: '8px' }}>
                 <select
                   value={q.type}
@@ -270,12 +279,11 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
                   style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
                 >
                   <option value="TEXT">テキスト入力</option>
-                  <option value="RADIO">単一選択（ラジオ）</option>
-                  <option value="CHECKBOX">複数選択（チェック）</option>
+                  <option value="SINGLE">単一選択（ラジオ）</option>
+                  <option value="MULTIPLE">複数選択（チェック）</option>
                 </select>
               </div>
 
-              {/* 選択肢 */}
               {q.type !== 'TEXT' && (
                 <div style={{ marginTop: '10px', paddingLeft: '15px' }}>
                   {q.options.map((opt, oIndex) => (
@@ -329,9 +337,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
           </button>
         </div>
 
-        <button onClick={changePublish}>{isPublish ? '非公開にする' : '公開する'}</button>
-
-        {/* 保存ボタン */}
         <button
           onClick={handleSave}
           disabled={saving}

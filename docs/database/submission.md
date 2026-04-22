@@ -9,12 +9,12 @@
 CREATE TABLE `submission` (
   `id` int NOT NULL AUTO_INCREMENT,
   `submitted_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  `surveyId` int DEFAULT NULL,
   `respondentId` varchar(255) DEFAULT NULL,
+  `surveyId` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_445eeaad33ae6464ac85f6ea46b` (`surveyId`),
   CONSTRAINT `FK_445eeaad33ae6464ac85f6ea46b` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
 </details>
@@ -25,8 +25,8 @@ CREATE TABLE `submission` (
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | id | int |  | false | auto_increment | [answer](answer.md) |  |  |
 | submitted_at | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
-| surveyId | int |  | true |  |  | [survey](survey.md) |  |
 | respondentId | varchar(255) |  | true |  |  |  |  |
+| surveyId | int |  | true |  |  | [survey](survey.md) |  |
 
 ## Constraints
 
@@ -53,8 +53,8 @@ erDiagram
 "submission" {
   int id PK
   datetime_6_ submitted_at
-  int surveyId FK
   varchar_255_ respondentId
+  int surveyId FK
 }
 "answer" {
   int id PK
@@ -67,9 +67,9 @@ erDiagram
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
+  varchar_255_ auth
   datetime_6_ created_at
   int ownerId FK
-  varchar_255_ auth
 }
 ```
 

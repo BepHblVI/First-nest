@@ -11,9 +11,9 @@ CREATE TABLE `survey` (
   `shareId` varchar(36) NOT NULL,
   `title` varchar(255) NOT NULL,
   `published` tinyint NOT NULL DEFAULT '0',
+  `auth` varchar(255) NOT NULL DEFAULT '0',
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `ownerId` int DEFAULT NULL,
-  `auth` varchar(255) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `IDX_76268d52f6deafc75cb9987c21` (`shareId`),
   KEY `FK_a2e6e9ab8f1ff04cbf31da646e7` (`ownerId`),
@@ -31,9 +31,9 @@ CREATE TABLE `survey` (
 | shareId | varchar(36) |  | false |  |  |  |  |
 | title | varchar(255) |  | false |  |  |  |  |
 | published | tinyint | 0 | false |  |  |  |  |
+| auth | varchar(255) | 0 | false |  |  |  |  |
 | created_at | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
 | ownerId | int |  | true |  |  | [user](user.md) |  |
-| auth | varchar(255) | 0 | false |  |  |  |  |
 
 ## Constraints
 
@@ -66,9 +66,9 @@ erDiagram
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
+  varchar_255_ auth
   datetime_6_ created_at
   int ownerId FK
-  varchar_255_ auth
 }
 "question" {
   int id PK
@@ -79,8 +79,8 @@ erDiagram
 "submission" {
   int id PK
   datetime_6_ submitted_at
-  int surveyId FK
   varchar_255_ respondentId
+  int surveyId FK
 }
 "survey_token" {
   varchar_36_ token PK

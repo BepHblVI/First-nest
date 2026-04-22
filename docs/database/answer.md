@@ -16,7 +16,7 @@ CREATE TABLE `answer` (
   KEY `FK_1398cb4bf7f1ccc37fa0dd538ff` (`submissionId`),
   CONSTRAINT `FK_1398cb4bf7f1ccc37fa0dd538ff` FOREIGN KEY (`submissionId`) REFERENCES `submission` (`id`),
   CONSTRAINT `FK_a4013f10cd6924793fbd5f0d637` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
 </details>
@@ -74,8 +74,8 @@ erDiagram
 "submission" {
   int id PK
   datetime_6_ submitted_at
-  int surveyId FK
   varchar_255_ respondentId
+  int surveyId FK
 }
 ```
 

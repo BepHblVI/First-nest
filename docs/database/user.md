@@ -56,9 +56,9 @@ erDiagram
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
+  varchar_255_ auth
   datetime_6_ created_at
   int ownerId FK
-  varchar_255_ auth
 }
 ```
 

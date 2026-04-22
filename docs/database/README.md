@@ -6,6 +6,7 @@
 | ---- | ------- | ------- | ---- |
 | [answer](answer.md) | 4 |  | BASE TABLE |
 | [answer_selected_options_question_option](answer_selected_options_question_option.md) | 2 |  | BASE TABLE |
+| [migrations](migrations.md) | 3 |  | BASE TABLE |
 | [question](question.md) | 4 |  | BASE TABLE |
 | [question_option](question_option.md) | 4 |  | BASE TABLE |
 | [submission](submission.md) | 4 |  | BASE TABLE |
@@ -38,6 +39,11 @@ erDiagram
   int answerId PK
   int questionOptionId PK
 }
+"migrations" {
+  int id PK
+  bigint timestamp
+  varchar_255_ name
+}
 "question" {
   int id PK
   varchar_255_ type
@@ -53,17 +59,17 @@ erDiagram
 "submission" {
   int id PK
   datetime_6_ submitted_at
-  int surveyId FK
   varchar_255_ respondentId
+  int surveyId FK
 }
 "survey" {
   int id PK
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
+  varchar_255_ auth
   datetime_6_ created_at
   int ownerId FK
-  varchar_255_ auth
 }
 "survey_token" {
   varchar_36_ token PK
