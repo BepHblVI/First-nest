@@ -1,16 +1,22 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  PayloadTooLargeException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.model';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
-    private jwtService: JwtService, 
+    private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   // ユーザー登録
@@ -30,8 +36,22 @@ export class AuthService {
 
     const payload = { id: user.id, username: user.username };
     return {
-      access_token: this.jwtService.sign(payload,{ expiresIn: '15m' }),
-      refresh_token: this.jwtService.sign(payload,{ expiresIn: '1d' })
+      access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
+      refresh_token: this.jwtService.sign(payload, { expiresIn: '1d' }),
     };
+  }
+
+  async refresh(refreshToken: string) {
+    const payload = this.jwtService.verify(refreshToken, {
+      secret: this.configService.get<string>('REFRESH_KEY'),
+    });
+    const access_token = this.jwtService.sign(
+      { sub: payload.sub, username: payload.username },
+      {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: '15m',
+      },
+    );
+    return { access_token };
   }
 }

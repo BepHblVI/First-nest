@@ -48,7 +48,7 @@ describe('Survey GraphQL API (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-    app = moduleFixture.createNestApplication({ logger: false });
+    app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
 

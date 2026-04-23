@@ -55,9 +55,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+    <div
+      style={{
+        maxWidth: '400px',
+        margin: '50px auto',
+        padding: '20px',
+        border: '1px solid #ccc',
+        borderRadius: '8px',
+      }}
+    >
       <h2>{isLoginMode ? 'ログイン' : '新規ユーザー登録'}</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
+      >
         <input
           type="text"
           placeholder="ユーザー名"
@@ -74,12 +85,24 @@ export default function LoginPage() {
           required
           style={{ padding: '10px' }}
         />
-        <button type="submit" style={{ padding: '10px', backgroundColor: '#0070f3', color: 'white', border: 'none', cursor: 'pointer' }}>
+        <button
+          type="submit"
+          style={{
+            padding: '10px',
+            backgroundColor: '#0070f3',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
           {isLoginMode ? 'ログイン' : '登録する'}
         </button>
       </form>
-      
-      <p style={{ marginTop: '20px', textAlign: 'center', cursor: 'pointer', color: '#0070f3' }} onClick={() => setIsLoginMode(!isLoginMode)}>
+
+      <p
+        style={{ marginTop: '20px', textAlign: 'center', cursor: 'pointer', color: '#0070f3' }}
+        onClick={() => setIsLoginMode(!isLoginMode)}
+      >
         {isLoginMode ? '新しくアカウントを作る' : 'すでにアカウントを持っている方はこちら'}
       </p>
     </div>

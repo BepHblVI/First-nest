@@ -7,6 +7,7 @@ import {
   ManyToOne,
   Generated,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Question } from './question.model';
 import { User } from '../../auth/user.model';
@@ -46,12 +47,16 @@ export class Survey {
   published!: boolean; //公開状態
 
   @Field()
-  @Column({ default: false })
+  @Column({ default: 'PUBLIC' })
   auth!: string; //回答時にユーザー認証するかどうか
 
   @Field()
   @CreateDateColumn()
-  created_at!: Date;
+  createdAt!: Date;
+
+  @Field()
+  @UpdateDateColumn()
+  updatedAt!: Date;
 
   @Field(() => [Submission])
   @OneToMany(() => Submission, (sub) => sub.survey, { cascade: true })

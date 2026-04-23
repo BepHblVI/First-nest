@@ -10,7 +10,7 @@ type User {
 
 type Submission {
   id: Int!
-  submitted_at: DateTime!
+  submittedAt: DateTime!
   survey: Survey!
   answers: [Answer!]!
   respondentId: String
@@ -37,7 +37,8 @@ type Survey {
   questions: [Question!]!
   published: Boolean!
   auth: String!
-  created_at: DateTime!
+  createdAt: DateTime!
+  updatedAt: DateTime!
   submissions: [Submission!]!
   tokens: [SurveyToken!]!
 }
@@ -112,6 +113,7 @@ type Mutation {
   submitSurveyAnswer(input: SubmitSurveyAnswerInput!): Submission!
   signUp(username: String!, password: String!): User!
   login(username: String!, password: String!): LoginResponse!
+  refresh: LoginResponse!
 }
 
 input CreateSurveyInput {

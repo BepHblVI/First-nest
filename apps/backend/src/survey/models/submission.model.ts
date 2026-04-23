@@ -19,7 +19,7 @@ export class Submission {
 
   @Field()
   @CreateDateColumn()
-  submitted_at!: Date;
+  submittedAt!: Date;
 
   @Field(() => Survey)
   @ManyToOne(() => Survey, (survey) => survey.submissions)

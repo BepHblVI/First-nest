@@ -1,15 +1,15 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Initial1776520081393 implements MigrationInterface {
-    name = 'Initial1776520081393'
+export class Initial1776961471721 implements MigrationInterface {
+    name = 'Initial1776961471721'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`CREATE TABLE \`submission\` (\`id\` int NOT NULL AUTO_INCREMENT, \`submitted_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`respondentId\` varchar(255) NULL, \`surveyId\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`question_option\` (\`id\` int NOT NULL AUTO_INCREMENT, \`text\` varchar(255) NOT NULL, \`order\` int NOT NULL DEFAULT '0', \`questionId\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`answer\` (\`id\` int NOT NULL AUTO_INCREMENT, \`text\` varchar(255) NULL, \`questionId\` int NULL, \`submissionId\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`question\` (\`id\` int NOT NULL AUTO_INCREMENT, \`type\` varchar(255) NOT NULL DEFAULT 'TEXT', \`qtext\` varchar(255) NOT NULL, \`surveyId\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`survey_token\` (\`token\` varchar(36) NOT NULL, \`isUsed\` tinyint NOT NULL DEFAULT 0, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`expiredAt\` datetime NULL, \`surveyId\` int NULL, PRIMARY KEY (\`token\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`survey\` (\`id\` int NOT NULL AUTO_INCREMENT, \`shareId\` varchar(36) NOT NULL, \`title\` varchar(255) NOT NULL, \`published\` tinyint NOT NULL DEFAULT 0, \`auth\` varchar(255) NOT NULL DEFAULT 0, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`ownerId\` int NULL, UNIQUE INDEX \`IDX_76268d52f6deafc75cb9987c21\` (\`shareId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`submission\` (\`id\` int NOT NULL AUTO_INCREMENT, \`submittedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`respondentId\` varchar(255) NULL, \`surveyId\` int NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`question_option\` (\`id\` int NOT NULL AUTO_INCREMENT, \`text\` varchar(255) NOT NULL, \`order\` int NOT NULL DEFAULT '0', \`questionId\` int NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`answer\` (\`id\` int NOT NULL AUTO_INCREMENT, \`text\` varchar(255) NULL, \`questionId\` int NOT NULL, \`submissionId\` int NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`question\` (\`id\` int NOT NULL AUTO_INCREMENT, \`type\` varchar(255) NOT NULL DEFAULT 'TEXT', \`qtext\` varchar(255) NOT NULL, \`surveyId\` int NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`survey_token\` (\`token\` varchar(36) NOT NULL, \`isUsed\` tinyint NOT NULL DEFAULT 0, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`expiredAt\` datetime NULL, \`surveyId\` int NOT NULL, PRIMARY KEY (\`token\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`survey\` (\`id\` int NOT NULL AUTO_INCREMENT, \`shareId\` varchar(36) NOT NULL, \`title\` varchar(255) NOT NULL, \`published\` tinyint NOT NULL DEFAULT 0, \`auth\` varchar(255) NOT NULL DEFAULT 'PUBLIC', \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`ownerId\` int NOT NULL, UNIQUE INDEX \`IDX_76268d52f6deafc75cb9987c21\` (\`shareId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`user\` (\`id\` int NOT NULL AUTO_INCREMENT, \`username\` varchar(255) NOT NULL, \`password\` varchar(255) NOT NULL, UNIQUE INDEX \`IDX_78a916df40e02a9deb1c4b75ed\` (\`username\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`answer_selected_options_question_option\` (\`answerId\` int NOT NULL, \`questionOptionId\` int NOT NULL, INDEX \`IDX_7c36f35a3fcb6c5fe610023447\` (\`answerId\`), INDEX \`IDX_a28062e701efff0f2680f6eafd\` (\`questionOptionId\`), PRIMARY KEY (\`answerId\`, \`questionOptionId\`)) ENGINE=InnoDB`);
         await queryRunner.query(`ALTER TABLE \`submission\` ADD CONSTRAINT \`FK_445eeaad33ae6464ac85f6ea46b\` FOREIGN KEY (\`surveyId\`) REFERENCES \`survey\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
