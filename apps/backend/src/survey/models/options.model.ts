@@ -24,6 +24,9 @@ export class QuestionOption {
   order!: Number;
 
   @Field(() => Question)
-  @ManyToOne(() => Question, (q) => q.options)
+  @ManyToOne(() => Question, (q) => q.options, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   question!: Question;
 }

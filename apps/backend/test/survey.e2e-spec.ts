@@ -396,7 +396,7 @@ describe('Survey GraphQL API (e2e)', () => {
     it('1. 招待制アンケートを作成し、指定した数のトークンが取得できること', async () => {
       const res = await sendGql(
         app,
-        `mutation { createSurvey(input: { title: "招待制", questions: [{ qtext: "言語？", type: "TEXT" }], auth: "PRIVATE", tokens: 2 }) { id, shareId, tokens { token } } }`,
+        `mutation { createSurvey(input: { title: "招待制", questions: [{ qtext: "言語？", type: "TEXT" }], auth: PRIVATE, tokens: 2 }) { id, shareId, tokens { token } } }`,
         validToken,
       );
       inviteId = res.body.data.createSurvey.id;

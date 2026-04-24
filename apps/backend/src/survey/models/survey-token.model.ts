@@ -21,7 +21,10 @@ export class SurveyToken {
 
   // どのアンケートに対するトークンか
   @Field(() => Survey)
-  @ManyToOne(() => Survey, (survey) => survey.tokens, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Survey, (survey) => survey.tokens, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   survey!: Survey;
 
   @Field()

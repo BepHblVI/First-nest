@@ -36,11 +36,20 @@ type Survey {
   owner: User!
   questions: [Question!]!
   published: Boolean!
-  auth: String!
+  auth: SurveyAuthType!
   createdAt: DateTime!
   updatedAt: DateTime!
   submissions: [Submission!]!
   tokens: [SurveyToken!]!
+}
+
+"""アンケート回答時の認証方式"""
+enum SurveyAuthType {
+  """誰でも回答可能"""
+  PUBLIC
+
+  """トークンが必要"""
+  PRIVATE
 }
 
 type QuestionOption {
@@ -119,7 +128,7 @@ type Mutation {
 input CreateSurveyInput {
   title: String!
   questions: [QuestionInput!]!
-  auth: String = "PUBLIC"
+  auth: SurveyAuthType = PUBLIC
   tokens: Float = 0
 }
 
@@ -134,7 +143,7 @@ input EditSurveyInput {
   title: String!
   questions: [QuestionInput!]!
   published: Boolean!
-  auth: String = "PUBLIC"
+  auth: SurveyAuthType = PUBLIC
   tokens: Float = 0
 }
 

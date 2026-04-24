@@ -30,6 +30,7 @@ export class Answer {
   @Field(() => Question)
   @ManyToOne(() => Question, (question) => question.answers, {
     onDelete: 'CASCADE',
+    nullable: false,
   })
   question!: Question; //親設問
 

@@ -36,6 +36,7 @@ export class Question {
   @Field(() => Survey)
   @ManyToOne(() => Survey, (survey) => survey.questions, {
     onDelete: 'CASCADE',
+    nullable: false,
   })
   survey!: Survey; //親アンケート
 

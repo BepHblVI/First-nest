@@ -4,11 +4,12 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { DataSource, Transaction } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DeepPartial } from 'typeorm';
 import { Answer } from './models/answer.model';
-import { Survey } from './models/survey.model';
+import { Survey, SurveyAuthType } from './models/survey.model';
 import { User } from '../auth/user.model';
 import { Submission } from './models/submission.model';
 import { SurveyToken } from './models/survey-token.model';
@@ -30,6 +31,7 @@ export class SurveyService {
     private answerRepo: Repository<Answer>,
     @InjectRepository(SurveyToken)
     private tokenRepo: Repository<SurveyToken>,
+    private dataSource: DataSource,
   ) {}
 
   // 1. 作成したものを取得
@@ -46,7 +48,7 @@ export class SurveyService {
     user: User,
   ): Promise<Survey> {
     const tokenEntities =
-      auth === 'PRIVATE' && tokens > 0
+      auth === SurveyAuthType.PRIVATE && tokens > 0
         ? Array.from({ length: tokens }).map(() => ({}))
         : [];
     const newSurvey = this.surveyRepo.create({
@@ -70,44 +72,48 @@ export class SurveyService {
     { id, title, questions, published, auth, tokens }: EditSurveyInput,
     user: User,
   ): Promise<Survey> {
-    // 1. 既存データを取得（questionsも含めて）
-    const survey = await this.surveyRepo.findOne({
-      where: { id: id },
-      relations: ['owner', 'questions', 'questions.options'],
+    return await this.dataSource.transaction(async (manager) => {
+      const survey = await manager.findOne(Survey, {
+        where: { id: id },
+        relations: ['owner', 'questions', 'questions.options', 'tokens'],
+      });
+
+      if (!survey) {
+        throw new NotFoundException('アンケートが見つかりません');
+      }
+
+      if (survey.owner.id !== user.id) {
+        throw new ForbiddenException(
+          '他人のアンケートを操作する権限がありません',
+        );
+      }
+
+      await manager.remove(survey.questions); //質問を消した場合回答も消します
+      !!survey.tokens.length && (await manager.remove(survey.tokens)); //tokensが空の場合は[]になるようにしています
+
+      const tokenEntities =
+        auth === SurveyAuthType.PRIVATE && tokens > 0
+          ? Array.from({ length: tokens }).map(() => ({}))
+          : [];
+
+      const editedSurvey = manager.create(Survey, {
+        id: id,
+        title: title,
+        owner: { id: user.id },
+        questions: questions.map((q) => ({
+          qtext: q.qtext,
+          type: q.type,
+          options:
+            q.options?.map((t, index) => ({ text: t, order: index })) || [],
+        })),
+        published: published,
+        auth: auth,
+        tokens: tokenEntities,
+      });
+
+      // 4. save() で保存（エンティティを直接渡す）
+      return await manager.save(Survey, editedSurvey);
     });
-
-    if (!survey) {
-      throw new NotFoundException('アンケートが見つかりません');
-    }
-
-    if (survey.owner.id !== user.id) {
-      throw new ForbiddenException(
-        '他人のアンケートを操作する権限がありません',
-      );
-    }
-
-    const tokenEntities =
-      auth === 'PRIVATE' && tokens > 0
-        ? Array.from({ length: tokens }).map(() => ({}))
-        : [];
-
-    const editedsurvey = this.surveyRepo.create({
-      id: id,
-      title: title,
-      owner: { id: user.id },
-      questions: questions.map((q) => ({
-        qtext: q.qtext,
-        type: q.type,
-        options:
-          q.options?.map((t, index) => ({ text: t, order: index })) || [],
-      })),
-      published: published,
-      auth: auth,
-      tokens: tokenEntities,
-    });
-
-    // 4. save() で保存（エンティティを直接渡す）
-    return await this.surveyRepo.save(editedsurvey);
   }
 
   async deleteData(id: number, currentUser: User) {
@@ -139,7 +145,7 @@ export class SurveyService {
     if (!survey) throw new NotFoundException('アンケートが見つかりません');
     if (!survey.published)
       throw new ForbiddenException('このアンケートは非公開です');
-    if (survey.auth == 'PRIVATE') {
+    if (survey.auth === SurveyAuthType.PRIVATE) {
       if (!token)
         throw new ForbiddenException('このアンケートへの回答権限がありません');
       const updateResult = await this.tokenRepo.update(

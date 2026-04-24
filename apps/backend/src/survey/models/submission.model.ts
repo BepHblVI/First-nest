@@ -22,7 +22,7 @@ export class Submission {
   submittedAt!: Date;
 
   @Field(() => Survey)
-  @ManyToOne(() => Survey, (survey) => survey.submissions)
+  @ManyToOne(() => Survey, (survey) => survey.submissions, { nullable: false })
   survey!: Survey;
 
   @Field(() => [Answer])

@@ -2,6 +2,7 @@ import { InputType, Field, Int } from '@nestjs/graphql';
 import {
   IsString,
   IsNotEmpty,
+  IsEnum,
   IsIn,
   IsArray,
   ValidateNested,
@@ -11,7 +12,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { InitCommand } from 'typeorm/commands/InitCommand.js';
+import { SurveyAuthType } from '../models/survey.model';
 
 @InputType()
 export class QuestionInput {
@@ -58,11 +59,14 @@ export class CreateSurveyInput {
   @Type(() => QuestionInput)
   questions!: QuestionInput[];
 
-  @Field({ nullable: true, defaultValue: 'PUBLIC' })
-  @IsIn(['PUBLIC', 'PRIVATE'], {
+  @Field(() => SurveyAuthType, {
+    nullable: true,
+    defaultValue: SurveyAuthType.PUBLIC,
+  })
+  @IsEnum(SurveyAuthType, {
     message: '公開レベルを設定してください',
   })
-  auth!: string;
+  auth!: SurveyAuthType;
 
   @Field({ nullable: true, defaultValue: 0 })
   @IsInt()
@@ -93,11 +97,14 @@ export class EditSurveyInput {
   @IsBoolean({ message: '公開または非公開の設定は必須です' })
   published!: boolean;
 
-  @Field({ nullable: true, defaultValue: 'PUBLIC' })
-  @IsIn(['PUBLIC', 'PRIVATE'], {
+  @Field(() => SurveyAuthType, {
+    nullable: true,
+    defaultValue: SurveyAuthType.PUBLIC,
+  })
+  @IsEnum(SurveyAuthType, {
     message: '公開レベルを設定してください',
   })
-  auth!: string;
+  auth!: SurveyAuthType;
 
   @Field({ nullable: true, defaultValue: 0 })
   @IsInt()
