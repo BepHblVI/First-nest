@@ -1,5 +1,5 @@
 // apps/backend/src/app.module.ts
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import depthLimit from 'graphql-depth-limit';
@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { SurveyModule } from './survey/survey.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigService } from '@nestjs/config';
+import cookieParser = require('cookie-parser');
 
 @Module({
   imports: [
@@ -47,4 +48,9 @@ import { ConfigService } from '@nestjs/config';
     AuthModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  // ★ 追加: middleware を設定
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(cookieParser()).forRoutes('*');
+  }
+}

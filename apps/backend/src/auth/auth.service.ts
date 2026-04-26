@@ -1,6 +1,6 @@
 import {
   Injectable,
-  PayloadTooLargeException,
+  ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -21,6 +21,10 @@ export class AuthService {
 
   // ユーザー登録
   async signUp(username: string, pass: string) {
+    const existing = await this.userRepo.findOne({ where: { username } });
+    if (existing) {
+      throw new ConflictException('このユーザー名は既に使用されています');
+    }
     const hashedPass = await bcrypt.hash(pass, 10);
     const user = this.userRepo.create({ username, password: hashedPass });
     return this.userRepo.save(user);
@@ -29,15 +33,23 @@ export class AuthService {
   // 2. ログイン
   async login(username: string, pass: string) {
     const user = await this.userRepo.findOne({ where: { username } });
-    if (!user) throw new UnauthorizedException('ユーザーが見つかりません');
+    if (!user)
+      throw new UnauthorizedException('ユーザー名またはパスワードが違います');
 
     const isMatch = await bcrypt.compare(pass, user.password);
-    if (!isMatch) throw new UnauthorizedException('パスワードが違います');
+    if (!isMatch)
+      throw new UnauthorizedException('ユーザー名またはパスワードが違います');
 
-    const payload = { id: user.id, username: user.username };
+    const payload = { sub: user.id, username: user.username };
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
-      refresh_token: this.jwtService.sign(payload, { expiresIn: '1d' }),
+      access_token: this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: '15m',
+      }),
+      refresh_token: this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('REFRESH_KEY'),
+        expiresIn: '1d',
+      }),
     };
   }
 

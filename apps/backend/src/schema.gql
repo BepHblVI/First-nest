@@ -62,6 +62,7 @@ type QuestionOption {
 type Question {
   id: Int!
   type: String!
+  required: Boolean!
   qtext: String!
   options: [QuestionOption!]!
   survey: Survey!
@@ -135,6 +136,7 @@ input CreateSurveyInput {
 input QuestionInput {
   qtext: String!
   type: String!
+  required: Boolean = false
   options: [String!]
 }
 

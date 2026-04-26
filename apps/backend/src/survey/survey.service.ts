@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { DataSource, Transaction } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,7 +19,9 @@ import {
   CreateSurveyInput,
   SubmitSurveyAnswerInput,
   EditSurveyInput,
+  AnswerInputType,
 } from './dto/input';
+import { Question } from './models/question.model';
 
 @Injectable()
 export class SurveyService {
@@ -31,6 +34,8 @@ export class SurveyService {
     private answerRepo: Repository<Answer>,
     @InjectRepository(SurveyToken)
     private tokenRepo: Repository<SurveyToken>,
+    @InjectRepository(Question)
+    private questionRepo: Repository<Question>,
     private dataSource: DataSource,
   ) {}
 
@@ -57,6 +62,7 @@ export class SurveyService {
       questions: questions.map((q) => ({
         qtext: q.qtext,
         type: q.type,
+        required: q.required,
         options:
           q.options?.map((t, index) => ({ text: t, order: index })) || [],
       })),
@@ -103,6 +109,7 @@ export class SurveyService {
         questions: questions.map((q) => ({
           qtext: q.qtext,
           type: q.type,
+          required: q.required,
           options:
             q.options?.map((t, index) => ({ text: t, order: index })) || [],
         })),
@@ -141,10 +148,13 @@ export class SurveyService {
   }: SubmitSurveyAnswerInput): Promise<Submission> {
     const survey = await this.surveyRepo.findOne({
       where: { id: surveyId },
+      relations: ['questions', 'questions.options'],
     });
     if (!survey) throw new NotFoundException('アンケートが見つかりません');
     if (!survey.published)
       throw new ForbiddenException('このアンケートは非公開です');
+
+    this.validateAnswers(survey.questions, answers);
     if (survey.auth === SurveyAuthType.PRIVATE) {
       if (!token)
         throw new ForbiddenException('このアンケートへの回答権限がありません');
@@ -186,7 +196,7 @@ export class SurveyService {
     });
 
     if (!survey) {
-      throw new Error('アンケートが見つかりません');
+      throw new NotFoundException('アンケートが見つかりません');
     }
 
     if (!survey.published) {
@@ -270,5 +280,134 @@ export class SurveyService {
       totalSubmissions,
       questions: questionResults,
     };
+  }
+
+  private validateAnswers(
+    questions: Question[],
+    answers: AnswerInputType[],
+  ): void {
+    // 質問IDをキーにしたMapを作る(高速ルックアップ用)
+    const questionMap = new Map(questions.map((q) => [q.id, q]));
+
+    // ① 各回答が有効な質問IDを参照しているか
+    for (const ans of answers) {
+      if (!questionMap.has(ans.questionId)) {
+        throw new BadRequestException(`存在しない質問ID: ${ans.questionId}`);
+      }
+    }
+
+    // ② 各質問について検証
+    for (const question of questions) {
+      const answer = answers.find((a) => a.questionId === question.id);
+
+      switch (question.type) {
+        case 'TEXT':
+          this.validateTextAnswer(question, answer);
+          break;
+        case 'SINGLE':
+          this.validateSingleAnswer(question, answer);
+          break;
+        case 'MULTIPLE':
+          this.validateMultipleAnswer(question, answer);
+          break;
+        default:
+          throw new BadRequestException(`不正な質問タイプ: ${question.type}`);
+      }
+    }
+  }
+
+  private validateTextAnswer(
+    question: Question,
+    answer: AnswerInputType | undefined,
+  ): void {
+    // 必須チェック
+    if (question.required) {
+      if (!answer?.text || answer.text.trim() === '') {
+        throw new BadRequestException(
+          `必須質問「${question.qtext}」に回答してください`,
+        );
+      }
+    }
+
+    // テキスト質問なのに選択肢が送られている → 無視 or エラー
+    if (answer?.selectionIds?.length) {
+      throw new BadRequestException(
+        `「${question.qtext}」はテキスト質問です。選択肢は送らないでください`,
+      );
+    }
+  }
+
+  private validateSingleAnswer(
+    question: Question,
+    answer: AnswerInputType | undefined,
+  ): void {
+    // 必須チェック
+    if (question.required && !answer?.selectionIds?.length) {
+      throw new BadRequestException(
+        `必須質問「${question.qtext}」を選択してください`,
+      );
+    }
+
+    if (answer?.selectionIds?.length) {
+      // SINGLE は1つだけ
+      if (answer.selectionIds.length > 1) {
+        throw new BadRequestException(
+          `「${question.qtext}」は1つだけ選択してください`,
+        );
+      }
+
+      // 有効な選択肢か?
+      this.validateSelectionIds(question, answer.selectionIds);
+    }
+
+    // text は無視 or エラー
+    if (answer?.text) {
+      throw new BadRequestException(`「${question.qtext}」は選択式です`);
+    }
+  }
+
+  private validateMultipleAnswer(
+    question: Question,
+    answer: AnswerInputType | undefined,
+  ): void {
+    // 必須チェック
+    if (question.required && !answer?.selectionIds?.length) {
+      throw new BadRequestException(
+        `必須質問「${question.qtext}」を1つ以上選択してください`,
+      );
+    }
+
+    if (answer?.selectionIds?.length) {
+      // 重複チェック
+      const uniqueIds = new Set(answer.selectionIds);
+      if (uniqueIds.size !== answer.selectionIds.length) {
+        throw new BadRequestException(
+          `「${question.qtext}」で同じ選択肢を重複選択しています`,
+        );
+      }
+
+      // 有効な選択肢か?
+      this.validateSelectionIds(question, answer.selectionIds);
+    }
+
+    // text は無視 or エラー
+    if (answer?.text) {
+      throw new BadRequestException(`「${question.qtext}」は選択式です`);
+    }
+  }
+
+  private validateSelectionIds(
+    question: Question,
+    selectionIds: number[],
+  ): void {
+    const validOptionIds = new Set(question.options?.map((o) => o.id) ?? []);
+
+    for (const id of selectionIds) {
+      if (!validOptionIds.has(id)) {
+        throw new BadRequestException(
+          `「${question.qtext}」に存在しない選択肢が指定されています`,
+        );
+      }
+    }
   }
 }

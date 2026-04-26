@@ -57,6 +57,10 @@ export class AuthResolver {
       throw new UnauthorizedException('リフレッシュトークンがありません');
     }
 
-    return await this.authService.refresh(refreshToken);
+    try {
+      return await this.authService.refresh(refreshToken);
+    } catch (error) {
+      throw new UnauthorizedException('無効なリフレッシュトークンです');
+    }
   }
 }

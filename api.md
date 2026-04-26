@@ -3,38 +3,40 @@
 <details>
   <summary><strong>Table of Contents</strong></summary>
 
-- [Query](#query)
-- [Mutation](#mutation)
-- [Objects](#objects)
-  - [Answer](#answer)
-  - [CorrelationResult](#correlationresult)
-  - [LoginResponse](#loginresponse)
-  - [OptionResult](#optionresult)
-  - [Question](#question)
-  - [QuestionOption](#questionoption)
-  - [QuestionResult](#questionresult)
-  - [Submission](#submission)
-  - [Survey](#survey)
-  - [SurveyResult](#surveyresult)
-  - [User](#user)
-- [Inputs](#inputs)
-  - [AnswerInputType](#answerinputtype)
-  - [CreateSurveyInput](#createsurveyinput)
-  - [EditSurveyInput](#editsurveyinput)
-  - [QuestionInput](#questioninput)
-  - [SubmitSurveyAnswerInput](#submitsurveyanswerinput)
-- [Scalars](#scalars)
-  - [Boolean](#boolean)
-  - [DateTime](#datetime)
-  - [Float](#float)
-  - [ID](#id)
-  - [Int](#int)
-  - [String](#string)
+  * [Query](#query)
+  * [Mutation](#mutation)
+  * [Objects](#objects)
+    * [Answer](#answer)
+    * [CorrelationResult](#correlationresult)
+    * [LoginResponse](#loginresponse)
+    * [OptionResult](#optionresult)
+    * [Question](#question)
+    * [QuestionOption](#questionoption)
+    * [QuestionResult](#questionresult)
+    * [Submission](#submission)
+    * [Survey](#survey)
+    * [SurveyResult](#surveyresult)
+    * [SurveyToken](#surveytoken)
+    * [User](#user)
+  * [Inputs](#inputs)
+    * [AnswerInputType](#answerinputtype)
+    * [CreateSurveyInput](#createsurveyinput)
+    * [EditSurveyInput](#editsurveyinput)
+    * [QuestionInput](#questioninput)
+    * [SubmitSurveyAnswerInput](#submitsurveyanswerinput)
+  * [Enums](#enums)
+    * [SurveyAuthType](#surveyauthtype)
+  * [Scalars](#scalars)
+    * [Boolean](#boolean)
+    * [DateTime](#datetime)
+    * [Float](#float)
+    * [ID](#id)
+    * [Int](#int)
+    * [String](#string)
 
 </details>
 
 ## Query
-
 <table>
 <thead>
 <tr>
@@ -74,7 +76,6 @@
 </table>
 
 ## Mutation
-
 <table>
 <thead>
 <tr>
@@ -153,6 +154,11 @@
 <tr>
 <td colspan="2" align="right" valign="top">password</td>
 <td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="mutation.refresh">refresh</strong></td>
+<td valign="top"><a href="#loginresponse">LoginResponse</a>!</td>
 <td></td>
 </tr>
 </tbody>
@@ -423,7 +429,7 @@
 <td></td>
 </tr>
 <tr>
-<td colspan="2" valign="top"><strong id="submission.submitted_at">submitted_at</strong></td>
+<td colspan="2" valign="top"><strong id="submission.submittedat">submittedAt</strong></td>
 <td valign="top"><a href="#datetime">DateTime</a>!</td>
 <td></td>
 </tr>
@@ -435,6 +441,11 @@
 <tr>
 <td colspan="2" valign="top"><strong id="submission.answers">answers</strong></td>
 <td valign="top">[<a href="#answer">Answer</a>!]!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="submission.respondentid">respondentId</strong></td>
+<td valign="top"><a href="#string">String</a></td>
 <td></td>
 </tr>
 </tbody>
@@ -483,13 +494,28 @@
 <td></td>
 </tr>
 <tr>
-<td colspan="2" valign="top"><strong id="survey.created_at">created_at</strong></td>
+<td colspan="2" valign="top"><strong id="survey.auth">auth</strong></td>
+<td valign="top"><a href="#surveyauthtype">SurveyAuthType</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="survey.createdat">createdAt</strong></td>
+<td valign="top"><a href="#datetime">DateTime</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="survey.updatedat">updatedAt</strong></td>
 <td valign="top"><a href="#datetime">DateTime</a>!</td>
 <td></td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.submissions">submissions</strong></td>
 <td valign="top">[<a href="#submission">Submission</a>!]!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="survey.tokens">tokens</strong></td>
+<td valign="top">[<a href="#surveytoken">SurveyToken</a>!]!</td>
 <td></td>
 </tr>
 </tbody>
@@ -530,6 +556,46 @@
 <tr>
 <td colspan="2" valign="top"><strong id="surveyresult.correlations">correlations</strong></td>
 <td valign="top">[<a href="#correlationresult">CorrelationResult</a>!]</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+### SurveyToken
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong id="surveytoken.token">token</strong></td>
+<td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="surveytoken.isused">isUsed</strong></td>
+<td valign="top"><a href="#boolean">Boolean</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="surveytoken.survey">survey</strong></td>
+<td valign="top"><a href="#survey">Survey</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="surveytoken.createdat">createdAt</strong></td>
+<td valign="top"><a href="#datetime">DateTime</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="surveytoken.expiredat">expiredAt</strong></td>
+<td valign="top"><a href="#datetime">DateTime</a>!</td>
 <td></td>
 </tr>
 </tbody>
@@ -617,6 +683,16 @@
 <td valign="top">[<a href="#questioninput">QuestionInput</a>!]!</td>
 <td></td>
 </tr>
+<tr>
+<td colspan="2" valign="top"><strong id="createsurveyinput.auth">auth</strong></td>
+<td valign="top"><a href="#surveyauthtype">SurveyAuthType</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="createsurveyinput.tokens">tokens</strong></td>
+<td valign="top"><a href="#float">Float</a></td>
+<td></td>
+</tr>
 </tbody>
 </table>
 
@@ -644,6 +720,21 @@
 <tr>
 <td colspan="2" valign="top"><strong id="editsurveyinput.questions">questions</strong></td>
 <td valign="top">[<a href="#questioninput">QuestionInput</a>!]!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="editsurveyinput.published">published</strong></td>
+<td valign="top"><a href="#boolean">Boolean</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="editsurveyinput.auth">auth</strong></td>
+<td valign="top"><a href="#surveyauthtype">SurveyAuthType</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="editsurveyinput.tokens">tokens</strong></td>
+<td valign="top"><a href="#float">Float</a></td>
 <td></td>
 </tr>
 </tbody>
@@ -699,6 +790,49 @@
 <td valign="top">[<a href="#answerinputtype">AnswerInputType</a>!]!</td>
 <td></td>
 </tr>
+<tr>
+<td colspan="2" valign="top"><strong id="submitsurveyanswerinput.token">token</strong></td>
+<td valign="top"><a href="#string">String</a></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="submitsurveyanswerinput.respondentid">respondentId</strong></td>
+<td valign="top"><a href="#string">String</a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+## Enums
+
+### SurveyAuthType
+
+アンケート回答時の認証方式
+
+<table>
+<thead>
+<tr>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>PUBLIC</strong></td>
+<td>
+
+誰でも回答可能
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>PRIVATE</strong></td>
+<td>
+
+トークンが必要
+
+</td>
+</tr>
 </tbody>
 </table>
 
@@ -727,3 +861,4 @@ The `Int` scalar type represents non-fractional signed whole numeric values. Int
 ### String
 
 The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.
+

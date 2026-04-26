@@ -24,6 +24,10 @@ export class QuestionInput {
   @IsIn(['TEXT', 'SINGLE', 'MULTIPLE'], { message: '質問タイプが不正です！' })
   type!: string;
 
+  @Field({ nullable: true, defaultValue: false })
+  @IsBoolean()
+  required!: boolean;
+
   @Field(() => [String], { nullable: true })
   options?: string[];
 }
@@ -34,13 +38,13 @@ export class AnswerInputType {
   questionId!: number;
 
   @Field({ nullable: true })
-  @ValidateIf((o) => !o.selectionIds || o.selectionIds.length === 0)
-  @IsNotEmpty({ message: '回答は必須です' })
+  //@ValidateIf((o) => !o.selectionIds || o.selectionIds.length === 0)
+  //@IsNotEmpty({ message: '回答は必須です' })
   text?: string;
 
   @Field(() => [Int], { nullable: true })
-  @ValidateIf((o) => !o.text || o.text.trim() === '')
-  @ArrayMinSize(1, { message: '回答は必須です' })
+  //@ValidateIf((o) => !o.text || o.text.trim() === '')
+  //@ArrayMinSize(1, { message: '回答は必須です' })
   selectionIds?: number[];
 }
 

@@ -19,7 +19,11 @@ export class Question {
 
   @Field()
   @Column({ default: 'TEXT' })
-  type!: string;
+  type!: string; //設問タイプ
+
+  @Field()
+  @Column({ default: false })
+  required!: boolean;
 
   @Field()
   @Column()
@@ -31,7 +35,7 @@ export class Question {
     eager: true,
     orphanedRowAction: 'delete',
   })
-  options?: QuestionOption[];
+  options?: QuestionOption[]; //選択肢
 
   @Field(() => Survey)
   @ManyToOne(() => Survey, (survey) => survey.questions, {
@@ -42,5 +46,5 @@ export class Question {
 
   @Field(() => [Answer])
   @OneToMany(() => Answer, (ans) => ans.question, { cascade: true })
-  answers!: Answer[];
+  answers!: Answer[]; //回答
 }
