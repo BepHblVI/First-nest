@@ -9,6 +9,7 @@ type Props = {
 type QuestionField = {
   qtext: string;
   type: string;
+  required: boolean; // ← 追加
   options: string[];
 };
 
@@ -17,12 +18,16 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
   const [newTitle, setNewTitle] = useState('');
   const [auth, setAuth] = useState('PUBLIC');
   const [tokenCount, setTokenCount] = useState(0);
+  const [published, setPublished] = useState(true);
   const [questions, setQuestions] = useState<QuestionField[]>([
-    { qtext: '', type: 'TEXT', options: [] },
+    { qtext: '', type: 'TEXT', required: false, options: [] }, // ← required追加
   ]);
 
   const addQuestionField = () => {
-    setQuestions([...questions, { qtext: '', type: 'TEXT', options: [] }]);
+    setQuestions([
+      ...questions,
+      { qtext: '', type: 'TEXT', required: false, options: [] }, // ← required追加
+    ]);
   };
 
   const updateQuestionText = (index: number, val: string) => {
@@ -41,6 +46,15 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
     if (val === 'TEXT') {
       target.options = [];
     }
+    setQuestions(updated);
+  };
+
+  // ★ 追加: 必須チェック切り替え
+  const toggleQuestionRequired = (index: number) => {
+    const updated = [...questions];
+    const target = updated[index];
+    if (!target) return;
+    target.required = !target.required;
     setQuestions(updated);
   };
 
@@ -96,6 +110,7 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
             title
             shareId
             auth
+            published
             tokens {
               token
               isUsed
@@ -109,8 +124,10 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
           questions: questions.map((q) => ({
             qtext: q.qtext,
             type: q.type,
+            required: q.required, // ← 追加
             options: q.type !== 'TEXT' ? q.options : [],
           })),
+          published,
           auth,
           tokens: auth === 'PRIVATE' ? tokenCount : 0,
         },
@@ -119,22 +136,24 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
 
     if (result?.data) {
       const created = result.data.createSurvey;
+      const stateLabel = created.published ? '公開' : '下書きとして保存';
 
       if (created.auth === 'PRIVATE' && created.tokens?.length > 0) {
         const tokenList = created.tokens.map((t: any) => t.token).join('\n');
         alert(
-          `アンケートを作成しました！\n\n` +
-            `🔑 招待トークン（${created.tokens.length}個）:\n${tokenList}\n\n` +
+          `アンケートを${stateLabel}しました!\n\n` +
+            `🔑 招待トークン(${created.tokens.length}個):\n${tokenList}\n\n` +
             `※ 集計結果ページからもコピーできます`,
         );
       } else {
-        alert('アンケートを作成しました！');
+        alert(`アンケートを${stateLabel}しました!`);
       }
 
       setNewTitle('');
       setAuth('PUBLIC');
       setTokenCount(0);
-      setQuestions([{ qtext: '', type: 'TEXT', options: [] }]);
+      setPublished(true);
+      setQuestions([{ qtext: '', type: 'TEXT', required: false, options: [] }]);
       onSurveyCreated();
     }
   };
@@ -158,7 +177,7 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
           style={{ padding: '10px' }}
         />
 
-        {/* 回答認証設定 */}
+        {/* 回答認証設定(既存) */}
         <div
           style={{
             padding: '15px',
@@ -211,6 +230,45 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
           )}
         </div>
 
+        {/* 公開状態(既存) */}
+        <div
+          style={{
+            padding: '15px',
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            backgroundColor: '#fafafa',
+          }}
+        >
+          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
+            公開設定:
+          </label>
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="published"
+                checked={published === true}
+                onChange={() => setPublished(true)}
+              />
+              <span>🌐 公開して回答受付を開始</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <input
+                type="radio"
+                name="published"
+                checked={published === false}
+                onChange={() => setPublished(false)}
+              />
+              <span>📝 下書きとして保存</span>
+            </label>
+          </div>
+          <p style={{ fontSize: '13px', color: '#666', marginTop: '8px', marginBottom: 0 }}>
+            {published
+              ? '✅ 作成後すぐに共有リンクから回答を受け付けます'
+              : '💡 下書きとして保存し、後で公開できます'}
+          </p>
+        </div>
+
         {/* 質問リスト */}
         <div>
           <label style={{ fontWeight: 'bold' }}>質問リスト:</label>
@@ -247,17 +305,46 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
                 </button>
               </div>
 
-              <div style={{ marginTop: '10px' }}>
-                <label style={{ marginRight: '10px', fontSize: '14px' }}>回答形式:</label>
-                <select
-                  value={question.type}
-                  onChange={(e) => updateQuestionType(qIndex, e.target.value)}
-                  style={{ padding: '6px' }}
+              {/* ★ 修正: 形式 + 必須チェックを横並び */}
+              <div
+                style={{
+                  marginTop: '10px',
+                  display: 'flex',
+                  gap: '15px',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div>
+                  <label style={{ marginRight: '10px', fontSize: '14px' }}>回答形式:</label>
+                  <select
+                    value={question.type}
+                    onChange={(e) => updateQuestionType(qIndex, e.target.value)}
+                    style={{ padding: '6px' }}
+                  >
+                    <option value="TEXT">テキスト入力</option>
+                    <option value="SINGLE">単一選択(ラジオ)</option>
+                    <option value="MULTIPLE">複数選択(チェックボックス)</option>
+                  </select>
+                </div>
+
+                {/* ★ 追加: 必須チェック */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
                 >
-                  <option value="TEXT">テキスト入力</option>
-                  <option value="SINGLE">単一選択（ラジオ）</option>
-                  <option value="MULTIPLE">複数選択（チェックボックス）</option>
-                </select>
+                  <input
+                    type="checkbox"
+                    checked={question.required}
+                    onChange={() => toggleQuestionRequired(qIndex)}
+                  />
+                  <span style={{ color: question.required ? '#dc3545' : '#666' }}>必須にする</span>
+                </label>
               </div>
 
               {question.type !== 'TEXT' && (
@@ -304,7 +391,18 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
             </div>
           ))}
 
-          <button onClick={addQuestionField} style={{ marginTop: '15px' }}>
+          <button
+            onClick={addQuestionField}
+            style={{
+              marginTop: '8px',
+              backgroundColor: '#0070f3',
+              color: 'white',
+              padding: '8px',
+              cursor: 'pointer',
+              border: 'none',
+              borderRadius: '8px',
+            }}
+          >
             ＋ 質問を追加
           </button>
         </div>
@@ -313,7 +411,7 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
         <button
           onClick={handleCreateSurvey}
           style={{
-            backgroundColor: '#0070f3',
+            backgroundColor: published ? '#0070f3' : '#888',
             color: 'white',
             padding: '12px',
             cursor: 'pointer',
@@ -321,7 +419,7 @@ export default function CreateSurvey({ onSurveyCreated }: Props) {
             borderRadius: '4px',
           }}
         >
-          アンケートを保存する
+          {published ? '🚀 アンケートを公開する' : '💾 下書きとして保存'}
         </button>
       </div>
     </section>

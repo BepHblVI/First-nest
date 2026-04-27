@@ -43,13 +43,19 @@ export class SurveyService {
   async getData(user: User): Promise<Survey[]> {
     return await this.surveyRepo.find({
       where: { owner: { id: user.id } },
-      relations: ['owner', 'questions', 'questions.options', 'tokens'],
+      relations: [
+        'owner',
+        'questions',
+        'questions.options',
+        'tokens',
+        'submissions',
+      ],
     });
   }
 
   // 2. アンケート作成
   async createData(
-    { title, questions, auth, tokens }: CreateSurveyInput,
+    { title, questions, published, auth, tokens }: CreateSurveyInput,
     user: User,
   ): Promise<Survey> {
     const tokenEntities =
@@ -66,7 +72,7 @@ export class SurveyService {
         options:
           q.options?.map((t, index) => ({ text: t, order: index })) || [],
       })),
-      published: true,
+      published: published,
       auth: auth,
       tokens: tokenEntities,
     });
@@ -75,13 +81,19 @@ export class SurveyService {
   }
 
   async editData(
-    { id, title, questions, published, auth, tokens }: EditSurveyInput,
+    { id, title, questions, auth, tokens }: EditSurveyInput,
     user: User,
   ): Promise<Survey> {
     return await this.dataSource.transaction(async (manager) => {
       const survey = await manager.findOne(Survey, {
         where: { id: id },
-        relations: ['owner', 'questions', 'questions.options', 'tokens'],
+        relations: [
+          'owner',
+          'questions',
+          'questions.options',
+          'tokens',
+          'submissions',
+        ],
       });
 
       if (!survey) {
@@ -93,7 +105,11 @@ export class SurveyService {
           '他人のアンケートを操作する権限がありません',
         );
       }
-
+      if (survey.submissions?.length) {
+        throw new ForbiddenException(
+          'すでに回答されているアンケートは編集できません',
+        );
+      }
       await manager.remove(survey.questions); //質問を消した場合回答も消します
       !!survey.tokens.length && (await manager.remove(survey.tokens)); //tokensが空の場合は[]になるようにしています
 
@@ -112,13 +128,10 @@ export class SurveyService {
           required: q.required,
           options:
             q.options?.map((t, index) => ({ text: t, order: index })) || [],
-        })),
-        published: published,
+        })), //公開設定だけは別関数
         auth: auth,
         tokens: tokenEntities,
       });
-
-      // 4. save() で保存（エンティティを直接渡す）
       return await manager.save(Survey, editedSurvey);
     });
   }
@@ -138,6 +151,23 @@ export class SurveyService {
     }
     await this.surveyRepo.delete(id);
     return true;
+  }
+
+  async togglePublished(id: number, currentUser: User, published: boolean) {
+    const survey = await this.surveyRepo.findOne({
+      where: { id: id },
+      relations: ['owner'],
+    });
+    if (!survey) {
+      throw new NotFoundException('アンケートが見つかりません');
+    }
+    if (survey.owner.id !== currentUser.id) {
+      throw new ForbiddenException(
+        '他人のアンケートを操作する権限がありません',
+      );
+    }
+    survey.published = published;
+    return await this.surveyRepo.save(survey);
   }
 
   async submitAnswer({

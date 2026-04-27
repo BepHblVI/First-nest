@@ -117,6 +117,21 @@
 <td></td>
 </tr>
 <tr>
+<td colspan="2" valign="top"><strong id="mutation.togglepublished">togglePublished</strong></td>
+<td valign="top"><a href="#survey">Survey</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">id</td>
+<td valign="top"><a href="#int">Int</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">published</td>
+<td valign="top"><a href="#boolean">Boolean</a>!</td>
+<td></td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong id="mutation.submitsurveyanswer">submitSurveyAnswer</strong></td>
 <td valign="top"><a href="#submission">Submission</a>!</td>
 <td></td>
@@ -311,6 +326,11 @@
 <tr>
 <td colspan="2" valign="top"><strong id="question.type">type</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="question.required">required</strong></td>
+<td valign="top"><a href="#boolean">Boolean</a>!</td>
 <td></td>
 </tr>
 <tr>
@@ -684,6 +704,11 @@
 <td></td>
 </tr>
 <tr>
+<td colspan="2" valign="top"><strong id="createsurveyinput.published">published</strong></td>
+<td valign="top"><a href="#boolean">Boolean</a></td>
+<td></td>
+</tr>
+<tr>
 <td colspan="2" valign="top"><strong id="createsurveyinput.auth">auth</strong></td>
 <td valign="top"><a href="#surveyauthtype">SurveyAuthType</a></td>
 <td></td>
@@ -723,11 +748,6 @@
 <td></td>
 </tr>
 <tr>
-<td colspan="2" valign="top"><strong id="editsurveyinput.published">published</strong></td>
-<td valign="top"><a href="#boolean">Boolean</a>!</td>
-<td></td>
-</tr>
-<tr>
 <td colspan="2" valign="top"><strong id="editsurveyinput.auth">auth</strong></td>
 <td valign="top"><a href="#surveyauthtype">SurveyAuthType</a></td>
 <td></td>
@@ -759,6 +779,11 @@
 <tr>
 <td colspan="2" valign="top"><strong id="questioninput.type">type</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="questioninput.required">required</strong></td>
+<td valign="top"><a href="#boolean">Boolean</a></td>
 <td></td>
 </tr>
 <tr>

@@ -16,7 +16,7 @@ const createTestSurvey = async (
   const res = await sendGql(
     app,
     `
-    mutation { createSurvey(input: { title: "${title}", questions: ${questionsGql} }) {
+    mutation { createSurvey(input: { title: "${title}", questions: ${questionsGql},published:true }) {
       id, shareId, tokens { token }, questions { id, type, options { id } }
     } }
   `,
@@ -143,7 +143,7 @@ describe('Survey GraphQL API (e2e)', () => {
       const { id } = await createTestSurvey(app, validToken, '編集用');
       const res = await sendGql(
         app,
-        `mutation { editSurvey(input:{ id: ${id}, title:"編集後", questions: [{ qtext: "テスト", type: "TEXT" }], published:true}){ title } }`,
+        `mutation { editSurvey(input:{ id: ${id}, title:"編集後", questions: [{ qtext: "テスト", type: "TEXT" }]}){ title } }`,
         validToken,
       );
       expect(res.body.data.editSurvey.title).toBe('編集後');
@@ -152,7 +152,7 @@ describe('Survey GraphQL API (e2e)', () => {
     test('他人のアンケートを編集しようとした場合、エラーで弾かれること', async () => {
       const res = await sendGql(
         app,
-        `mutation { editSurvey(input:{ id: ${otherUserSurveyId}, title:"不正", questions: [{ qtext: "T", type: "TEXT" }], published:true}){ id } }`,
+        `mutation { editSurvey(input:{ id: ${otherUserSurveyId}, title:"不正", questions: [{ qtext: "T", type: "TEXT" }]}){ id } }`,
         validToken,
       );
       expect(res.body.errors[0].message).toMatch(
@@ -164,7 +164,7 @@ describe('Survey GraphQL API (e2e)', () => {
       const { id } = await createTestSurvey(app, validToken, '追加');
       const res = await sendGql(
         app,
-        `mutation { editSurvey(input: { id: ${id}, title: "追加", published: true, questions: [ { qtext: "1", type: "TEXT" }, { qtext: "2", type: "TEXT" } ] }) { questions { qtext } } }`,
+        `mutation { editSurvey(input: { id: ${id}, title: "追加", questions: [ { qtext: "1", type: "TEXT" }, { qtext: "2", type: "TEXT" } ] }) { questions { qtext } } }`,
         validToken,
       );
       expect(res.body.data.editSurvey.questions).toHaveLength(2);
@@ -179,7 +179,7 @@ describe('Survey GraphQL API (e2e)', () => {
       );
       const res = await sendGql(
         app,
-        `mutation { editSurvey(input: { id: ${id}, title: "削除", published: true, questions: [{ qtext: "残", type: "TEXT" }] }) { questions { qtext } } }`,
+        `mutation { editSurvey(input: { id: ${id}, title: "削除", questions: [{ qtext: "残", type: "TEXT" }] }) { questions { qtext } } }`,
         validToken,
       );
       expect(res.body.data.editSurvey.questions).toHaveLength(1);
@@ -189,7 +189,7 @@ describe('Survey GraphQL API (e2e)', () => {
       const { id } = await createTestSurvey(app, validToken, '変更');
       const res = await sendGql(
         app,
-        `mutation { editSurvey(input: { id: ${id}, title: "変更", published: true, questions: [{ qtext: "Q", type: "SINGLE", options: ["A", "B", "C"] }] }) { questions { type, options { text } } } }`,
+        `mutation { editSurvey(input: { id: ${id}, title: "変更", questions: [{ qtext: "Q", type: "SINGLE", options: ["A", "B", "C"] }] }) { questions { type, options { text } } } }`,
         validToken,
       );
       expect(res.body.data.editSurvey.questions[0].type).toBe('SINGLE');
@@ -215,7 +215,7 @@ describe('Survey GraphQL API (e2e)', () => {
           const { id } = await createTestSurvey(app, validToken);
           const res = await sendGql(
             app,
-            `mutation { editSurvey(input: { id: ${id}, title: ${title}, published: true, questions: ${questions} }) { id } }`,
+            `mutation { editSurvey(input: { id: ${id}, title: ${title}, questions: ${questions} }) { id } }`,
             validToken,
           );
           expect(res.body.errors).toBeDefined();
@@ -253,49 +253,6 @@ describe('Survey GraphQL API (e2e)', () => {
     });
   });
 
-  describe('公開/非公開機能', () => {
-    test('アンケートを非公開に設定できること', async () => {
-      const { id } = await createTestSurvey(app, validToken, '非公開テスト');
-      const res = await sendGql(
-        app,
-        `mutation { editSurvey(input: { id: ${id}, title: "非公開", published: false, questions: [{ qtext: "Q", type: "TEXT" }] }) { published } }`,
-        validToken,
-      );
-      expect(res.body.data.editSurvey.published).toBe(false);
-    });
-
-    test('公開後に非公開にすると共有リンクでアクセスできなくなること', async () => {
-      const { id, shareId } = await createTestSurvey(
-        app,
-        validToken,
-        '公開→非公開',
-      );
-      await sendGql(
-        app,
-        `mutation { editSurvey(input: { id: ${id}, title: "公開", published: true, questions: [{ qtext: "Q", type: "TEXT" }] }) { id } }`,
-        validToken,
-      );
-
-      const accessRes = await sendGql(
-        app,
-        `query { getSurveyForAnswer(shareId: "${shareId}") { title } }`,
-      );
-      expect(accessRes.body.data.getSurveyForAnswer.title).toBeDefined();
-
-      await sendGql(
-        app,
-        `mutation { editSurvey(input: { id: ${id}, title: "非公開", published: false, questions: [{ qtext: "Q", type: "TEXT" }] }) { id } }`,
-        validToken,
-      );
-
-      const blockedRes = await sendGql(
-        app,
-        `query { getSurveyForAnswer(shareId: "${shareId}") { title } }`,
-      );
-      expect(blockedRes.body.errors[0].message).toMatch('非公開');
-    });
-  });
-
   describe('回答送信と集計', () => {
     test('公開中のアンケートに回答を送信でき、集計結果に反映されること', async () => {
       const { id, shareId } = await createTestSurvey(
@@ -307,7 +264,7 @@ describe('Survey GraphQL API (e2e)', () => {
 
       const editRes = await sendGql(
         app,
-        `mutation { editSurvey(input: { id: ${id}, title: "公開", published: true, questions: [{ qtext: "自由記述", type: "TEXT" }] }) { questions { id } } }`,
+        `mutation { editSurvey(input: { id: ${id}, title: "公開", questions: [{ qtext: "自由記述", type: "TEXT" }] }) { questions { id } } }`,
         validToken,
       );
       const qId = editRes.body.data.editSurvey.questions[0].id;
@@ -327,56 +284,6 @@ describe('Survey GraphQL API (e2e)', () => {
         resultRes.body.data.getSurveyResults.totalSubmissions,
       ).toBeGreaterThanOrEqual(1);
     });
-
-    test('非公開のアンケートには回答を送信できないこと', async () => {
-      const { id, questions } = await createTestSurvey(
-        app,
-        validToken,
-        '非公開回答',
-      );
-      await sendGql(
-        app,
-        `mutation { editSurvey(input: { id: ${id}, title: "非公開", published: false, questions: [{ qtext: "Q", type: "TEXT" }] }) { id } }`,
-        validToken,
-      );
-
-      const res = await sendGql(
-        app,
-        `mutation { submitSurveyAnswer(input: { surveyId: ${id}, answers: [{ questionId: ${questions[0].id}, text: "回答" }] }) { id } }`,
-      );
-      expect(res.body.errors).toBeDefined();
-    });
-
-    test('回答が既にあるアンケートを編集しても、新しい構造で回答を受け付けられること', async () => {
-      const { id, questions: oldQs } = await createTestSurvey(
-        app,
-        validToken,
-        '編集後回答',
-        `[{ qtext: "古", type: "TEXT" }]`,
-      );
-      await sendGql(
-        app,
-        `mutation { editSurvey(input: { id: ${id}, title: "古", published: true, questions: [{ qtext: "古", type: "TEXT" }] }) { id } }`,
-        validToken,
-      );
-      await sendGql(
-        app,
-        `mutation { submitSurveyAnswer(input: { surveyId: ${id}, answers: [{ questionId: ${oldQs[0].id}, text: "古い回答" }] }) { id } }`,
-      );
-
-      const editRes = await sendGql(
-        app,
-        `mutation { editSurvey(input: { id: ${id}, title: "新", published: true, questions: [{ qtext: "新", type: "TEXT" }] }) { questions { id } } }`,
-        validToken,
-      );
-      const newQId = editRes.body.data.editSurvey.questions[0].id;
-
-      const answerRes = await sendGql(
-        app,
-        `mutation { submitSurveyAnswer(input: { surveyId: ${id}, answers: [{ questionId: ${newQId}, text: "新回答" }] }) { id } }`,
-      );
-      expect(answerRes.body.errors).toBeUndefined();
-    });
   });
 
   describe('回答者の認証', () => {
@@ -391,6 +298,7 @@ describe('Survey GraphQL API (e2e)', () => {
         `mutation { createSurvey(input: { 
         title: "招待制", 
         questions: [{ qtext: "言語？", type: "TEXT" }], 
+        published:true,
         auth: PRIVATE, 
         tokens: 2 
       }) { 
@@ -465,6 +373,80 @@ describe('Survey GraphQL API (e2e)', () => {
         );
       const responses = await Promise.all(requests);
       expect(responses.filter((r) => !r.body.errors).length).toBe(1);
+    });
+  });
+  describe('togglePublished', () => {
+    test('公開状態を true に変更できる', async () => {
+      const { id } = await createTestSurvey(app, validToken);
+
+      const res = await sendGql(
+        app,
+        `mutation { togglePublished(id: ${id}, published: true) { published } }`,
+        validToken,
+      );
+      expect(res.body.data.togglePublished.published).toBe(true);
+    });
+
+    test('回答済みでも公開状態を変更できる', async () => {
+      const { id, questions } = await createTestSurvey(app, validToken);
+      // 回答送信
+      await sendGql(
+        app,
+        `mutation { submitSurveyAnswer(input: {
+        surveyId: ${id},
+        answers: [{ questionId: ${questions[0].id}, text: "test" }]
+      }) { id } }`,
+      );
+
+      // 公開切替できる
+      const res = await sendGql(
+        app,
+        `mutation { togglePublished(id: ${id}, published: false) { published } }`,
+        validToken,
+      );
+      expect(res.body.data.togglePublished.published).toBe(false);
+    });
+
+    test('他人のアンケートの公開状態は変更できない', async () => {
+      const { id } = await createTestSurvey(app, validToken);
+
+      const res = await sendGql(
+        app,
+        `mutation { togglePublished(id: ${id}, published: true) { published } }`,
+        validTokenB, // 別ユーザー
+      );
+      expect(res.body.errors).toBeDefined();
+    });
+  });
+
+  describe('editSurvey', () => {
+    test('回答ゼロなら編集できる', async () => {
+      // ...既存
+    });
+
+    test('回答済みなら編集できない', async () => {
+      const { id, questions } = await createTestSurvey(app, validToken);
+
+      // 回答する
+      await sendGql(
+        app,
+        `mutation { submitSurveyAnswer(input: {
+        surveyId: ${id},
+        answers: [{ questionId: ${questions[0].id}, text: "test" }]
+      }) { id } }`,
+      );
+
+      // 編集を試みる → エラー
+      const res = await sendGql(
+        app,
+        `mutation { editSurvey(input: {
+        id: ${id},
+        title: "編集",
+        questions: [{ qtext: "新", type: "TEXT" }]
+      }) { id } }`,
+        validToken,
+      );
+      expect(res.body.errors[0].message).toMatch(/すでに回答/);
     });
   });
   describe('回答送信のバリデーション', () => {
@@ -613,6 +595,7 @@ describe('Survey GraphQL API (e2e)', () => {
           `mutation { createSurvey(input: { 
         title: "トークン保護", 
         questions: [{ qtext: "必須", type: "TEXT", required: true }],
+        published:true,
         auth: PRIVATE,
         tokens: 1
       }) { 

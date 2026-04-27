@@ -164,7 +164,7 @@ export default function AnswerPage() {
         input.token = inviteToken;
       }
 
-      const response = await fetch('http://localhost:3001/graphql', {
+      const response = await fetch('http://localhost:3000/api/graphql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -172,7 +172,7 @@ export default function AnswerPage() {
             mutation SubmitSurveyAnswer($input: SubmitSurveyAnswerInput!) {
               submitSurveyAnswer(input: $input) {
                 id
-                submitted_at
+                submittedAt
               }
             }
           `,

@@ -14,6 +14,7 @@ import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { SurveyAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
+import { publish } from 'rxjs';
 
 @Resolver(() => Survey)
 @UseInterceptors(LoggingInterceptor)
@@ -51,6 +52,16 @@ export class SurveyResolver {
     @CurrentUser() currentUser: any,
   ) {
     return await this.surveyService.deleteData(id, currentUser);
+  }
+
+  @Mutation(() => Survey)
+  @UseGuards(SurveyAuthGuard)
+  async togglePublished(
+    @Args('id', { type: () => Int }) id: number,
+    @CurrentUser() currentUser: any,
+    @Args('published') published: boolean,
+  ) {
+    return await this.surveyService.togglePublished(id, currentUser, published);
   }
 
   @Query(() => Survey)

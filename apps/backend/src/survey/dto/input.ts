@@ -63,6 +63,10 @@ export class CreateSurveyInput {
   @Type(() => QuestionInput)
   questions!: QuestionInput[];
 
+  @Field({ nullable: true, defaultValue: false })
+  @IsBoolean({ message: '公開または非公開の設定は必須です' })
+  published!: boolean;
+
   @Field(() => SurveyAuthType, {
     nullable: true,
     defaultValue: SurveyAuthType.PUBLIC,
@@ -72,7 +76,7 @@ export class CreateSurveyInput {
   })
   auth!: SurveyAuthType;
 
-  @Field({ nullable: true, defaultValue: 0 })
+  @Field(() => Int, { nullable: true, defaultValue: 0 })
   @IsInt()
   tokens!: number;
 }
@@ -95,11 +99,6 @@ export class EditSurveyInput {
   @ValidateNested({ each: true })
   @Type(() => QuestionInput)
   questions!: QuestionInput[];
-
-  @Field()
-  @IsNotEmpty()
-  @IsBoolean({ message: '公開または非公開の設定は必須です' })
-  published!: boolean;
 
   @Field(() => SurveyAuthType, {
     nullable: true,

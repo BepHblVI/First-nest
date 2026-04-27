@@ -120,6 +120,7 @@ type Mutation {
   createSurvey(input: CreateSurveyInput!): Survey!
   editSurvey(input: EditSurveyInput!): Survey!
   deleteSurvey(id: Int!): Boolean!
+  togglePublished(id: Int!, published: Boolean!): Survey!
   submitSurveyAnswer(input: SubmitSurveyAnswerInput!): Submission!
   signUp(username: String!, password: String!): User!
   login(username: String!, password: String!): LoginResponse!
@@ -129,8 +130,9 @@ type Mutation {
 input CreateSurveyInput {
   title: String!
   questions: [QuestionInput!]!
+  published: Boolean = false
   auth: SurveyAuthType = PUBLIC
-  tokens: Float = 0
+  tokens: Int = 0
 }
 
 input QuestionInput {
@@ -144,7 +146,6 @@ input EditSurveyInput {
   id: Float!
   title: String!
   questions: [QuestionInput!]!
-  published: Boolean!
   auth: SurveyAuthType = PUBLIC
   tokens: Float = 0
 }
