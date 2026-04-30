@@ -1,6 +1,17 @@
+// apps/frontend/utils/authfetch.ts
 'use client';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
+import type { TypedDocumentString } from '../src/gql/graphql';
+
+// GraphQL のレスポンス型
+type GraphQLResponse<TResult> = {
+  data?: TResult;
+  errors?: {
+    message: string;
+    extensions?: { code?: string };
+  }[];
+};
 
 export function useAuthfetch() {
   const router = useRouter();
@@ -37,11 +48,15 @@ export function useAuthfetch() {
       console.error('refresh error:', error);
       return null;
     }
-  }, []); // ★ 依存なし(関数内で外部の state を参照していない)
+  }, []);
 
-  // 実際の fetch 処理
+  // 実際の fetch 処理（ジェネリック対応）
   const sendRequest = useCallback(
-    async (query: string, variables: any, token: string) => {
+    async <TResult, TVariables>(
+      query: TypedDocumentString<TResult, TVariables>,
+      variables: TVariables | undefined,
+      token: string,
+    ): Promise<GraphQLResponse<TResult> | null> => {
       try {
         const response = await fetch('/api/graphql', {
           method: 'POST',
@@ -50,14 +65,14 @@ export function useAuthfetch() {
             Authorization: `Bearer ${token}`,
           },
           credentials: 'include',
-          body: JSON.stringify({ query, variables }),
+          body: JSON.stringify({ query: query.toString(), variables }),
         });
 
-        const result = await response.json();
+        const result: GraphQLResponse<TResult> = await response.json();
 
         if (result.errors) {
           const isUnauthorized = result.errors.some(
-            (err: any) =>
+            (err) =>
               err.message.includes('Unauthorized') || err.extensions?.code === 'UNAUTHENTICATED',
           );
 
@@ -72,13 +87,13 @@ export function useAuthfetch() {
                   Authorization: `Bearer ${newToken}`,
                 },
                 credentials: 'include',
-                body: JSON.stringify({ query, variables }),
+                body: JSON.stringify({ query: query.toString(), variables }),
               });
 
-              const retryResult = await retryResponse.json();
+              const retryResult: GraphQLResponse<TResult> = await retryResponse.json();
 
               if (retryResult.errors) {
-                alert(`エラー: ${retryResult.errors[0].message}`);
+                alert(`エラー: ${retryResult.errors[0]?.message}`);
                 return null;
               }
 
@@ -91,7 +106,7 @@ export function useAuthfetch() {
             return null;
           }
 
-          alert(`バックエンドエラー: ${result.errors[0].message}`);
+          alert(`バックエンドエラー: ${result.errors[0]?.message}`);
           return null;
         }
 
@@ -102,12 +117,15 @@ export function useAuthfetch() {
         return null;
       }
     },
-    [refreshAccessToken, router], // ★ 依存
+    [refreshAccessToken, router],
   );
 
-  // GraphQL リクエストを実行(リフレッシュ付き)
+  // GraphQL リクエストを実行（リフレッシュ付き、型推論対応）
   const authFetch = useCallback(
-    async (query: string, variables?: any) => {
+    async <TResult, TVariables>(
+      query: TypedDocumentString<TResult, TVariables>,
+      ...[variables]: TVariables extends Record<string, never> ? [] : [TVariables]
+    ): Promise<GraphQLResponse<TResult> | null> => {
       const token = localStorage.getItem('access_token');
 
       if (!token) {
@@ -122,7 +140,7 @@ export function useAuthfetch() {
 
       return await sendRequest(query, variables, token);
     },
-    [refreshAccessToken, sendRequest, router], // ★ 依存
+    [refreshAccessToken, sendRequest, router],
   );
 
   return { authFetch };

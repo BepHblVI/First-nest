@@ -9,10 +9,10 @@ import {
   ArrayMinSize,
   IsInt,
   IsBoolean,
-  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { SurveyAuthType } from '../models/survey.model';
+import { QuestionType } from '../models/question.model';
 
 @InputType()
 export class QuestionInput {
@@ -20,9 +20,12 @@ export class QuestionInput {
   @IsNotEmpty({ message: '質問文は空にしないでください！' })
   qtext!: string;
 
-  @Field()
-  @IsIn(['TEXT', 'SINGLE', 'MULTIPLE'], { message: '質問タイプが不正です！' })
-  type!: string;
+  @Field(() => QuestionType, {
+    nullable: true,
+    defaultValue: QuestionType.TEXT,
+  })
+  @IsEnum(QuestionType, { message: '質問タイプが不正です！' })
+  type!: QuestionType;
 
   @Field({ nullable: true, defaultValue: false })
   @IsBoolean()
@@ -38,13 +41,9 @@ export class AnswerInputType {
   questionId!: number;
 
   @Field({ nullable: true })
-  //@ValidateIf((o) => !o.selectionIds || o.selectionIds.length === 0)
-  //@IsNotEmpty({ message: '回答は必須です' })
   text?: string;
 
   @Field(() => [Int], { nullable: true })
-  //@ValidateIf((o) => !o.text || o.text.trim() === '')
-  //@ArrayMinSize(1, { message: '回答は必須です' })
   selectionIds?: number[];
 }
 

@@ -10,7 +10,9 @@
     "test:e2e": "turbo run test:e2e",
     "api": "npx graphql-markdown http://localhost:3001/graphql > api.md",
     "db:doc": "docker run --rm --network host --env-file .env -v $(pwd):/work -w /work ghcr.io/k1low/tbls doc --force",
-    "m:gen": "turbo run m:gen --filter=backend --"
+    "m:gen": "turbo run m:gen --filter=backend --",
+    "codegen:watch": "graphql-codegen --watch",
+    "codegen": "turbo run codegen"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -44,7 +46,6 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "cookie-parser": "^1.4.7",
-    "graphql": "^16.13.2",
     "graphql-depth-limit": "^1.1.0",
     "mysql2": "^3.20.0",
     "next": "^16.2.4",

@@ -87,12 +87,24 @@ type QuestionOption {
 """アンケート設問"""
 type Question {
   id: Int!
-  type: String!
+  type: QuestionType!
   required: Boolean!
   qtext: String!
   options: [QuestionOption!]!
   survey: Survey!
   answers: [Answer!]!
+}
+
+"""質問の形式"""
+enum QuestionType {
+  """テキスト入力"""
+  TEXT
+
+  """単一選択"""
+  SINGLE
+
+  """複数選択"""
+  MULTIPLE
 }
 
 """回答"""
@@ -166,7 +178,7 @@ input CreateSurveyInput {
 
 input QuestionInput {
   qtext: String!
-  type: String!
+  type: QuestionType = TEXT
   required: Boolean = false
   options: [String!]
 }

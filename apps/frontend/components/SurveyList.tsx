@@ -1,13 +1,18 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useAuthfetch } from '../utils/authfetch';
-import type { Survey } from '../types/survey';
+import { TogglePublishedMutation } from '../src/queries/togglePublished';
+import { DeleteSurveyMutation } from '../src/queries/deleteSurvey';
+import type { GetSurveysQuery } from '../src/gql/graphql';
+
+// ★ 自動生成された型から Survey を抽出
+type Survey = GetSurveysQuery['getSurvey'][number];
 
 type Props = {
   surveys: Survey[];
   loading: boolean;
   onEdit: (survey: Survey) => void;
-  onSurveyChanged: () => void; // 削除・公開切替後の再取得用
+  onSurveyChanged: () => void;
 };
 
 export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }: Props) {
@@ -28,15 +33,10 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
     const action = survey.published ? '非公開' : '公開';
     if (!confirm(`このアンケートを「${action}」にしますか?`)) return;
 
-    const result = await authFetch(
-      `mutation TogglePublished($id: Int!, $published: Boolean!) {
-        togglePublished(id: $id, published: $published) {
-          id
-          published
-        }
-      }`,
-      { id: survey.id, published: !survey.published },
-    );
+    const result = await authFetch(TogglePublishedMutation, {
+      id: survey.id,
+      published: !survey.published,
+    });
 
     if (result?.data) {
       onSurveyChanged();
@@ -55,12 +55,7 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
       return;
     }
 
-    const result = await authFetch(
-      `mutation DeleteSurvey($id: Int!) {
-        deleteSurvey(id: $id)
-      }`,
-      { id: survey.id },
-    );
+    const result = await authFetch(DeleteSurveyMutation, { id: survey.id });
 
     if (result?.data?.deleteSurvey) {
       alert('アンケートを削除しました');
@@ -126,7 +121,7 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
               border: '1px solid #ddd',
               borderRadius: '8px',
               position: 'relative',
-              opacity: survey.published ? 1 : 0.7, // 下書きは少し薄く
+              opacity: survey.published ? 1 : 0.7,
               backgroundColor: survey.published ? '#fff' : '#f9f9f9',
             }}
           >
@@ -141,11 +136,15 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
             >
               <div style={{ flex: 1 }}>
                 <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                  }}
                 >
                   <h3 style={{ margin: 0, color: '#0070f3' }}>{survey.title}</h3>
 
-                  {/* 公開状態バッジ */}
                   <span
                     style={{
                       fontSize: '12px',
@@ -159,7 +158,6 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
                     {survey.published ? '● 公開中' : '○ 下書き'}
                   </span>
 
-                  {/* 認証方式バッジ */}
                   <span
                     style={{
                       fontSize: '12px',
@@ -180,7 +178,6 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
 
               {/* 操作ボタン群 */}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {/* 公開/非公開切替 */}
                 <button
                   onClick={() => handleTogglePublished(survey)}
                   style={{
@@ -197,7 +194,6 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
                   {survey.published ? '⏸ 非公開化' : '▶ 公開する'}
                 </button>
 
-                {/* 編集 */}
                 <button
                   onClick={() => onEdit(survey)}
                   style={{
@@ -213,7 +209,6 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
                   ✏️ 編集
                 </button>
 
-                {/* 集計結果 */}
                 <button
                   onClick={() => router.push(`/results/${survey.shareId}`)}
                   style={{
@@ -229,7 +224,6 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
                   📊 集計
                 </button>
 
-                {/* 削除 */}
                 <button
                   onClick={() => handleDelete(survey)}
                   style={{
@@ -247,7 +241,7 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
               </div>
             </div>
 
-            {/* 共有URL(公開中のみ表示) */}
+            {/* 共有URL */}
             {survey.published && (
               <div
                 style={{
@@ -259,7 +253,13 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
                   border: '1px dashed #0070f3',
                 }}
               >
-                <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>
+                <span
+                  style={{
+                    fontWeight: 'bold',
+                    display: 'block',
+                    marginBottom: '5px',
+                  }}
+                >
                   配布用URL:
                 </span>
                 <a
@@ -284,7 +284,7 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
               </div>
             )}
 
-            {/* 招待トークン情報(PRIVATE のみ) */}
+            {/* 招待トークン情報 */}
             {isPrivate && (
               <div
                 style={{
@@ -346,7 +346,13 @@ export default function SurveyList({ surveys, loading, onEdit, onSurveyChanged }
                     <span>
                       {i + 1}. {q.qtext}
                     </span>
-                    <span style={{ color: '#999', fontSize: '12px', marginLeft: '8px' }}>
+                    <span
+                      style={{
+                        color: '#999',
+                        fontSize: '12px',
+                        marginLeft: '8px',
+                      }}
+                    >
                       ({getQuestionTypeLabel(q.type)})
                     </span>
                     {q.required && (

@@ -1,11 +1,15 @@
 'use client';
 import { useState } from 'react';
 import { useAuthfetch } from '../utils/authfetch';
-import { Survey, SurveyAuthType } from '../types/survey';
+import { EditSurveyMutation } from '../src/queries/editSurvey';
+import { SurveyAuthType, type GetSurveysQuery, type QuestionType } from '../src/gql/graphql';
+
+// ★ 自動生成された型から Survey を抽出
+type Survey = GetSurveysQuery['getSurvey'][number];
 
 type QuestionState = {
   qtext: string;
-  type: string;
+  type: QuestionType; // ★ string → QuestionType (自動生成enum)
   required: boolean;
   options: string[];
 };
@@ -31,10 +35,8 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
   );
   const [saving, setSaving] = useState(false);
 
-  // 回答済みかどうか
   const hasSubmissions = (survey.submissions?.length ?? 0) > 0;
 
-  // 質問操作
   const updateQuestionText = (index: number, val: string) => {
     const updated = [...questions];
     const target = updated[index];
@@ -43,12 +45,12 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
     setQuestions(updated);
   };
 
-  const updateQuestionType = (index: number, val: string) => {
+  const updateQuestionType = (index: number, val: QuestionType) => {
     const updated = [...questions];
     const target = updated[index];
     if (!target) return;
     target.type = val;
-    if (val === 'TEXT') target.options = [];
+    if (val === ('TEXT' as QuestionType)) target.options = [];
     setQuestions(updated);
   };
 
@@ -85,7 +87,15 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
   };
 
   const addQuestion = () => {
-    setQuestions([...questions, { qtext: '', type: 'TEXT', required: false, options: [] }]);
+    setQuestions([
+      ...questions,
+      {
+        qtext: '',
+        type: 'TEXT' as QuestionType,
+        required: false,
+        options: [],
+      },
+    ]);
   };
 
   const removeQuestion = (index: number) => {
@@ -100,50 +110,33 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
     }
     if (
       questions.some(
-        (q) => q.type !== 'TEXT' && (q.options.length === 0 || q.options.some((o) => !o.trim())),
+        (q) =>
+          q.type !== ('TEXT' as QuestionType) &&
+          (q.options.length === 0 || q.options.some((o) => !o.trim())),
       )
     ) {
       return alert('選択式の質問には選択肢を入力してください');
     }
-    if (auth === 'PRIVATE' && tokenCount <= 0) {
+    if (auth === SurveyAuthType.Private && tokenCount <= 0) {
       return alert('招待制の場合はトークン発行数を1以上にしてください');
     }
 
     setSaving(true);
 
-    const result = await authFetch(
-      `
-        mutation EditSurvey($input: EditSurveyInput!) {
-          editSurvey(input: $input) {
-            id
-            title
-            auth
-            published
-            questions { 
-              id 
-              qtext 
-              type 
-              required 
-              options { id text } 
-            }
-          }
-        }
-      `,
-      {
-        input: {
-          id: survey.id,
-          title,
-          questions: questions.map((q) => ({
-            qtext: q.qtext,
-            type: q.type,
-            required: q.required,
-            options: q.type !== 'TEXT' ? q.options : [],
-          })),
-          auth,
-          tokens: auth === 'PRIVATE' ? tokenCount : 0,
-        },
+    const result = await authFetch(EditSurveyMutation, {
+      input: {
+        id: survey.id,
+        title,
+        questions: questions.map((q) => ({
+          qtext: q.qtext,
+          type: q.type,
+          required: q.required,
+          options: q.type !== ('TEXT' as QuestionType) ? q.options : [],
+        })),
+        auth,
+        tokens: auth === SurveyAuthType.Private ? tokenCount : 0,
       },
-    );
+    });
 
     setSaving(false);
 
@@ -152,10 +145,8 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
       onUpdated();
       onClose();
     }
-    // result が null や errors があれば authFetch 側で alert される
   };
 
-  // 回答済みアンケートの場合は編集不可の警告画面
   if (hasSubmissions) {
     return (
       <div style={overlayStyle}>
@@ -216,7 +207,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
           </button>
         </div>
 
-        {/* 注意メッセージ */}
         <div
           style={{
             padding: '10px 15px',
@@ -231,13 +221,11 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
           💡 公開状態の切替はアンケート一覧画面のボタンで行えます
         </div>
 
-        {/* タイトル */}
         <div style={{ marginBottom: '20px' }}>
           <label style={labelStyle}>タイトル</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} />
         </div>
 
-        {/* 認証方式 */}
         <div
           style={{
             marginBottom: '20px',
@@ -248,21 +236,32 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
           }}
         >
           <label style={labelStyle}>回答者の認証</label>
-          <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '15px',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
             <select
               value={auth}
               onChange={(e) => {
                 const value = e.target.value as SurveyAuthType;
                 setAuth(value);
-                if (value === 'PUBLIC') setTokenCount(0);
+                if (value === SurveyAuthType.Public) setTokenCount(0);
               }}
-              style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              style={{
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid #ccc',
+              }}
             >
-              <option value="PUBLIC">🌐 誰でも回答可能</option>
-              <option value="PRIVATE">🔑 招待者のみ</option>
+              <option value={SurveyAuthType.Public}>🌐 誰でも回答可能</option>
+              <option value={SurveyAuthType.Private}>🔑 招待者のみ</option>
             </select>
 
-            {auth === 'PRIVATE' && (
+            {auth === SurveyAuthType.Private && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <label style={{ fontSize: '14px' }}>発行数:</label>
                 <input
@@ -281,14 +280,20 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
               </div>
             )}
           </div>
-          {auth === 'PRIVATE' && (
-            <p style={{ fontSize: '12px', color: '#e67e22', marginTop: '8px', marginBottom: 0 }}>
+          {auth === SurveyAuthType.Private && (
+            <p
+              style={{
+                fontSize: '12px',
+                color: '#e67e22',
+                marginTop: '8px',
+                marginBottom: 0,
+              }}
+            >
               ⚠️ 編集を保存すると、既存のトークンは破棄され新しく発行されます
             </p>
           )}
         </div>
 
-        {/* 質問リスト */}
         <div style={{ marginBottom: '20px' }}>
           <label style={labelStyle}>質問リスト</label>
 
@@ -329,13 +334,16 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
                   flexWrap: 'wrap',
                 }}
               >
-                {/* 質問タイプ */}
                 <div>
                   <label style={{ fontSize: '13px', marginRight: '6px' }}>形式:</label>
                   <select
                     value={q.type}
-                    onChange={(e) => updateQuestionType(qIndex, e.target.value)}
-                    style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+                    onChange={(e) => updateQuestionType(qIndex, e.target.value as QuestionType)}
+                    style={{
+                      padding: '6px',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc',
+                    }}
                   >
                     <option value="TEXT">テキスト入力</option>
                     <option value="SINGLE">単一選択(ラジオ)</option>
@@ -343,7 +351,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
                   </select>
                 </div>
 
-                {/* 必須チェック */}
                 <label
                   style={{
                     display: 'flex',
@@ -362,7 +369,7 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
                 </label>
               </div>
 
-              {q.type !== 'TEXT' && (
+              {q.type !== ('TEXT' as QuestionType) && (
                 <div style={{ marginTop: '10px', paddingLeft: '15px' }}>
                   <label style={{ fontSize: '13px', color: '#666' }}>選択肢:</label>
                   {q.options.map((opt, oIndex) => (
@@ -402,7 +409,11 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
                   ))}
                   <button
                     onClick={() => addOption(qIndex)}
-                    style={{ marginTop: '6px', fontSize: '12px', cursor: 'pointer' }}
+                    style={{
+                      marginTop: '6px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
                   >
                     ＋ 選択肢を追加
                   </button>
@@ -416,7 +427,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
           </button>
         </div>
 
-        {/* 保存ボタン */}
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
             onClick={onClose}
@@ -455,7 +465,6 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
   );
 }
 
-// スタイル(再利用)
 const overlayStyle: React.CSSProperties = {
   position: 'fixed',
   top: 0,

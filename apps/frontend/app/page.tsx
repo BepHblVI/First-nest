@@ -1,3 +1,4 @@
+// apps/frontend/src/app/page.tsx
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import CreateSurvey from '../components/CreateSurvey';
@@ -5,45 +6,23 @@ import SurveyList from '../components/SurveyList';
 import EditSurveyModal from '../components/EditSurveyModal';
 import { useRouter } from 'next/navigation';
 import { useAuthfetch } from '../utils/authfetch';
-import type { Survey } from '../types/survey';
+import { GetSurveysQuery } from '../src/queries/GetSurveys';
+import type { GetSurveysQuery as GetSurveysQueryType } from '../src/gql/graphql';
+
+// ★ 自動生成された型から Survey 型を抽出
+type Survey = GetSurveysQueryType['getSurvey'][number];
 
 export default function Home() {
   const { authFetch } = useAuthfetch();
   const router = useRouter();
-  const [surveys, setSurveys] = useState<Survey[]>([]); // ★ 型指定
+  const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingSurvey, setEditingSurvey] = useState<Survey | null>(null); // ★ 型指定
+  const [editingSurvey, setEditingSurvey] = useState<Survey | null>(null);
 
-  // ★ useCallback で再生成を防ぐ + ESLint警告対策
   const fetchSurveys = useCallback(async () => {
     setLoading(true);
-    const result = await authFetch(`
-      query {
-        getSurvey {
-          id
-          title
-          published
-          auth
-          owner { username }
-          shareId
-          questions {
-            id
-            qtext
-            type
-            required
-            options { id text }
-          }
-          tokens {
-            token
-            isUsed
-            createdAt
-          }
-          submissions {
-            id
-          }
-        }
-      }
-    `);
+    // ★ 文字列化したクエリを渡す（Phase 3でauthFetch改修後は .toString() 不要）
+    const result = await authFetch(GetSurveysQuery);
 
     if (result?.data) {
       setSurveys(result.data.getSurvey);
@@ -53,7 +32,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchSurveys();
-  }, [fetchSurveys]); // ★ fetchSurveys を依存配列に
+  }, [fetchSurveys]);
 
   const handleLogout = () => {
     if (!confirm('ログアウトしますか?')) return;
@@ -101,7 +80,7 @@ export default function Home() {
         <SurveyList
           surveys={surveys}
           loading={loading}
-          onEdit={setEditingSurvey} // ★ 型が合う
+          onEdit={setEditingSurvey}
           onSurveyChanged={fetchSurveys}
         />
       </section>

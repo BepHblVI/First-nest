@@ -32,10 +32,6 @@ export class SurveyService {
     private submitRepo: Repository<Submission>,
     @InjectRepository(Answer)
     private answerRepo: Repository<Answer>,
-    @InjectRepository(SurveyToken)
-    private tokenRepo: Repository<SurveyToken>,
-    @InjectRepository(Question)
-    private questionRepo: Repository<Question>,
     private dataSource: DataSource,
   ) {}
 
@@ -176,47 +172,52 @@ export class SurveyService {
     token,
     respondentId,
   }: SubmitSurveyAnswerInput): Promise<Submission> {
-    const survey = await this.surveyRepo.findOne({
-      where: { id: surveyId },
-      relations: ['questions', 'questions.options'],
-    });
-    if (!survey) throw new NotFoundException('アンケートが見つかりません');
-    if (!survey.published)
-      throw new ForbiddenException('このアンケートは非公開です');
+    return await this.dataSource.transaction(async (manager) => {
+      const survey = await manager.findOne(Survey, {
+        where: { id: surveyId },
+        relations: ['questions', 'questions.options'],
+      });
+      if (!survey) throw new NotFoundException('アンケートが見つかりません');
+      if (!survey.published)
+        throw new ForbiddenException('このアンケートは非公開です');
 
-    this.validateAnswers(survey.questions, answers);
-    if (survey.auth === SurveyAuthType.PRIVATE) {
-      if (!token)
-        throw new ForbiddenException('このアンケートへの回答権限がありません');
-      const updateResult = await this.tokenRepo.update(
-        {
-          token: token,
-          survey: { id: surveyId },
-          isUsed: false,
-        },
-        {
-          isUsed: true,
-        },
-      );
-      if (updateResult.affected === 0) {
-        throw new ForbiddenException(
-          '無効なトークン、またはすでに回答済みです',
+      if (survey.auth === SurveyAuthType.PRIVATE) {
+        if (!token)
+          throw new ForbiddenException(
+            'このアンケートへの回答権限がありません',
+          );
+        const updateResult = await manager.update(
+          SurveyToken,
+          {
+            token: token,
+            survey: surveyId,
+            isUsed: false,
+          },
+          {
+            isUsed: true,
+          },
         );
+        if (updateResult.affected === 0) {
+          throw new ForbiddenException(
+            '無効なトークン、またはすでに回答済みです',
+          );
+        }
       }
-    }
-    const newSubmission = this.submitRepo.create({
-      survey: { id: surveyId },
-      answers: answers.map(
-        (ans): DeepPartial<Answer> => ({
-          question: { id: ans.questionId },
-          text: ans.text || undefined,
-          selectedOptions: ans.selectionIds?.map((id) => ({ id })) || [],
-        }),
-      ),
-      respondentId: respondentId,
-    });
+      this.validateAnswers(survey.questions, answers);
+      const newSubmission = manager.create(Submission, {
+        survey: { id: surveyId },
+        answers: answers.map(
+          (ans): DeepPartial<Answer> => ({
+            question: { id: ans.questionId },
+            text: ans.text ?? undefined,
+            selectedOptions: ans.selectionIds?.map((id) => ({ id })) || [],
+          }),
+        ),
+        respondentId: respondentId,
+      });
 
-    return await this.submitRepo.save(newSubmission);
+      return await manager.save(Submission, newSubmission);
+    });
   }
 
   async getSurveyByShareId(shareId: string): Promise<Survey> {
@@ -319,14 +320,14 @@ export class SurveyService {
     // 質問IDをキーにしたMapを作る(高速ルックアップ用)
     const questionMap = new Map(questions.map((q) => [q.id, q]));
 
-    // ① 各回答が有効な質問IDを参照しているか
+    // 各回答が有効な質問IDを参照しているか
     for (const ans of answers) {
       if (!questionMap.has(ans.questionId)) {
         throw new BadRequestException(`存在しない質問ID: ${ans.questionId}`);
       }
     }
 
-    // ② 各質問について検証
+    // 各質問について検証
     for (const question of questions) {
       const answer = answers.find((a) => a.questionId === question.id);
 

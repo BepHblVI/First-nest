@@ -346,6 +346,20 @@ describe('Survey GraphQL API (e2e)', () => {
       expect(res.body.errors[0].message).toMatch('すでに回答済みです');
     });
 
+    it('4. 使用済みのトークンでは回答が拒否されること', async () => {
+      const res = await sendGql(
+        app,
+        `mutation { submitSurveyAnswer(input: { 
+        surveyId: ${inviteId}, 
+        token: "kjhgfdsa", 
+        answers: [{ questionId: ${inviteQuestionId}, text: "PY" }] 
+      }) { id } }`,
+      );
+      expect(res.body.errors[0].message).toMatch(
+        '無効なトークン、またはすでに回答済みです',
+      );
+    });
+
     it('PRIVATEで作成したアンケートに、トークンなしで回答できないようにする', async () => {
       const res = await sendGql(
         app,

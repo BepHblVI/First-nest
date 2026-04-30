@@ -24,6 +24,10 @@
     "m:gen": {
       "cache": false // マイグレーション生成は毎回中身が違うので、キャッシュさせない
     },
-    "m:run": { "cache": false }
+    "m:run": { "cache": false },
+    "codegen": {
+      "cache": false,
+      "outputs": ["src/gql/**"]
+    }
   }
 }

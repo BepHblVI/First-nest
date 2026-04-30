@@ -1,78 +1,52 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthfetch } from '../../../utils/authfetch';
+import { GetSurveyResultsQuery } from '../../../src/queries/getSurveyResults';
+import { GetSurveysQuery } from '../../../src/queries/GetSurveys';
+import type {
+  GetSurveyResultsQuery as GetSurveyResultsQueryType,
+  GetSurveysQuery as GetSurveysQueryType,
+} from '../../../src/gql/graphql';
+
+// ★ 自動生成型から各種型を抽出
+type SurveyResults = GetSurveyResultsQueryType['getSurveyResults'];
+type SurveyToken = NonNullable<GetSurveysQueryType['getSurvey'][number]['tokens']>[number];
 
 export default function ResultsPage() {
   const { id } = useParams();
   const router = useRouter();
   const { authFetch } = useAuthfetch();
-  const [data, setData] = useState<any>(null);
-  const [tokens, setTokens] = useState<any[]>([]);
+  const [data, setData] = useState<SurveyResults | null>(null);
+  const [tokens, setTokens] = useState<SurveyToken[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchResults = async () => {
-    const result = await authFetch(
-      `
-        query GetResults($shareId: String!) {
-          getSurveyResults(shareId: $shareId) {
-            surveyId
-            title
-            totalSubmissions
-            questions {
-              questionId
-              qtext
-              type
-              totalAnswersForThisQuestion
-              options {
-                optionId
-                text
-                count
-                percentage
-              }
-            }
-          }
-        }
-      `,
-      { shareId: id as string },
-    );
+  const fetchResults = useCallback(async () => {
+    const result = await authFetch(GetSurveyResultsQuery, {
+      shareId: id as string,
+    });
 
     if (result?.data) {
       setData(result.data.getSurveyResults);
     }
     setLoading(false);
-  };
+  }, [authFetch, id]);
 
-  const fetchTokens = async () => {
-    const result = await authFetch(
-      `
-        query {
-          getSurvey {
-            id
-            shareId
-            auth
-            tokens {
-              token
-              isUsed
-              createdAt
-            }
-          }
-        }
-      `,
-    );
+  const fetchTokens = useCallback(async () => {
+    const result = await authFetch(GetSurveysQuery);
 
     if (result?.data) {
-      const survey = result.data.getSurvey.find((s: any) => s.shareId === id);
+      const survey = result.data.getSurvey.find((s) => s.shareId === id);
       if (survey?.tokens) {
         setTokens(survey.tokens);
       }
     }
-  };
+  }, [authFetch, id]);
 
   useEffect(() => {
     fetchResults();
     fetchTokens();
-  }, [id]);
+  }, [fetchResults, fetchTokens]);
 
   const copyToken = (token: string) => {
     navigator.clipboard.writeText(token);
@@ -83,7 +57,14 @@ export default function ResultsPage() {
   if (!data) return <div style={{ padding: '40px' }}>データが見つかりません。</div>;
 
   return (
-    <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+    <div
+      style={{
+        padding: '40px',
+        maxWidth: '800px',
+        margin: '0 auto',
+        fontFamily: 'sans-serif',
+      }}
+    >
       <button onClick={() => router.back()} style={{ marginBottom: '20px', cursor: 'pointer' }}>
         ← 戻る
       </button>
@@ -103,12 +84,11 @@ export default function ResultsPage() {
           }}
         >
           <h2 style={{ color: '#e67e22', marginBottom: '15px' }}>
-            🔑 招待トークン管理（{tokens.filter((t: any) => t.isUsed).length}/{tokens.length}{' '}
-            使用済み）
+            🔑 招待トークン管理（{tokens.filter((t) => t.isUsed).length}/{tokens.length} 使用済み）
           </h2>
 
           <div style={{ display: 'grid', gap: '10px' }}>
-            {tokens.map((t: any, index: number) => (
+            {tokens.map((t, index) => (
               <div
                 key={t.token}
                 style={{
@@ -137,7 +117,12 @@ export default function ResultsPage() {
                 </div>
 
                 <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '10px' }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginLeft: '10px',
+                  }}
                 >
                   {t.isUsed ? (
                     <span
@@ -182,7 +167,7 @@ export default function ResultsPage() {
       )}
 
       {/* 質問ごとの集計 */}
-      {data.questions.map((q: any) => (
+      {data.questions.map((q) => (
         <div
           key={q.questionId}
           style={{
@@ -198,7 +183,7 @@ export default function ResultsPage() {
           </p>
 
           <div style={{ marginTop: '20px' }}>
-            {q.options.map((opt: any) => (
+            {q.options.map((opt) => (
               <div key={opt.optionId} style={{ marginBottom: '15px' }}>
                 <div
                   style={{
