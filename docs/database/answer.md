@@ -9,7 +9,7 @@
 CREATE TABLE `answer` (
   `id` int NOT NULL AUTO_INCREMENT,
   `text` varchar(255) DEFAULT NULL,
-  `questionId` int DEFAULT NULL,
+  `questionId` int NOT NULL,
   `submissionId` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_a4013f10cd6924793fbd5f0d637` (`questionId`),
@@ -27,7 +27,7 @@ CREATE TABLE `answer` (
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | id | int |  | false | auto_increment | [answer_selected_options_question_option](answer_selected_options_question_option.md) |  |  |
 | text | varchar(255) |  | true |  |  |  |  |
-| questionId | int |  | true |  |  | [question](question.md) |  |
+| questionId | int |  | false |  |  | [question](question.md) |  |
 | submissionId | int |  | true |  |  | [submission](submission.md) |  |
 
 ## Constraints
@@ -52,7 +52,7 @@ CREATE TABLE `answer` (
 erDiagram
 
 "answer_selected_options_question_option" }o--|| "answer" : "FOREIGN KEY (answerId) REFERENCES answer (id)"
-"answer" }o--o| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
+"answer" }o--|| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
 "answer" }o--o| "submission" : "FOREIGN KEY (submissionId) REFERENCES submission (id)"
 
 "answer" {
@@ -70,10 +70,11 @@ erDiagram
   varchar_255_ type
   varchar_255_ qtext
   int surveyId FK
+  tinyint required
 }
 "submission" {
   int id PK
-  datetime_6_ submitted_at
+  datetime_6_ submittedAt
   varchar_255_ respondentId
   int surveyId FK
 }

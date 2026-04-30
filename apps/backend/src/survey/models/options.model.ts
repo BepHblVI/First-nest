@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Question } from './question.model';
 
-@ObjectType()
+@ObjectType({ description: '選択肢' })
 @Entity()
 export class QuestionOption {
   @Field(() => Int)

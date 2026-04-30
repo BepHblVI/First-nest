@@ -11,7 +11,7 @@ CREATE TABLE `survey_token` (
   `isUsed` tinyint NOT NULL DEFAULT '0',
   `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `expiredAt` datetime DEFAULT NULL,
-  `surveyId` int DEFAULT NULL,
+  `surveyId` int NOT NULL,
   PRIMARY KEY (`token`),
   KEY `FK_beeccb051103b4b15ee1ca81547` (`surveyId`),
   CONSTRAINT `FK_beeccb051103b4b15ee1ca81547` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`) ON DELETE CASCADE
@@ -28,7 +28,7 @@ CREATE TABLE `survey_token` (
 | isUsed | tinyint | 0 | false |  |  |  |  |
 | createdAt | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
 | expiredAt | datetime |  | true |  |  |  |  |
-| surveyId | int |  | true |  |  | [survey](survey.md) |  |
+| surveyId | int |  | false |  |  | [survey](survey.md) |  |
 
 ## Constraints
 
@@ -49,7 +49,7 @@ CREATE TABLE `survey_token` (
 ```mermaid
 erDiagram
 
-"survey_token" }o--o| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"survey_token" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
 
 "survey_token" {
   varchar_36_ token PK
@@ -63,9 +63,10 @@ erDiagram
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
-  varchar_255_ auth
-  datetime_6_ created_at
+  datetime_6_ createdAt
+  datetime_6_ updatedAt
   int ownerId FK
+  enum__PUBLIC___PRIVATE__ auth
 }
 ```
 

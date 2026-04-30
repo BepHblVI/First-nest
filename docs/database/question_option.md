@@ -10,10 +10,10 @@ CREATE TABLE `question_option` (
   `id` int NOT NULL AUTO_INCREMENT,
   `text` varchar(255) NOT NULL,
   `order` int NOT NULL DEFAULT '0',
-  `questionId` int DEFAULT NULL,
+  `questionId` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_ba19747af180520381a117f5986` (`questionId`),
-  CONSTRAINT `FK_ba19747af180520381a117f5986` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`)
+  CONSTRAINT `FK_ba19747af180520381a117f5986` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
@@ -26,7 +26,7 @@ CREATE TABLE `question_option` (
 | id | int |  | false | auto_increment | [answer_selected_options_question_option](answer_selected_options_question_option.md) |  |  |
 | text | varchar(255) |  | false |  |  |  |  |
 | order | int | 0 | false |  |  |  |  |
-| questionId | int |  | true |  |  | [question](question.md) |  |
+| questionId | int |  | false |  |  | [question](question.md) |  |
 
 ## Constraints
 
@@ -48,7 +48,7 @@ CREATE TABLE `question_option` (
 erDiagram
 
 "answer_selected_options_question_option" }o--|| "question_option" : "FOREIGN KEY (questionOptionId) REFERENCES question_option (id)"
-"question_option" }o--o| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
+"question_option" }o--|| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
 
 "question_option" {
   int id PK
@@ -65,6 +65,7 @@ erDiagram
   varchar_255_ type
   varchar_255_ qtext
   int surveyId FK
+  tinyint required
 }
 ```
 

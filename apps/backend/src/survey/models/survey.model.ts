@@ -29,39 +29,39 @@ registerEnumType(SurveyAuthType, {
   },
 });
 
-@ObjectType()
+@ObjectType({ description: 'アンケート本体' })
 @Entity()
 export class Survey {
-  @Field(() => Int)
+  @Field(() => Int, { description: 'アンケートID' })
   @PrimaryGeneratedColumn()
-  id!: number; //アンケートID
+  id!: number;
 
-  @Field(() => String)
+  @Field(() => String, { description: 'アンケートURL識別子' })
   @Column({ unique: true })
   @Generated('uuid')
-  shareId!: string; //URL用の識別子
+  shareId!: string;
 
-  @Field()
+  @Field({ description: 'アンケートタイトル' })
   @Column()
-  title!: string; //アンケートタイトル
+  title!: string;
 
-  @Field(() => User)
+  @Field(() => User, { description: 'アンケート作成者' })
   @ManyToOne(() => User, (owner) => owner.surveys, { nullable: false })
-  owner!: User; //作成者
+  owner!: User;
 
-  @Field(() => [Question])
+  @Field(() => [Question], { description: '設問' })
   @OneToMany(() => Question, (q) => q.survey, {
     cascade: true,
     eager: true,
     orphanedRowAction: 'delete',
   })
-  questions!: Question[]; //設問群
+  questions!: Question[];
 
-  @Field()
+  @Field({ description: 'アンケート公開状態' })
   @Column({ default: false })
   published!: boolean; //公開状態
 
-  @Field(() => SurveyAuthType)
+  @Field(() => SurveyAuthType, { description: 'アンケートのセキュリティ' })
   @Column({
     type: 'enum',
     enum: SurveyAuthType,
@@ -69,19 +69,21 @@ export class Survey {
   })
   auth!: SurveyAuthType;
 
-  @Field()
+  @Field({ description: 'アンケート作成日時' })
   @CreateDateColumn()
   createdAt!: Date;
 
-  @Field()
+  @Field({ description: 'アンケート更新日時' })
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @Field(() => [Submission])
+  @Field(() => [Submission], { description: '提出一覧' })
   @OneToMany(() => Submission, (sub) => sub.survey, { cascade: true })
   submissions!: Submission[];
 
-  @Field(() => [SurveyToken])
+  @Field(() => [SurveyToken], {
+    description: '回答用トークン（セキュリティ設定時のみ）',
+  })
   @OneToMany(() => SurveyToken, (token) => token.survey, {
     cascade: true,
     eager: true,

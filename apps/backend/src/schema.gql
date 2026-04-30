@@ -8,6 +8,7 @@ type User {
   surveys: [Survey!]!
 }
 
+"""提出一覧"""
 type Submission {
   id: Int!
   submittedAt: DateTime!
@@ -21,6 +22,7 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""アンケート回答用トークン"""
 type SurveyToken {
   token: String!
   isUsed: Boolean!
@@ -29,17 +31,39 @@ type SurveyToken {
   expiredAt: DateTime!
 }
 
+"""アンケート本体"""
 type Survey {
+  """アンケートID"""
   id: Int!
+
+  """アンケートURL識別子"""
   shareId: String!
+
+  """アンケートタイトル"""
   title: String!
+
+  """アンケート作成者"""
   owner: User!
+
+  """設問"""
   questions: [Question!]!
+
+  """アンケート公開状態"""
   published: Boolean!
+
+  """アンケートのセキュリティ"""
   auth: SurveyAuthType!
+
+  """アンケート作成日時"""
   createdAt: DateTime!
+
+  """アンケート更新日時"""
   updatedAt: DateTime!
+
+  """提出一覧"""
   submissions: [Submission!]!
+
+  """回答用トークン（セキュリティ設定時のみ）"""
   tokens: [SurveyToken!]!
 }
 
@@ -52,6 +76,7 @@ enum SurveyAuthType {
   PRIVATE
 }
 
+"""選択肢"""
 type QuestionOption {
   id: Int!
   text: String!
@@ -59,6 +84,7 @@ type QuestionOption {
   question: Question!
 }
 
+"""アンケート設問"""
 type Question {
   id: Int!
   type: String!
@@ -69,9 +95,12 @@ type Question {
   answers: [Answer!]!
 }
 
+"""回答"""
 type Answer {
   id: Int!
   text: String
+
+  """選ばれた選択肢配列"""
   selectedOptions: [QuestionOption!]
   question: Question!
   submission: Submission!

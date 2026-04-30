@@ -11,7 +11,7 @@ import { Question } from './question.model';
 import { Submission } from './submission.model';
 import { QuestionOption } from './options.model';
 
-@ObjectType()
+@ObjectType({ description: '回答' })
 @Entity()
 export class Answer {
   @Field(() => Int)
@@ -22,7 +22,10 @@ export class Answer {
   @Column({ nullable: true })
   text?: string; //回答テキスト
 
-  @Field(() => [QuestionOption], { nullable: true })
+  @Field(() => [QuestionOption], {
+    nullable: true,
+    description: '選ばれた選択肢配列',
+  })
   @ManyToMany(() => QuestionOption)
   @JoinTable()
   selectedOptions?: QuestionOption[];

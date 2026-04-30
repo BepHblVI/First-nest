@@ -10,7 +10,7 @@ import {
 import { Survey } from './survey.model';
 import { Answer } from './answer.model';
 
-@ObjectType()
+@ObjectType({ description: '提出一覧' })
 @Entity()
 export class Submission {
   @Field(() => Int)

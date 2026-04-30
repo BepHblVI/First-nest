@@ -11,9 +11,10 @@ CREATE TABLE `survey` (
   `shareId` varchar(36) NOT NULL,
   `title` varchar(255) NOT NULL,
   `published` tinyint NOT NULL DEFAULT '0',
-  `auth` varchar(255) NOT NULL DEFAULT '0',
-  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  `ownerId` int DEFAULT NULL,
+  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `ownerId` int NOT NULL,
+  `auth` enum('PUBLIC','PRIVATE') NOT NULL DEFAULT 'PUBLIC',
   PRIMARY KEY (`id`),
   UNIQUE KEY `IDX_76268d52f6deafc75cb9987c21` (`shareId`),
   KEY `FK_a2e6e9ab8f1ff04cbf31da646e7` (`ownerId`),
@@ -31,9 +32,10 @@ CREATE TABLE `survey` (
 | shareId | varchar(36) |  | false |  |  |  |  |
 | title | varchar(255) |  | false |  |  |  |  |
 | published | tinyint | 0 | false |  |  |  |  |
-| auth | varchar(255) | 0 | false |  |  |  |  |
-| created_at | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
-| ownerId | int |  | true |  |  | [user](user.md) |  |
+| createdAt | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
+| updatedAt | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED on update CURRENT_TIMESTAMP(6) |  |  |  |
+| ownerId | int |  | false |  |  | [user](user.md) |  |
+| auth | enum('PUBLIC','PRIVATE') | PUBLIC | false |  |  |  |  |
 
 ## Constraints
 
@@ -56,29 +58,31 @@ CREATE TABLE `survey` (
 ```mermaid
 erDiagram
 
-"question" }o--o| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
-"submission" }o--o| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
-"survey_token" }o--o| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
-"survey" }o--o| "user" : "FOREIGN KEY (ownerId) REFERENCES user (id)"
+"question" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"submission" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"survey_token" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"survey" }o--|| "user" : "FOREIGN KEY (ownerId) REFERENCES user (id)"
 
 "survey" {
   int id PK
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
-  varchar_255_ auth
-  datetime_6_ created_at
+  datetime_6_ createdAt
+  datetime_6_ updatedAt
   int ownerId FK
+  enum__PUBLIC___PRIVATE__ auth
 }
 "question" {
   int id PK
   varchar_255_ type
   varchar_255_ qtext
   int surveyId FK
+  tinyint required
 }
 "submission" {
   int id PK
-  datetime_6_ submitted_at
+  datetime_6_ submittedAt
   varchar_255_ respondentId
   int surveyId FK
 }

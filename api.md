@@ -183,6 +183,8 @@
 
 ### Answer
 
+回答
+
 <table>
 <thead>
 <tr>
@@ -206,7 +208,11 @@
 <tr>
 <td colspan="2" valign="top"><strong id="answer.selectedoptions">selectedOptions</strong></td>
 <td valign="top">[<a href="#questionoption">QuestionOption</a>!]</td>
-<td></td>
+<td>
+
+選ばれた選択肢配列
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="answer.question">question</strong></td>
@@ -308,6 +314,8 @@
 
 ### Question
 
+アンケート設問
+
 <table>
 <thead>
 <tr>
@@ -357,6 +365,8 @@
 </table>
 
 ### QuestionOption
+
+選択肢
 
 <table>
 <thead>
@@ -433,6 +443,8 @@
 
 ### Submission
 
+提出一覧
+
 <table>
 <thead>
 <tr>
@@ -473,6 +485,8 @@
 
 ### Survey
 
+アンケート本体
+
 <table>
 <thead>
 <tr>
@@ -486,57 +500,101 @@
 <tr>
 <td colspan="2" valign="top"><strong id="survey.id">id</strong></td>
 <td valign="top"><a href="#int">Int</a>!</td>
-<td></td>
+<td>
+
+アンケートID
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.shareid">shareId</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+アンケートURL識別子
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.title">title</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+アンケートタイトル
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.owner">owner</strong></td>
 <td valign="top"><a href="#user">User</a>!</td>
-<td></td>
+<td>
+
+アンケート作成者
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.questions">questions</strong></td>
 <td valign="top">[<a href="#question">Question</a>!]!</td>
-<td></td>
+<td>
+
+設問
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.published">published</strong></td>
 <td valign="top"><a href="#boolean">Boolean</a>!</td>
-<td></td>
+<td>
+
+アンケート公開状態
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.auth">auth</strong></td>
 <td valign="top"><a href="#surveyauthtype">SurveyAuthType</a>!</td>
-<td></td>
+<td>
+
+アンケートのセキュリティ
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.createdat">createdAt</strong></td>
 <td valign="top"><a href="#datetime">DateTime</a>!</td>
-<td></td>
+<td>
+
+アンケート作成日時
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.updatedat">updatedAt</strong></td>
 <td valign="top"><a href="#datetime">DateTime</a>!</td>
-<td></td>
+<td>
+
+アンケート更新日時
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.submissions">submissions</strong></td>
 <td valign="top">[<a href="#submission">Submission</a>!]!</td>
-<td></td>
+<td>
+
+提出一覧
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="survey.tokens">tokens</strong></td>
 <td valign="top">[<a href="#surveytoken">SurveyToken</a>!]!</td>
-<td></td>
+<td>
+
+回答用トークン（セキュリティ設定時のみ）
+
+</td>
 </tr>
 </tbody>
 </table>
@@ -582,6 +640,8 @@
 </table>
 
 ### SurveyToken
+
+アンケート回答用トークン
 
 <table>
 <thead>
@@ -715,7 +775,7 @@
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="createsurveyinput.tokens">tokens</strong></td>
-<td valign="top"><a href="#float">Float</a></td>
+<td valign="top"><a href="#int">Int</a></td>
 <td></td>
 </tr>
 </tbody>

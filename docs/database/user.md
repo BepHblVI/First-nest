@@ -44,7 +44,7 @@ CREATE TABLE `user` (
 ```mermaid
 erDiagram
 
-"survey" }o--o| "user" : "FOREIGN KEY (ownerId) REFERENCES user (id)"
+"survey" }o--|| "user" : "FOREIGN KEY (ownerId) REFERENCES user (id)"
 
 "user" {
   int id PK
@@ -56,9 +56,10 @@ erDiagram
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
-  varchar_255_ auth
-  datetime_6_ created_at
+  datetime_6_ createdAt
+  datetime_6_ updatedAt
   int ownerId FK
+  enum__PUBLIC___PRIVATE__ auth
 }
 ```
 

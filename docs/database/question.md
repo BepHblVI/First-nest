@@ -10,7 +10,8 @@ CREATE TABLE `question` (
   `id` int NOT NULL AUTO_INCREMENT,
   `type` varchar(255) NOT NULL DEFAULT 'TEXT',
   `qtext` varchar(255) NOT NULL,
-  `surveyId` int DEFAULT NULL,
+  `surveyId` int NOT NULL,
+  `required` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `FK_a1188e0f702ab268e0982049e5c` (`surveyId`),
   CONSTRAINT `FK_a1188e0f702ab268e0982049e5c` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`) ON DELETE CASCADE
@@ -26,7 +27,8 @@ CREATE TABLE `question` (
 | id | int |  | false | auto_increment | [answer](answer.md) [question_option](question_option.md) |  |  |
 | type | varchar(255) | TEXT | false |  |  |  |  |
 | qtext | varchar(255) |  | false |  |  |  |  |
-| surveyId | int |  | true |  |  | [survey](survey.md) |  |
+| surveyId | int |  | false |  |  | [survey](survey.md) |  |
+| required | tinyint | 0 | false |  |  |  |  |
 
 ## Constraints
 
@@ -47,15 +49,16 @@ CREATE TABLE `question` (
 ```mermaid
 erDiagram
 
-"answer" }o--o| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
-"question_option" }o--o| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
-"question" }o--o| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"answer" }o--|| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
+"question_option" }o--|| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
+"question" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
 
 "question" {
   int id PK
   varchar_255_ type
   varchar_255_ qtext
   int surveyId FK
+  tinyint required
 }
 "answer" {
   int id PK
@@ -74,9 +77,10 @@ erDiagram
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
-  varchar_255_ auth
-  datetime_6_ created_at
+  datetime_6_ createdAt
+  datetime_6_ updatedAt
   int ownerId FK
+  enum__PUBLIC___PRIVATE__ auth
 }
 ```
 

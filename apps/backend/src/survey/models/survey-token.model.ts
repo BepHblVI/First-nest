@@ -8,7 +8,7 @@ import {
 import { Field, ObjectType } from '@nestjs/graphql';
 import { Survey } from './survey.model';
 
-@ObjectType()
+@ObjectType({ description: 'アンケート回答用トークン' })
 @Entity()
 export class SurveyToken {
   @Field()

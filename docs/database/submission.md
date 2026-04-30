@@ -8,9 +8,9 @@
 ```sql
 CREATE TABLE `submission` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `submitted_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `submittedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `respondentId` varchar(255) DEFAULT NULL,
-  `surveyId` int DEFAULT NULL,
+  `surveyId` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_445eeaad33ae6464ac85f6ea46b` (`surveyId`),
   CONSTRAINT `FK_445eeaad33ae6464ac85f6ea46b` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`)
@@ -24,9 +24,9 @@ CREATE TABLE `submission` (
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | id | int |  | false | auto_increment | [answer](answer.md) |  |  |
-| submitted_at | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
+| submittedAt | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
 | respondentId | varchar(255) |  | true |  |  |  |  |
-| surveyId | int |  | true |  |  | [survey](survey.md) |  |
+| surveyId | int |  | false |  |  | [survey](survey.md) |  |
 
 ## Constraints
 
@@ -48,11 +48,11 @@ CREATE TABLE `submission` (
 erDiagram
 
 "answer" }o--o| "submission" : "FOREIGN KEY (submissionId) REFERENCES submission (id)"
-"submission" }o--o| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"submission" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
 
 "submission" {
   int id PK
-  datetime_6_ submitted_at
+  datetime_6_ submittedAt
   varchar_255_ respondentId
   int surveyId FK
 }
@@ -67,9 +67,10 @@ erDiagram
   varchar_36_ shareId
   varchar_255_ title
   tinyint published
-  varchar_255_ auth
-  datetime_6_ created_at
+  datetime_6_ createdAt
+  datetime_6_ updatedAt
   int ownerId FK
+  enum__PUBLIC___PRIVATE__ auth
 }
 ```
 
