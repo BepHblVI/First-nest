@@ -63,7 +63,6 @@ erDiagram
 "question_option" {
   int id PK
   varchar_255_ text
-  int order
   int questionId FK
 }
 ```

@@ -19,10 +19,6 @@ export class QuestionOption {
   @Column()
   text!: string; //テキスト
 
-  @Field(() => Int)
-  @Column({ default: 0 })
-  order!: Number;
-
   @Field(() => Question)
   @ManyToOne(() => Question, (q) => q.options, {
     nullable: false,

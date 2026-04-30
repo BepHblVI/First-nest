@@ -9,7 +9,6 @@
 CREATE TABLE `question_option` (
   `id` int NOT NULL AUTO_INCREMENT,
   `text` varchar(255) NOT NULL,
-  `order` int NOT NULL DEFAULT '0',
   `questionId` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_ba19747af180520381a117f5986` (`questionId`),
@@ -25,7 +24,6 @@ CREATE TABLE `question_option` (
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | id | int |  | false | auto_increment | [answer_selected_options_question_option](answer_selected_options_question_option.md) |  |  |
 | text | varchar(255) |  | false |  |  |  |  |
-| order | int | 0 | false |  |  |  |  |
 | questionId | int |  | false |  |  | [question](question.md) |  |
 
 ## Constraints
@@ -53,7 +51,6 @@ erDiagram
 "question_option" {
   int id PK
   varchar_255_ text
-  int order
   int questionId FK
 }
 "answer_selected_options_question_option" {
@@ -62,10 +59,10 @@ erDiagram
 }
 "question" {
   int id PK
-  varchar_255_ type
   varchar_255_ qtext
   int surveyId FK
   tinyint required
+  enum__TEXT___SINGLE___MULTIPLE__ type
 }
 ```
 

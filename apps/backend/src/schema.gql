@@ -80,7 +80,6 @@ enum SurveyAuthType {
 type QuestionOption {
   id: Int!
   text: String!
-  order: Int!
   question: Question!
 }
 

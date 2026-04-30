@@ -8,7 +8,7 @@
 | [answer_selected_options_question_option](answer_selected_options_question_option.md) | 2 |  | BASE TABLE |
 | [migrations](migrations.md) | 3 |  | BASE TABLE |
 | [question](question.md) | 5 |  | BASE TABLE |
-| [question_option](question_option.md) | 4 |  | BASE TABLE |
+| [question_option](question_option.md) | 3 |  | BASE TABLE |
 | [submission](submission.md) | 4 |  | BASE TABLE |
 | [survey](survey.md) | 8 |  | BASE TABLE |
 | [survey_token](survey_token.md) | 5 |  | BASE TABLE |
@@ -46,15 +46,14 @@ erDiagram
 }
 "question" {
   int id PK
-  varchar_255_ type
   varchar_255_ qtext
   int surveyId FK
   tinyint required
+  enum__TEXT___SINGLE___MULTIPLE__ type
 }
 "question_option" {
   int id PK
   varchar_255_ text
-  int order
   int questionId FK
 }
 "submission" {

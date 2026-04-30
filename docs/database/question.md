@@ -8,10 +8,10 @@
 ```sql
 CREATE TABLE `question` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `type` varchar(255) NOT NULL DEFAULT 'TEXT',
   `qtext` varchar(255) NOT NULL,
   `surveyId` int NOT NULL,
   `required` tinyint NOT NULL DEFAULT '0',
+  `type` enum('TEXT','SINGLE','MULTIPLE') NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_a1188e0f702ab268e0982049e5c` (`surveyId`),
   CONSTRAINT `FK_a1188e0f702ab268e0982049e5c` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`) ON DELETE CASCADE
@@ -25,10 +25,10 @@ CREATE TABLE `question` (
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | id | int |  | false | auto_increment | [answer](answer.md) [question_option](question_option.md) |  |  |
-| type | varchar(255) | TEXT | false |  |  |  |  |
 | qtext | varchar(255) |  | false |  |  |  |  |
 | surveyId | int |  | false |  |  | [survey](survey.md) |  |
 | required | tinyint | 0 | false |  |  |  |  |
+| type | enum('TEXT','SINGLE','MULTIPLE') |  | false |  |  |  |  |
 
 ## Constraints
 
@@ -55,10 +55,10 @@ erDiagram
 
 "question" {
   int id PK
-  varchar_255_ type
   varchar_255_ qtext
   int surveyId FK
   tinyint required
+  enum__TEXT___SINGLE___MULTIPLE__ type
 }
 "answer" {
   int id PK
@@ -69,7 +69,6 @@ erDiagram
 "question_option" {
   int id PK
   varchar_255_ text
-  int order
   int questionId FK
 }
 "survey" {

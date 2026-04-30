@@ -75,10 +75,10 @@ erDiagram
 }
 "question" {
   int id PK
-  varchar_255_ type
   varchar_255_ qtext
   int surveyId FK
   tinyint required
+  enum__TEXT___SINGLE___MULTIPLE__ type
 }
 "submission" {
   int id PK

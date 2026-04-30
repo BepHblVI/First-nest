@@ -229,12 +229,6 @@
           "extra_def": "auto_increment"
         },
         {
-          "name": "type",
-          "type": "varchar(255)",
-          "nullable": false,
-          "default": "TEXT"
-        },
-        {
           "name": "qtext",
           "type": "varchar(255)",
           "nullable": false
@@ -249,6 +243,11 @@
           "type": "tinyint",
           "nullable": false,
           "default": "0"
+        },
+        {
+          "name": "type",
+          "type": "enum('TEXT','SINGLE','MULTIPLE')",
+          "nullable": false
         }
       ],
       "indexes": [
@@ -293,7 +292,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `question` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `type` varchar(255) NOT NULL DEFAULT 'TEXT',\n  `qtext` varchar(255) NOT NULL,\n  `surveyId` int NOT NULL,\n  `required` tinyint NOT NULL DEFAULT '0',\n  PRIMARY KEY (`id`),\n  KEY `FK_a1188e0f702ab268e0982049e5c` (`surveyId`),\n  CONSTRAINT `FK_a1188e0f702ab268e0982049e5c` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `question` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `qtext` varchar(255) NOT NULL,\n  `surveyId` int NOT NULL,\n  `required` tinyint NOT NULL DEFAULT '0',\n  `type` enum('TEXT','SINGLE','MULTIPLE') NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_a1188e0f702ab268e0982049e5c` (`surveyId`),\n  CONSTRAINT `FK_a1188e0f702ab268e0982049e5c` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "question_option",
@@ -309,12 +308,6 @@
           "name": "text",
           "type": "varchar(255)",
           "nullable": false
-        },
-        {
-          "name": "order",
-          "type": "int",
-          "nullable": false,
-          "default": "0"
         },
         {
           "name": "questionId",
@@ -364,7 +357,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `question_option` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(255) NOT NULL,\n  `order` int NOT NULL DEFAULT '0',\n  `questionId` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_ba19747af180520381a117f5986` (`questionId`),\n  CONSTRAINT `FK_ba19747af180520381a117f5986` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `question_option` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(255) NOT NULL,\n  `questionId` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_ba19747af180520381a117f5986` (`questionId`),\n  CONSTRAINT `FK_ba19747af180520381a117f5986` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "submission",
