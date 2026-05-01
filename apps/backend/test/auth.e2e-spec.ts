@@ -10,10 +10,12 @@ import {
   refreshAccessToken,
   sendGqlWithCookie,
 } from './utils/auth-client';
+import { cleanDatabase } from './utils/db-cleaner';
 
 describe('Auth GraphQL API (e2e)', () => {
   let app: INestApplication;
 
+  // ★ アプリ起動は1回だけ
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -23,23 +25,33 @@ describe('Auth GraphQL API (e2e)', () => {
     await app.init();
   });
 
+  // ★ 各テスト前にDBクリア
+  beforeEach(async () => {
+    await cleanDatabase(app);
+  });
+
   afterAll(async () => {
     if (app) await app.close();
   });
 
-  // ---------------------------
-  // signUp / login の基本確認
-  // ---------------------------
+  // ─────────────────────────────────────────
+  // ログイン
+  // ─────────────────────────────────────────
   describe('ログイン', () => {
-    const user = `loginuser_${Date.now()}`;
-    const pass = 'password123';
+    const username = 'loginuser';
+    const password = 'password123';
 
-    beforeAll(async () => {
-      await signUp(app, user, pass);
+    // ★ describe単位で必要なユーザーを再作成
+    beforeEach(async () => {
+      await signUp(app, username, password);
     });
 
     test('access_token(Body)とrefresh_token(Cookie)が発行される', async () => {
-      const { accessToken, rawSetCookie } = await login(app, user, pass);
+      const { accessToken, rawSetCookie } = await login(
+        app,
+        username,
+        password,
+      );
 
       expect(typeof accessToken).toBe('string');
       expect(accessToken.split('.')).toHaveLength(3); // JWT形式
@@ -50,7 +62,7 @@ describe('Auth GraphQL API (e2e)', () => {
     test('間違ったパスワードでログインできない', async () => {
       const res = await sendGql(
         app,
-        `mutation { login(username: "${user}", password: "wrong") { access_token } }`,
+        `mutation { login(username: "${username}", password: "wrong") { access_token } }`,
       );
       expect(res.body.errors).toBeDefined();
       expect(res.body.errors[0].message).toMatch(/パスワード|ユーザー/);
@@ -67,7 +79,7 @@ describe('Auth GraphQL API (e2e)', () => {
     test('エラーメッセージから「ユーザー存在/不存在」が判別できないこと', async () => {
       const wrongPassRes = await sendGql(
         app,
-        `mutation { login(username: "${user}", password: "wrong") { access_token } }`,
+        `mutation { login(username: "${username}", password: "wrong") { access_token } }`,
       );
       const noUserRes = await sendGql(
         app,
@@ -80,19 +92,18 @@ describe('Auth GraphQL API (e2e)', () => {
     });
   });
 
-  // ---------------------------
+  // ─────────────────────────────────────────
   // リフレッシュ機能
-  // ---------------------------
+  // ─────────────────────────────────────────
   describe('リフレッシュ機能 (refresh)', () => {
+    const username = 'refreshuser';
+    const password = 'password123';
     let validCookie: string;
-    let originalAccessToken: string;
-    const user = `refreshuser_${Date.now()}`;
-    const pass = 'password123';
 
-    beforeAll(async () => {
-      const result = await signUpAndLogin(app, user, pass);
+    // ★ 各テスト前にユーザー作成 + ログインしてトークン取得
+    beforeEach(async () => {
+      const result = await signUpAndLogin(app, username, password);
       validCookie = result.refreshCookie!;
-      originalAccessToken = result.accessToken;
     });
 
     test('有効なrefresh_token Cookieで新しいaccess_tokenを取得できる', async () => {
@@ -134,11 +145,9 @@ describe('Auth GraphQL API (e2e)', () => {
     });
 
     test('refreshで取得した新トークンで認証付きAPIにアクセスできる', async () => {
-      // 1. refresh で新しいトークンを取得
       const refreshRes = await refreshAccessToken(app, validCookie);
       const newToken = refreshRes.body.data.refresh.access_token;
 
-      // 2. 新トークンで認証必須APIを叩く
       const res = await sendGql(app, `query { getSurvey { id } }`, newToken);
       expect(res.body.errors).toBeUndefined();
       expect(Array.isArray(res.body.data?.getSurvey)).toBe(true);
@@ -156,7 +165,7 @@ describe('Auth GraphQL API (e2e)', () => {
 
       expect(payload.sub).toBeDefined();
       expect(typeof payload.sub).toBe('number');
-      expect(payload.username).toBe(user);
+      expect(payload.username).toBe(username);
       expect(payload.exp).toBeDefined(); // 有効期限が設定されている
     });
 
@@ -185,9 +194,9 @@ describe('Auth GraphQL API (e2e)', () => {
     });
   });
 
-  // ---------------------------
+  // ─────────────────────────────────────────
   // アクセストークン検証
-  // ---------------------------
+  // ─────────────────────────────────────────
   describe('access_tokenの検証', () => {
     test('access_tokenなしで認証必須APIにアクセスするとエラー', async () => {
       const res = await sendGql(app, `query { getSurvey { id } }`);
@@ -204,18 +213,23 @@ describe('Auth GraphQL API (e2e)', () => {
     });
   });
 
-  // ---------------------------
-  // signUp の検証
-  // ---------------------------
+  // ─────────────────────────────────────────
+  // サインアップ
+  // ─────────────────────────────────────────
   describe('signUp', () => {
     test('同じユーザー名で2回登録するとエラー', async () => {
-      const username = `dupuser_${Date.now()}`;
+      const username = 'dupuser';
       const res1 = await signUp(app, username, 'pass1234');
       expect(res1.body.errors).toBeUndefined();
 
       const res2 = await signUp(app, username, 'pass5678');
       expect(res2.body.errors).toBeDefined();
       expect(res2.body.errors[0].message).toMatch(/既に使用|重複/);
+    });
+
+    test('正常な情報でユーザー登録できる', async () => {
+      const res = await signUp(app, 'newuser', 'password123');
+      expect(res.body.errors).toBeUndefined();
     });
   });
 });

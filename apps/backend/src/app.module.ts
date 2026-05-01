@@ -14,24 +14,29 @@ import cookieParser = require('cookie-parser');
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: join(__dirname, '../../../.env'),
+      envFilePath:
+        process.env.NODE_ENV === 'test'
+          ? join(__dirname, '../../../.env.test')
+          : join(__dirname, '../../../.env'),
       isGlobal: true, // アプリ全体でどこからでも使えるようにする
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-        autoLoadEntities: true,
-        synchronize: false,
-        migrationsRun: true, // 🚀 起動時に未実行のマイグレーションを自動実行
-        migrations: [join(__dirname, 'migrations/*{.ts,.js}')], // マイグレーションファイルの場所
-        logging: false,
-      }),
+      useFactory: (configService: ConfigService) => {
+        return {
+          type: 'mysql',
+          host: configService.get<string>('DB_HOST'),
+          port: configService.get<number>('DB_PORT'),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_DATABASE'),
+          autoLoadEntities: true,
+          synchronize: false,
+          migrationsRun: true,
+          migrations: [join(__dirname, 'migrations/*{.ts,.js}')],
+          logging: false,
+        };
+      },
       inject: [ConfigService],
     }),
 

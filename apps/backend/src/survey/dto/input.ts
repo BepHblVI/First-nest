@@ -3,12 +3,13 @@ import {
   IsString,
   IsNotEmpty,
   IsEnum,
-  IsIn,
   IsArray,
   ValidateNested,
   ArrayMinSize,
   IsInt,
   IsBoolean,
+  ValidateIf,
+  ArrayNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { SurveyAuthType } from '../models/survey.model';
@@ -32,6 +33,11 @@ export class QuestionInput {
   required!: boolean;
 
   @Field(() => [String], { nullable: true })
+  @ValidateIf((o: QuestionInput) => o.type !== QuestionType.TEXT)
+  @IsArray({ message: '選択肢は配列で指定してください' })
+  @ArrayNotEmpty({ message: '選択式の質問には選択肢が必須です' })
+  @IsString({ each: true, message: '選択肢は文字列で指定してください' })
+  @IsNotEmpty({ each: true, message: '選択肢に空の項目があります' })
   options?: string[];
 }
 
