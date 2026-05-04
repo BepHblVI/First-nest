@@ -42,7 +42,8 @@ import cookieParser = require('cookie-parser');
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // スキーマを自動生成
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      sortSchema: true,
       context: ({ req, res }) => ({ req, res }),
       validationRules: [depthLimit(5)],
       subscriptions: {

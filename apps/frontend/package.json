@@ -10,7 +10,8 @@
     "lint": "eslint --max-warnings 0",
     "check-types": "next typegen && tsc --noEmit",
     "codegen": "graphql-codegen",
-    "codegen:watch": "graphql-codegen --watch"
+    "codegen:watch": "graphql-codegen --watch",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",

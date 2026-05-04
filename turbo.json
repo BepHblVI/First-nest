@@ -28,8 +28,12 @@
       "cache": false
     },
     "codegen": {
-      "cache": false,
+      "dependsOn": ["backend#build"],
+      "inputs": ["../backend/src/schema.gql", "src/**/*.{ts,tsx,graphql}", "codegen.ts"],
       "outputs": ["src/gql/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["codegen"]
     }
   }
 }

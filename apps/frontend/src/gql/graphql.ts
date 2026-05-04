@@ -161,7 +161,6 @@ export type QuestionInput = {
 export type QuestionOption = {
   __typename?: 'QuestionOption';
   id: Scalars['Int']['output'];
-  order: Scalars['Int']['output'];
   question: Question;
   text: Scalars['String']['output'];
 };
