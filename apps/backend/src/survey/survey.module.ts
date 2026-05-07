@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { SurveyService } from './survey.service';
 import { SurveyResolver } from './survey.resolver';
+import { SurveyResultService } from './survey-result.service';
+import { AnswerValidator } from './validators/answer.validator';
 
 import { Survey } from './models/survey.model';
 import { Question } from './models/question.model';
@@ -22,6 +24,11 @@ import { SurveyToken } from './models/survey-token.model';
       SurveyToken,
     ]),
   ],
-  providers: [SurveyService, SurveyResolver],
+  providers: [
+    SurveyService,
+    SurveyResolver,
+    SurveyResultService,
+    AnswerValidator,
+  ],
 })
 export class SurveyModule {}

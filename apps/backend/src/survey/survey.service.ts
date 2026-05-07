@@ -1,444 +1,197 @@
-// apps/backend/src/practice/practice.service.ts
 import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
-import { DataSource, Transaction } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { DeepPartial } from 'typeorm';
-import { Answer } from './models/answer.model';
 import { Survey, SurveyAuthType } from './models/survey.model';
-import { User } from '../auth/user.model';
 import { Submission } from './models/submission.model';
 import { SurveyToken } from './models/survey-token.model';
-import { SurveyResult } from './dto/result.output';
+import { User } from '../auth/user.model';
 import {
   CreateSurveyInput,
-  SubmitSurveyAnswerInput,
   EditSurveyInput,
-  AnswerInputType,
-} from './dto/input';
-import { Question } from './models/question.model';
+  SubmitSurveyAnswerInput,
+} from './dto/inputs';
+import { AnswerValidator } from './validators/answer.validator';
+import { buildTokenEntities, mapQuestionInputs } from './helpers/survey-mapper';
+
+const FULL_SURVEY_RELATIONS = [
+  'owner',
+  'questions',
+  'questions.options',
+  'tokens',
+  'submissions',
+];
 
 @Injectable()
 export class SurveyService {
   constructor(
     @InjectRepository(Survey)
     private surveyRepo: Repository<Survey>,
-    @InjectRepository(Submission)
-    private submitRepo: Repository<Submission>,
-    @InjectRepository(Answer)
-    private answerRepo: Repository<Answer>,
     private dataSource: DataSource,
+    private validator: AnswerValidator,
   ) {}
 
-  // 1. 作成したものを取得
   async getData(user: User): Promise<Survey[]> {
-    return await this.surveyRepo.find({
+    return this.surveyRepo.find({
       where: { owner: { id: user.id } },
-      relations: [
-        'owner',
-        'questions',
-        'questions.options',
-        'tokens',
-        'submissions',
-      ],
+      relations: FULL_SURVEY_RELATIONS,
     });
   }
 
-  // 2. アンケート作成
-  async createData(
-    { title, questions, published, auth, tokens }: CreateSurveyInput,
-    user: User,
-  ): Promise<Survey> {
-    const tokenEntities =
-      auth === SurveyAuthType.PRIVATE && tokens > 0
-        ? Array.from({ length: tokens }).map(() => ({}))
-        : [];
+  async createData(input: CreateSurveyInput, user: User): Promise<Survey> {
     const newSurvey = this.surveyRepo.create({
-      title: title,
+      title: input.title,
       owner: { id: user.id },
-      questions: questions.map((q) => ({
-        qtext: q.qtext,
-        type: q.type,
-        required: q.required,
-        options:
-          q.options?.map((t, index) => ({ text: t, order: index })) || [],
-      })),
-      published: published,
-      auth: auth,
-      tokens: tokenEntities,
+      questions: mapQuestionInputs(input.questions),
+      published: input.published,
+      auth: input.auth,
+      tokens: buildTokenEntities(input.auth, input.tokens),
     });
-
-    return await this.surveyRepo.save(newSurvey);
+    return this.surveyRepo.save(newSurvey);
   }
 
-  async editData(
-    { id, title, questions, auth, tokens }: EditSurveyInput,
-    user: User,
-  ): Promise<Survey> {
-    return await this.dataSource.transaction(async (manager) => {
-      const survey = await manager.findOne(Survey, {
-        where: { id: id },
-        relations: [
-          'owner',
-          'questions',
-          'questions.options',
-          'tokens',
-          'submissions',
-        ],
-      });
+  async editData(input: EditSurveyInput, user: User): Promise<Survey> {
+    return this.dataSource.transaction(async (manager) => {
+      const survey = await this.findOwnedSurveyOrThrow(
+        manager,
+        input.id,
+        user,
+        FULL_SURVEY_RELATIONS,
+      );
 
-      if (!survey) {
-        throw new NotFoundException('アンケートが見つかりません');
-      }
-
-      if (survey.owner.id !== user.id) {
-        throw new ForbiddenException(
-          '他人のアンケートを操作する権限がありません',
-        );
-      }
       if (survey.submissions?.length) {
         throw new ForbiddenException(
           'すでに回答されているアンケートは編集できません',
         );
       }
-      await manager.remove(survey.questions); //質問を消した場合回答も消します
-      !!survey.tokens.length && (await manager.remove(survey.tokens)); //tokensが空の場合は[]になるようにしています
 
-      const tokenEntities =
-        auth === SurveyAuthType.PRIVATE && tokens > 0
-          ? Array.from({ length: tokens }).map(() => ({}))
-          : [];
+      // 既存の質問・トークンは全て差し替え
+      await manager.remove(survey.questions);
+      if (survey.tokens.length) {
+        await manager.remove(survey.tokens);
+      }
 
-      const editedSurvey = manager.create(Survey, {
-        id: id,
-        title: title,
+      const edited = manager.create(Survey, {
+        id: input.id,
+        title: input.title,
         owner: { id: user.id },
-        questions: questions.map((q) => ({
-          qtext: q.qtext,
-          type: q.type,
-          required: q.required,
-          options:
-            q.options?.map((t, index) => ({ text: t, order: index })) || [],
-        })), //公開設定だけは別関数
-        auth: auth,
-        tokens: tokenEntities,
+        questions: mapQuestionInputs(input.questions),
+        auth: input.auth,
+        tokens: buildTokenEntities(input.auth, input.tokens),
       });
-      return await manager.save(Survey, editedSurvey);
+      return manager.save(Survey, edited);
     });
   }
 
-  async deleteData(id: number, currentUser: User) {
-    const survey = await this.surveyRepo.findOne({
-      where: { id: id },
-      relations: ['owner'],
-    });
-    if (!survey) {
-      throw new NotFoundException('アンケートが見つかりません');
-    }
-    if (survey.owner.id !== currentUser.id) {
-      throw new ForbiddenException(
-        '他人のアンケートを操作する権限がありません',
-      );
-    }
+  async deleteData(id: number, user: User): Promise<boolean> {
+    await this.findOwnedSurveyOrThrow(this.surveyRepo.manager, id, user);
     await this.surveyRepo.delete(id);
     return true;
   }
 
-  async togglePublished(id: number, currentUser: User, published: boolean) {
-    const survey = await this.surveyRepo.findOne({
-      where: { id: id },
-      relations: ['owner'],
-    });
-    if (!survey) {
-      throw new NotFoundException('アンケートが見つかりません');
-    }
-    if (survey.owner.id !== currentUser.id) {
-      throw new ForbiddenException(
-        '他人のアンケートを操作する権限がありません',
-      );
-    }
+  async togglePublished(
+    id: number,
+    user: User,
+    published: boolean,
+  ): Promise<Survey> {
+    const survey = await this.findOwnedSurveyOrThrow(
+      this.surveyRepo.manager,
+      id,
+      user,
+    );
     survey.published = published;
-    return await this.surveyRepo.save(survey);
+    return this.surveyRepo.save(survey);
   }
 
-  async submitAnswer({
-    surveyId,
-    answers,
-    token,
-    respondentId,
-  }: SubmitSurveyAnswerInput): Promise<Submission> {
-    return await this.dataSource.transaction(async (manager) => {
+  async submitAnswer(input: SubmitSurveyAnswerInput): Promise<Submission> {
+    return this.dataSource.transaction(async (manager) => {
       const survey = await manager.findOne(Survey, {
-        where: { id: surveyId },
+        where: { id: input.surveyId },
         relations: ['questions', 'questions.options'],
       });
-      if (!survey) throw new NotFoundException('アンケートが見つかりません');
-      if (!survey.published)
+      if (!survey) {
+        throw new NotFoundException('アンケートが見つかりません');
+      }
+      if (!survey.published) {
         throw new ForbiddenException('このアンケートは非公開です');
+      }
 
       if (survey.auth === SurveyAuthType.PRIVATE) {
-        if (!token)
-          throw new ForbiddenException(
-            'このアンケートへの回答権限がありません',
-          );
-        const updateResult = await manager.update(
-          SurveyToken,
-          {
-            token: token,
-            survey: surveyId,
-            isUsed: false,
-          },
-          {
-            isUsed: true,
-          },
-        );
-        if (updateResult.affected === 0) {
-          throw new ForbiddenException(
-            '無効なトークン、またはすでに回答済みです',
-          );
-        }
+        await this.consumeToken(manager, input.surveyId, input.token);
       }
-      this.validateAnswers(survey.questions, answers);
-      const newSubmission = manager.create(Submission, {
-        survey: { id: surveyId },
-        answers: answers.map(
-          (ans): DeepPartial<Answer> => ({
-            question: { id: ans.questionId },
-            text: ans.text ?? undefined,
-            selectedOptions: ans.selectionIds?.map((id) => ({ id })) || [],
-          }),
-        ),
-        respondentId: respondentId,
-      });
 
-      return await manager.save(Submission, newSubmission);
+      this.validator.validate(survey.questions, input.answers);
+
+      const newSubmission = manager.create(Submission, {
+        survey: { id: input.surveyId },
+        answers: input.answers.map((ans) => ({
+          question: { id: ans.questionId },
+          text: ans.text ?? undefined,
+          selectedOptions: ans.selectionIds?.map((id) => ({ id })) ?? [],
+        })),
+        respondentId: input.respondentId,
+      });
+      return manager.save(Submission, newSubmission);
     });
   }
 
   async getSurveyByShareId(shareId: string): Promise<Survey> {
     const survey = await this.surveyRepo.findOne({
-      where: { shareId: shareId },
+      where: { shareId },
       relations: ['questions', 'owner', 'questions.options'],
     });
-
     if (!survey) {
       throw new NotFoundException('アンケートが見つかりません');
     }
-
     if (!survey.published) {
       throw new ForbiddenException('このアンケートは非公開です');
     }
     return survey;
   }
 
-  async getResults(shareId: string, currentUser: User): Promise<SurveyResult> {
-    const survey = await this.surveyRepo.findOne({
-      where: { shareId: shareId },
-      relations: ['questions', 'questions.options', 'owner'],
-    });
+  // ── private helpers ─────────────────────────────────────
 
+  /** ID指定でアンケートを取得しつつ「存在チェック+所有者チェック」を行う */
+  private async findOwnedSurveyOrThrow(
+    manager: EntityManager,
+    id: number,
+    user: User,
+    relations: string[] = ['owner'],
+  ): Promise<Survey> {
+    const survey = await manager.findOne(Survey, {
+      where: { id },
+      relations,
+    });
     if (!survey) {
       throw new NotFoundException('アンケートが見つかりません');
     }
-    if (survey.owner.id !== currentUser.id) {
+    if (survey.owner.id !== user.id) {
       throw new ForbiddenException(
         '他人のアンケートを操作する権限がありません',
       );
     }
-
-    const totalSubmissions = await this.submitRepo.count({
-      where: { survey: { id: survey.id } },
-    });
-
-    const rawQuestionsAnswerCounts = await this.answerRepo
-      .createQueryBuilder('answer')
-      .innerJoin('answer.question', 'question') // 中間テーブルを結合
-      .select('question.id', 'questionId')
-      .addSelect('COUNT(answer.id)', 'count')
-      .where('question.surveyId = :sId', { sId: survey.id })
-      .groupBy('question.id')
-      .getRawMany();
-
-    const rawOptionCounts = await this.answerRepo
-      .createQueryBuilder('answer')
-      .innerJoin('answer.selectedOptions', 'option') // 中間テーブルを結合
-      .select('option.id', 'optionId') // 選択肢IDを取得
-      .innerJoin('answer.question', 'question') // 中間テーブルを結合
-      .addSelect('COUNT(answer.id)', 'count') // その選択肢が含まれる回答数をカウント
-      .where('question.surveyId = :sId', { sId: survey.id }) // 現在の設問に絞る
-      .groupBy('option.id') // 選択肢ごとにまとめる
-      .getRawMany(); // 生データとして取得
-
-    const questionResults = survey.questions.map((question) => {
-      // この設問に対する回答総数
-      const totalAnswers = Number(
-        rawQuestionsAnswerCounts.find((q) => q.questionId === question.id)
-          ?.count ?? 0,
-      );
-      const optionsResults =
-        question.options?.map((opt) => {
-          const found = rawOptionCounts.find((r) => r.optionId === opt.id);
-
-          const count = found ? Number(found.count) : 0;
-          const percentage =
-            totalAnswers > 0 ? (count / totalAnswers) * 100 : 0;
-
-          return {
-            optionId: opt.id,
-            text: opt.text,
-            count: count,
-            percentage: percentage,
-          };
-        }) || [];
-
-      return {
-        questionId: question.id,
-        qtext: question.qtext,
-        type: question.type,
-        totalAnswersForThisQuestion: totalAnswers,
-        options: optionsResults,
-      };
-    });
-
-    return {
-      surveyId: survey.id,
-      title: survey.title,
-      totalSubmissions,
-      questions: questionResults,
-    };
+    return survey;
   }
 
-  private validateAnswers(
-    questions: Question[],
-    answers: AnswerInputType[],
-  ): void {
-    // 質問IDをキーにしたMapを作る(高速ルックアップ用)
-    const questionMap = new Map(questions.map((q) => [q.id, q]));
-
-    // 各回答が有効な質問IDを参照しているか
-    for (const ans of answers) {
-      if (!questionMap.has(ans.questionId)) {
-        throw new BadRequestException(`存在しない質問ID: ${ans.questionId}`);
-      }
+  /** トークンを1件「使用済み」にマークする(原子的更新) */
+  private async consumeToken(
+    manager: EntityManager,
+    surveyId: number,
+    token: string | undefined,
+  ): Promise<void> {
+    if (!token) {
+      throw new ForbiddenException('このアンケートへの回答権限がありません');
     }
-
-    // 各質問について検証
-    for (const question of questions) {
-      const answer = answers.find((a) => a.questionId === question.id);
-
-      switch (question.type) {
-        case 'TEXT':
-          this.validateTextAnswer(question, answer);
-          break;
-        case 'SINGLE':
-          this.validateSingleAnswer(question, answer);
-          break;
-        case 'MULTIPLE':
-          this.validateMultipleAnswer(question, answer);
-          break;
-        default:
-          throw new BadRequestException(`不正な質問タイプ: ${question.type}`);
-      }
-    }
-  }
-
-  private validateTextAnswer(
-    question: Question,
-    answer: AnswerInputType | undefined,
-  ): void {
-    // 必須チェック
-    if (question.required) {
-      if (!answer?.text || answer.text.trim() === '') {
-        throw new BadRequestException(
-          `必須質問「${question.qtext}」に回答してください`,
-        );
-      }
-    }
-
-    // テキスト質問なのに選択肢が送られている → 無視 or エラー
-    if (answer?.selectionIds?.length) {
-      throw new BadRequestException(
-        `「${question.qtext}」はテキスト質問です。選択肢は送らないでください`,
-      );
-    }
-  }
-
-  private validateSingleAnswer(
-    question: Question,
-    answer: AnswerInputType | undefined,
-  ): void {
-    // 必須チェック
-    if (question.required && !answer?.selectionIds?.length) {
-      throw new BadRequestException(
-        `必須質問「${question.qtext}」を選択してください`,
-      );
-    }
-
-    if (answer?.selectionIds?.length) {
-      // SINGLE は1つだけ
-      if (answer.selectionIds.length > 1) {
-        throw new BadRequestException(
-          `「${question.qtext}」は1つだけ選択してください`,
-        );
-      }
-
-      // 有効な選択肢か?
-      this.validateSelectionIds(question, answer.selectionIds);
-    }
-
-    // text は無視 or エラー
-    if (answer?.text) {
-      throw new BadRequestException(`「${question.qtext}」は選択式です`);
-    }
-  }
-
-  private validateMultipleAnswer(
-    question: Question,
-    answer: AnswerInputType | undefined,
-  ): void {
-    // 必須チェック
-    if (question.required && !answer?.selectionIds?.length) {
-      throw new BadRequestException(
-        `必須質問「${question.qtext}」を1つ以上選択してください`,
-      );
-    }
-
-    if (answer?.selectionIds?.length) {
-      // 重複チェック
-      const uniqueIds = new Set(answer.selectionIds);
-      if (uniqueIds.size !== answer.selectionIds.length) {
-        throw new BadRequestException(
-          `「${question.qtext}」で同じ選択肢を重複選択しています`,
-        );
-      }
-
-      // 有効な選択肢か?
-      this.validateSelectionIds(question, answer.selectionIds);
-    }
-
-    // text は無視 or エラー
-    if (answer?.text) {
-      throw new BadRequestException(`「${question.qtext}」は選択式です`);
-    }
-  }
-
-  private validateSelectionIds(
-    question: Question,
-    selectionIds: number[],
-  ): void {
-    const validOptionIds = new Set(question.options?.map((o) => o.id) ?? []);
-
-    for (const id of selectionIds) {
-      if (!validOptionIds.has(id)) {
-        throw new BadRequestException(
-          `「${question.qtext}」に存在しない選択肢が指定されています`,
-        );
-      }
+    const result = await manager.update(
+      SurveyToken,
+      { token, survey: surveyId, isUsed: false },
+      { isUsed: true },
+    );
+    if (result.affected === 0) {
+      throw new ForbiddenException('無効なトークン、またはすでに回答済みです');
     }
   }
 }

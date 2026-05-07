@@ -23,6 +23,12 @@ services:
     tmpfs:
       - /var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-p${MYSQL_ROOT_PASSWORD}']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
 
 volumes:
   mysql_data:

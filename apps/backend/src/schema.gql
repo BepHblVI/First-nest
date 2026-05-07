@@ -2,19 +2,51 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type User {
-  id: ID!
-  username: String!
-  surveys: [Survey!]!
+"""回答"""
+type Answer {
+  id: Int!
+  question: Question!
+
+  """選ばれた選択肢配列"""
+  selectedOptions: [QuestionOption!]
+  submission: Submission!
+  text: String
 }
 
-"""提出一覧"""
-type Submission {
-  id: Int!
-  submittedAt: DateTime!
-  survey: Survey!
-  answers: [Answer!]!
-  respondentId: String
+"""1問分の回答の入力値"""
+input AnswerInput {
+  """回答対象の質問ID"""
+  questionId: Int!
+
+  """選択した選択肢IDの配列(SINGLE/MULTIPLE タイプのときのみ使用)"""
+  selectionIds: [Int!]
+
+  """自由記述の回答テキスト(TEXTタイプの質問のときのみ使用)"""
+  text: String
+}
+
+type CorrelationResult {
+  coOccurrenceCount: Int!
+  option1Id: Int!
+  option2Id: Int!
+}
+
+"""アンケート作成の入力値"""
+input CreateSurveyInput {
+  """アクセス権限(PUBLIC: 誰でも回答可 / PRIVATE: トークン保有者のみ)"""
+  auth: SurveyAuthType = PUBLIC
+
+  """公開フラグ(true: 即時公開 / false: 下書き保存)"""
+  published: Boolean = false
+
+  """アンケートに含める設問のリスト(最低1問)"""
+  questions: [QuestionInput!]!
+
+  """アンケートのタイトル"""
+  title: String!
+
+  """生成する回答用トークン数(PRIVATE時のみ有効、0以上)"""
+  tokens: Int = 0
 }
 
 """
@@ -22,132 +54,44 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-"""アンケート回答用トークン"""
-type SurveyToken {
-  token: String!
-  isUsed: Boolean!
-  survey: Survey!
-  createdAt: DateTime!
-  expiredAt: DateTime!
-}
+"""アンケート編集の入力値。回答が1件以上ある場合は編集不可となる"""
+input EditSurveyInput {
+  """アクセス権限(PUBLIC: 誰でも回答可 / PRIVATE: トークン保有者のみ)"""
+  auth: SurveyAuthType = PUBLIC
 
-"""アンケート本体"""
-type Survey {
-  """アンケートID"""
+  """編集対象のアンケートID"""
   id: Int!
 
-  """アンケートURL識別子"""
-  shareId: String!
+  """更新後の設問リスト。既存の質問はすべて差し替えられる"""
+  questions: [QuestionInput!]!
 
-  """アンケートタイトル"""
+  """アンケートのタイトル"""
   title: String!
 
-  """アンケート作成者"""
-  owner: User!
-
-  """設問"""
-  questions: [Question!]!
-
-  """アンケート公開状態"""
-  published: Boolean!
-
-  """アンケートのセキュリティ"""
-  auth: SurveyAuthType!
-
-  """アンケート作成日時"""
-  createdAt: DateTime!
-
-  """アンケート更新日時"""
-  updatedAt: DateTime!
-
-  """提出一覧"""
-  submissions: [Submission!]!
-
-  """回答用トークン（セキュリティ設定時のみ）"""
-  tokens: [SurveyToken!]!
-}
-
-"""アンケート回答時の認証方式"""
-enum SurveyAuthType {
-  """誰でも回答可能"""
-  PUBLIC
-
-  """トークンが必要"""
-  PRIVATE
-}
-
-"""選択肢"""
-type QuestionOption {
-  id: Int!
-  text: String!
-  question: Question!
-}
-
-"""アンケート設問"""
-type Question {
-  id: Int!
-  type: QuestionType!
-  required: Boolean!
-  qtext: String!
-  options: [QuestionOption!]!
-  survey: Survey!
-  answers: [Answer!]!
-}
-
-"""質問の形式"""
-enum QuestionType {
-  """テキスト入力"""
-  TEXT
-
-  """単一選択"""
-  SINGLE
-
-  """複数選択"""
-  MULTIPLE
-}
-
-"""回答"""
-type Answer {
-  id: Int!
-  text: String
-
-  """選ばれた選択肢配列"""
-  selectedOptions: [QuestionOption!]
-  question: Question!
-  submission: Submission!
-}
-
-type OptionResult {
-  optionId: Int!
-  text: String!
-  count: Int!
-  percentage: Float!
-}
-
-type QuestionResult {
-  questionId: Int!
-  qtext: String!
-  type: String!
-  totalAnswersForThisQuestion: Int!
-  options: [OptionResult!]!
-}
-
-type CorrelationResult {
-  option1Id: Int!
-  option2Id: Int!
-  coOccurrenceCount: Int!
-}
-
-type SurveyResult {
-  surveyId: Int!
-  title: String!
-  totalSubmissions: Int!
-  questions: [QuestionResult!]!
-  correlations: [CorrelationResult!]
+  """再生成する回答用トークン数(PRIVATE時のみ有効、0以上)"""
+  tokens: Int = 0
 }
 
 type LoginResponse {
   access_token: String!
+}
+
+type Mutation {
+  createSurvey(input: CreateSurveyInput!): Survey!
+  deleteSurvey(id: Int!): Boolean!
+  editSurvey(input: EditSurveyInput!): Survey!
+  login(password: String!, username: String!): LoginResponse!
+  refresh: LoginResponse!
+  signUp(password: String!, username: String!): User!
+  submitSurveyAnswer(input: SubmitSurveyAnswerInput!): Submission!
+  togglePublished(id: Int!, published: Boolean!): Survey!
+}
+
+type OptionResult {
+  count: Int!
+  optionId: Int!
+  percentage: Float!
+  text: String!
 }
 
 type Query {
@@ -156,49 +100,147 @@ type Query {
   getSurveyResults(shareId: String!): SurveyResult!
 }
 
-type Mutation {
-  createSurvey(input: CreateSurveyInput!): Survey!
-  editSurvey(input: EditSurveyInput!): Survey!
-  deleteSurvey(id: Int!): Boolean!
-  togglePublished(id: Int!, published: Boolean!): Survey!
-  submitSurveyAnswer(input: SubmitSurveyAnswerInput!): Submission!
-  signUp(username: String!, password: String!): User!
-  login(username: String!, password: String!): LoginResponse!
-  refresh: LoginResponse!
-}
-
-input CreateSurveyInput {
-  title: String!
-  questions: [QuestionInput!]!
-  published: Boolean = false
-  auth: SurveyAuthType = PUBLIC
-  tokens: Int = 0
-}
-
-input QuestionInput {
+"""アンケート設問"""
+type Question {
+  answers: [Answer!]!
+  id: Int!
+  options: [QuestionOption!]!
   qtext: String!
-  type: QuestionType = TEXT
-  required: Boolean = false
+  required: Boolean!
+  survey: Survey!
+  type: QuestionType!
+}
+
+"""アンケートの設問の入力値"""
+input QuestionInput {
+  """選択肢の一覧。SINGLE / MULTIPLE のときは必須"""
   options: [String!]
+
+  """質問文(本文)"""
+  qtext: String!
+
+  """回答必須フラグ"""
+  required: Boolean = false
+
+  """質問のタイプ(TEXT: 自由記述 / SINGLE: 単一選択 / MULTIPLE: 複数選択)"""
+  type: QuestionType = TEXT
 }
 
-input EditSurveyInput {
-  id: Float!
-  title: String!
-  questions: [QuestionInput!]!
-  auth: SurveyAuthType = PUBLIC
-  tokens: Float = 0
+"""選択肢"""
+type QuestionOption {
+  id: Int!
+  question: Question!
+  text: String!
 }
 
-input SubmitSurveyAnswerInput {
-  surveyId: Int!
-  answers: [AnswerInputType!]!
-  token: String
-  respondentId: String
-}
-
-input AnswerInputType {
+type QuestionResult {
+  options: [OptionResult!]!
+  qtext: String!
   questionId: Int!
-  text: String
-  selectionIds: [Int!]
+  totalAnswersForThisQuestion: Int!
+  type: String!
+}
+
+"""質問の形式"""
+enum QuestionType {
+  """複数選択"""
+  MULTIPLE
+
+  """単一選択"""
+  SINGLE
+
+  """テキスト入力"""
+  TEXT
+}
+
+"""提出一覧"""
+type Submission {
+  answers: [Answer!]!
+  id: Int!
+  respondentId: String
+  submittedAt: DateTime!
+  survey: Survey!
+}
+
+"""アンケートへの回答送信の入力値"""
+input SubmitSurveyAnswerInput {
+  """各設問への回答(最低1件、各回答は対応する質問IDを持つ)"""
+  answers: [AnswerInput!]!
+
+  """回答者を識別する任意のID(クライアント発行、匿名集計に利用)"""
+  respondentId: String
+
+  """回答対象のアンケートID"""
+  surveyId: Int!
+
+  """回答用トークン(PRIVATEアンケートの場合は必須)"""
+  token: String
+}
+
+"""アンケート本体"""
+type Survey {
+  """アンケートのセキュリティ"""
+  auth: SurveyAuthType!
+
+  """アンケート作成日時"""
+  createdAt: DateTime!
+
+  """アンケートID"""
+  id: Int!
+
+  """アンケート作成者"""
+  owner: User!
+
+  """アンケート公開状態"""
+  published: Boolean!
+
+  """設問"""
+  questions: [Question!]!
+
+  """アンケートURL識別子"""
+  shareId: String!
+
+  """提出一覧"""
+  submissions: [Submission!]!
+
+  """アンケートタイトル"""
+  title: String!
+
+  """回答用トークン（セキュリティ設定時のみ）"""
+  tokens: [SurveyToken!]!
+
+  """アンケート更新日時"""
+  updatedAt: DateTime!
+}
+
+"""アンケート回答時の認証方式"""
+enum SurveyAuthType {
+  """トークンが必要"""
+  PRIVATE
+
+  """誰でも回答可能"""
+  PUBLIC
+}
+
+type SurveyResult {
+  correlations: [CorrelationResult!]
+  questions: [QuestionResult!]!
+  surveyId: Int!
+  title: String!
+  totalSubmissions: Int!
+}
+
+"""アンケート回答用トークン"""
+type SurveyToken {
+  createdAt: DateTime!
+  expiredAt: DateTime!
+  isUsed: Boolean!
+  survey: Survey!
+  token: String!
+}
+
+type User {
+  id: ID!
+  surveys: [Survey!]!
+  username: String!
 }

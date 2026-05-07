@@ -18,7 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
-    "db:test:up": "docker compose -f ../../docker-compose.yml --env-file ../../.env.test up -d db_test",
+    "db:test:up": "docker compose -f ../../docker-compose.yml --env-file ../../.env.test up -d --wait db_test",
     "db:test:down": "docker compose -f ../../docker-compose.yml down db_test",
     "pretest:e2e": "npm run db:test:up",
     "typeorm": "ts-node --project tsconfig.migration.json -r tsconfig-paths/register ../../node_modules/typeorm/cli.js",

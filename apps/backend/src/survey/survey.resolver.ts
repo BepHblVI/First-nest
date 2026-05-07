@@ -1,6 +1,7 @@
 // apps/backend/src/practice/practice.resolver.ts
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { SurveyService } from './survey.service';
+import { SurveyResultService } from './survey-result.service';
 import { Survey } from './models/survey.model';
 import { Submission } from './models/submission.model';
 import { SurveyResult } from './dto/result.output';
@@ -8,18 +9,20 @@ import {
   CreateSurveyInput,
   SubmitSurveyAnswerInput,
   EditSurveyInput,
-} from './dto/input';
+} from './dto/inputs';
 
 import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { SurveyAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
-import { publish } from 'rxjs';
 
 @Resolver(() => Survey)
 @UseInterceptors(LoggingInterceptor)
 export class SurveyResolver {
-  constructor(private readonly surveyService: SurveyService) {}
+  constructor(
+    private readonly surveyService: SurveyService,
+    private readonly surveyResultService: SurveyResultService,
+  ) {}
 
   @Query(() => [Survey])
   @UseGuards(SurveyAuthGuard)
@@ -82,6 +85,6 @@ export class SurveyResolver {
     @Args('shareId') shareId: string,
     @CurrentUser() currentUser: any,
   ): Promise<SurveyResult> {
-    return this.surveyService.getResults(shareId, currentUser);
+    return this.surveyResultService.getResults(shareId, currentUser);
   }
 }
