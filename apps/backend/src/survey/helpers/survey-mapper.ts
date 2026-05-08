@@ -3,10 +3,6 @@ import { Question } from '../models/question.model';
 import { SurveyAuthType } from '../models/survey.model';
 import { QuestionInput } from '../dto/inputs';
 
-/**
- * 招待トークンのエンティティを必要数生成する。
- * PRIVATE かつ tokens > 0 のときのみ生成、それ以外は空配列。
- */
 export function buildTokenEntities(
   auth: SurveyAuthType,
   tokens: number,
@@ -17,15 +13,18 @@ export function buildTokenEntities(
 
 /**
  * Inputから保存用のQuestion形に変換する。
- * 選択肢は配列のindexをorderとして付与する。
+ * 配列のindexをそのまま order として付与する。
+ * options も同様に index で order を付ける。
  */
 export function mapQuestionInputs(
   questions: QuestionInput[],
 ): DeepPartial<Question>[] {
-  return questions.map((q) => ({
+  return questions.map((q, order) => ({
+    // ← 第2引数で index を受け取る
     qtext: q.qtext,
     type: q.type,
     required: q.required,
+    order, // ← これを追加！
     options: q.options?.map((text, order) => ({ text, order })) ?? [],
   }));
 }

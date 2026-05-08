@@ -1,5 +1,13 @@
 // apps/backend/src/practice/practice.resolver.ts
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  Int,
+  ResolveField, // ← 追加
+  Parent, // ← 追加
+} from '@nestjs/graphql';
 import { SurveyService } from './survey.service';
 import { SurveyResultService } from './survey-result.service';
 import { Survey } from './models/survey.model';
@@ -24,12 +32,28 @@ export class SurveyResolver {
     private readonly surveyResultService: SurveyResultService,
   ) {}
 
+  // ─── Queries ───────────────────────────────
   @Query(() => [Survey])
   @UseGuards(SurveyAuthGuard)
   async getSurvey(@CurrentUser() currentUser: any): Promise<Survey[]> {
     return this.surveyService.getData(currentUser);
   }
 
+  @Query(() => Survey)
+  async getSurveyForAnswer(@Args('shareId') shareId: string): Promise<Survey> {
+    return this.surveyService.getSurveyByShareId(shareId);
+  }
+
+  @Query(() => SurveyResult)
+  @UseGuards(SurveyAuthGuard)
+  async getSurveyResults(
+    @Args('shareId') shareId: string,
+    @CurrentUser() currentUser: any,
+  ): Promise<SurveyResult> {
+    return this.surveyResultService.getResults(shareId, currentUser);
+  }
+
+  // ─── Mutations ─────────────────────────────
   @Mutation(() => Survey)
   @UseGuards(SurveyAuthGuard)
   async createSurvey(
@@ -54,7 +78,7 @@ export class SurveyResolver {
     @Args('id', { type: () => Int }) id: number,
     @CurrentUser() currentUser: any,
   ) {
-    return await this.surveyService.deleteData(id, currentUser);
+    return this.surveyService.deleteData(id, currentUser);
   }
 
   @Mutation(() => Survey)
@@ -64,12 +88,7 @@ export class SurveyResolver {
     @CurrentUser() currentUser: any,
     @Args('published') published: boolean,
   ) {
-    return await this.surveyService.togglePublished(id, currentUser, published);
-  }
-
-  @Query(() => Survey)
-  async getSurveyForAnswer(@Args('shareId') shareId: string): Promise<Survey> {
-    return this.surveyService.getSurveyByShareId(shareId);
+    return this.surveyService.togglePublished(id, currentUser, published);
   }
 
   @Mutation(() => Submission)
@@ -79,12 +98,14 @@ export class SurveyResolver {
     return this.surveyService.submitAnswer(input);
   }
 
-  @Query(() => SurveyResult)
-  @UseGuards(SurveyAuthGuard)
-  async getSurveyResults(
-    @Args('shareId') shareId: string,
-    @CurrentUser() currentUser: any,
-  ): Promise<SurveyResult> {
-    return this.surveyResultService.getResults(shareId, currentUser);
+  // ─── ResolveField ──────────────────────────
+  /**
+   * 受信した回答件数。
+   * Survey.submissions リレーションは内部用のため非公開だが、
+   * 件数だけは集計値としてフロントに公開する。
+   */
+  @ResolveField(() => Int, { description: '受信した回答件数' })
+  async submissionCount(@Parent() survey: Survey): Promise<number> {
+    return this.surveyResultService.countSubmissions(survey.id);
   }
 }

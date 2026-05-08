@@ -18,20 +18,13 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
 };
 
-/** 回答 */
-export type Answer = {
-  __typename?: 'Answer';
-  id: Scalars['Int']['output'];
-  question: Question;
-  /** 選ばれた選択肢配列 */
-  selectedOptions?: Maybe<Array<QuestionOption>>;
-  submission: Submission;
-  text?: Maybe<Scalars['String']['output']>;
-};
-
-export type AnswerInputType = {
+/** 1問分の回答の入力値 */
+export type AnswerInput = {
+  /** 回答対象の質問ID */
   questionId: Scalars['Int']['input'];
+  /** 選択した選択肢IDの配列(SINGLE/MULTIPLE タイプのときのみ使用) */
   selectionIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+  /** 自由記述の回答テキスト(TEXTタイプの質問のときのみ使用) */
   text?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -42,20 +35,32 @@ export type CorrelationResult = {
   option2Id: Scalars['Int']['output'];
 };
 
+/** アンケート作成の入力値 */
 export type CreateSurveyInput = {
+  /** アクセス権限(PUBLIC: 誰でも回答可 / PRIVATE: トークン保有者のみ) */
   auth?: InputMaybe<SurveyAuthType>;
+  /** 公開フラグ(true: 即時公開 / false: 下書き保存) */
   published?: InputMaybe<Scalars['Boolean']['input']>;
+  /** アンケートに含める設問のリスト(最低1問) */
   questions: Array<QuestionInput>;
+  /** アンケートのタイトル */
   title: Scalars['String']['input'];
+  /** 生成する回答用トークン数(PRIVATE時のみ有効、0以上) */
   tokens?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** アンケート編集の入力値。回答が1件以上ある場合は編集不可となる */
 export type EditSurveyInput = {
+  /** アクセス権限(PUBLIC: 誰でも回答可 / PRIVATE: トークン保有者のみ) */
   auth?: InputMaybe<SurveyAuthType>;
-  id: Scalars['Float']['input'];
+  /** 編集対象のアンケートID */
+  id: Scalars['Int']['input'];
+  /** 更新後の設問リスト。既存の質問はすべて差し替えられる */
   questions: Array<QuestionInput>;
+  /** アンケートのタイトル */
   title: Scalars['String']['input'];
-  tokens?: InputMaybe<Scalars['Float']['input']>;
+  /** 再生成する回答用トークン数(PRIVATE時のみ有効、0以上) */
+  tokens?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type LoginResponse = {
@@ -138,30 +143,47 @@ export type QueryGetSurveyResultsArgs = {
   shareId: Scalars['String']['input'];
 };
 
-/** アンケート設問 */
+/** アンケートの設問 */
 export type Question = {
   __typename?: 'Question';
-  answers: Array<Answer>;
+  /** 設問ID(自動採番) */
   id: Scalars['Int']['output'];
+  /** 選択肢(SINGLE/MULTIPLEのときのみ要素を持つ。orderの昇順) */
   options: Array<QuestionOption>;
+  /** 同一アンケート内での表示順(0始まり、昇順) */
+  order: Scalars['Int']['output'];
+  /** 設問のテキスト(本文) */
   qtext: Scalars['String']['output'];
+  /** 回答必須フラグ */
   required: Scalars['Boolean']['output'];
+  /** この設問が属するアンケート */
   survey: Survey;
+  /** 設問の形式 */
   type: QuestionType;
 };
 
+/** アンケートの設問の入力値 */
 export type QuestionInput = {
+  /** 選択肢の一覧。SINGLE / MULTIPLE のときは必須 */
   options?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** 質問文(本文) */
   qtext: Scalars['String']['input'];
+  /** 回答必須フラグ */
   required?: InputMaybe<Scalars['Boolean']['input']>;
+  /** 質問のタイプ(TEXT: 自由記述 / SINGLE: 単一選択 / MULTIPLE: 複数選択) */
   type?: InputMaybe<QuestionType>;
 };
 
-/** 選択肢 */
+/** 選択式質問の1つの選択肢 */
 export type QuestionOption = {
   __typename?: 'QuestionOption';
+  /** 選択肢ID(自動採番) */
   id: Scalars['Int']['output'];
+  /** 同一質問内での表示順(0始まり、昇順) */
+  order: Scalars['Int']['output'];
+  /** この選択肢が属する設問 */
   question: Question;
+  /** 選択肢の表示テキスト */
   text: Scalars['String']['output'];
 };
 
@@ -176,63 +198,71 @@ export type QuestionResult = {
 
 /** 質問の形式 */
 export enum QuestionType {
-  /** 複数選択 */
+  /** 複数選択(選択肢から複数選択可) */
   Multiple = 'MULTIPLE',
-  /** 単一選択 */
+  /** 単一選択(選択肢から1つだけ) */
   Single = 'SINGLE',
-  /** テキスト入力 */
+  /** テキスト入力(自由記述) */
   Text = 'TEXT'
 }
 
-/** 提出一覧 */
+/** アンケートへの1回分の回答送信 */
 export type Submission = {
   __typename?: 'Submission';
-  answers: Array<Answer>;
+  /** 送信ID(自動採番) */
   id: Scalars['Int']['output'];
+  /** 回答者を識別する任意のID(クライアント発行、匿名集計用) */
   respondentId?: Maybe<Scalars['String']['output']>;
+  /** 送信日時 */
   submittedAt: Scalars['DateTime']['output'];
+  /** 回答対象のアンケート */
   survey: Survey;
 };
 
+/** アンケートへの回答送信の入力値 */
 export type SubmitSurveyAnswerInput = {
-  answers: Array<AnswerInputType>;
+  /** 各設問への回答(最低1件、各回答は対応する質問IDを持つ) */
+  answers: Array<AnswerInput>;
+  /** 回答者を識別する任意のID(クライアント発行、匿名集計に利用) */
   respondentId?: InputMaybe<Scalars['String']['input']>;
+  /** 回答対象のアンケートID */
   surveyId: Scalars['Int']['input'];
+  /** 回答用トークン(PRIVATEアンケートの場合は必須) */
   token?: InputMaybe<Scalars['String']['input']>;
 };
 
-/** アンケート本体 */
+/** アンケート本体(設問・回答送信・トークンの集約) */
 export type Survey = {
   __typename?: 'Survey';
-  /** アンケートのセキュリティ */
+  /** アクセス制御方式 */
   auth: SurveyAuthType;
-  /** アンケート作成日時 */
+  /** 作成日時 */
   createdAt: Scalars['DateTime']['output'];
-  /** アンケートID */
+  /** アンケートID(自動採番、内部用) */
   id: Scalars['Int']['output'];
-  /** アンケート作成者 */
+  /** アンケートの作成者・所有者 */
   owner: User;
-  /** アンケート公開状態 */
+  /** 公開状態(true: 回答受付中 / false: 下書き、回答不可) */
   published: Scalars['Boolean']['output'];
-  /** 設問 */
+  /** 設問の一覧(orderの昇順) */
   questions: Array<Question>;
-  /** アンケートURL識別子 */
+  /** URL共有用の識別子(UUID。所有者以外でもこの値で参照可) */
   shareId: Scalars['String']['output'];
-  /** 提出一覧 */
-  submissions: Array<Submission>;
-  /** アンケートタイトル */
+  /** 受信した回答件数 */
+  submissionCount: Scalars['Int']['output'];
+  /** アンケートのタイトル */
   title: Scalars['String']['output'];
-  /** 回答用トークン（セキュリティ設定時のみ） */
+  /** 招待トークン一覧(PRIVATE時のみ。所有者にのみ返すこと。loadは明示ロードのみ) */
   tokens: Array<SurveyToken>;
-  /** アンケート更新日時 */
+  /** 最終更新日時 */
   updatedAt: Scalars['DateTime']['output'];
 };
 
-/** アンケート回答時の認証方式 */
+/** アンケート回答時のアクセス制御方式 */
 export enum SurveyAuthType {
-  /** トークンが必要 */
+  /** 発行された招待トークン保有者のみ回答可能 */
   Private = 'PRIVATE',
-  /** 誰でも回答可能 */
+  /** 誰でもURLを知っていれば回答可能 */
   Public = 'PUBLIC'
 }
 
@@ -245,13 +275,16 @@ export type SurveyResult = {
   totalSubmissions: Scalars['Int']['output'];
 };
 
-/** アンケート回答用トークン */
+/** PRIVATEアンケートへの回答を許可する招待トークン */
 export type SurveyToken = {
   __typename?: 'SurveyToken';
+  /** トークン発行日時 */
   createdAt: Scalars['DateTime']['output'];
-  expiredAt: Scalars['DateTime']['output'];
+  /** 使用済みフラグ(trueは消費済み) */
   isUsed: Scalars['Boolean']['output'];
+  /** このトークンが対象とするアンケート */
   survey: Survey;
+  /** 回答用トークン値(UUID)。所有者にのみ公開すること。1回使うと無効になる */
   token: Scalars['String']['output'];
 };
 
@@ -265,7 +298,7 @@ export type User = {
 export type GetSurveysQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetSurveysQuery = { __typename?: 'Query', getSurvey: Array<{ __typename?: 'Survey', id: number, title: string, published: boolean, auth: SurveyAuthType, shareId: string, owner: { __typename?: 'User', username: string }, questions: Array<{ __typename?: 'Question', id: number, qtext: string, type: QuestionType, required: boolean, options: Array<{ __typename?: 'QuestionOption', id: number, text: string }> }>, tokens: Array<{ __typename?: 'SurveyToken', token: string, isUsed: boolean, createdAt: any }>, submissions: Array<{ __typename?: 'Submission', id: number }> }> };
+export type GetSurveysQuery = { __typename?: 'Query', getSurvey: Array<{ __typename?: 'Survey', id: number, title: string, published: boolean, auth: SurveyAuthType, shareId: string, submissionCount: number, owner: { __typename?: 'User', username: string }, questions: Array<{ __typename?: 'Question', id: number, qtext: string, type: QuestionType, required: boolean, options: Array<{ __typename?: 'QuestionOption', id: number, text: string }> }>, tokens: Array<{ __typename?: 'SurveyToken', token: string, isUsed: boolean, createdAt: any }> }> };
 
 export type CreateSurveyMutationVariables = Exact<{
   input: CreateSurveyInput;
@@ -348,9 +381,7 @@ export const GetSurveysDocument = new TypedDocumentString(`
       isUsed
       createdAt
     }
-    submissions {
-      id
-    }
+    submissionCount
   }
 }
     `) as unknown as TypedDocumentString<GetSurveysQuery, GetSurveysQueryVariables>;

@@ -35,7 +35,7 @@ export default function EditSurveyModal({ survey, onClose, onUpdated }: Props) {
   );
   const [saving, setSaving] = useState(false);
 
-  const hasSubmissions = (survey.submissions?.length ?? 0) > 0;
+  const hasSubmissions = (survey.submissionCount ?? 0) > 0;
 
   const updateQuestionText = (index: number, val: string) => {
     const updated = [...questions];

@@ -2,17 +2,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-"""回答"""
-type Answer {
-  id: Int!
-  question: Question!
-
-  """選ばれた選択肢配列"""
-  selectedOptions: [QuestionOption!]
-  submission: Submission!
-  text: String
-}
-
 """1問分の回答の入力値"""
 input AnswerInput {
   """回答対象の質問ID"""
@@ -100,14 +89,27 @@ type Query {
   getSurveyResults(shareId: String!): SurveyResult!
 }
 
-"""アンケート設問"""
+"""アンケートの設問"""
 type Question {
-  answers: [Answer!]!
+  """設問ID(自動採番)"""
   id: Int!
+
+  """選択肢(SINGLE/MULTIPLEのときのみ要素を持つ。orderの昇順)"""
   options: [QuestionOption!]!
+
+  """同一アンケート内での表示順(0始まり、昇順)"""
+  order: Int!
+
+  """設問のテキスト(本文)"""
   qtext: String!
+
+  """回答必須フラグ"""
   required: Boolean!
+
+  """この設問が属するアンケート"""
   survey: Survey!
+
+  """設問の形式"""
   type: QuestionType!
 }
 
@@ -126,10 +128,18 @@ input QuestionInput {
   type: QuestionType = TEXT
 }
 
-"""選択肢"""
+"""選択式質問の1つの選択肢"""
 type QuestionOption {
+  """選択肢ID(自動採番)"""
   id: Int!
+
+  """同一質問内での表示順(0始まり、昇順)"""
+  order: Int!
+
+  """この選択肢が属する設問"""
   question: Question!
+
+  """選択肢の表示テキスト"""
   text: String!
 }
 
@@ -143,22 +153,28 @@ type QuestionResult {
 
 """質問の形式"""
 enum QuestionType {
-  """複数選択"""
+  """複数選択(選択肢から複数選択可)"""
   MULTIPLE
 
-  """単一選択"""
+  """単一選択(選択肢から1つだけ)"""
   SINGLE
 
-  """テキスト入力"""
+  """テキスト入力(自由記述)"""
   TEXT
 }
 
-"""提出一覧"""
+"""アンケートへの1回分の回答送信"""
 type Submission {
-  answers: [Answer!]!
+  """送信ID(自動採番)"""
   id: Int!
+
+  """回答者を識別する任意のID(クライアント発行、匿名集計用)"""
   respondentId: String
+
+  """送信日時"""
   submittedAt: DateTime!
+
+  """回答対象のアンケート"""
   survey: Survey!
 }
 
@@ -177,48 +193,48 @@ input SubmitSurveyAnswerInput {
   token: String
 }
 
-"""アンケート本体"""
+"""アンケート本体(設問・回答送信・トークンの集約)"""
 type Survey {
-  """アンケートのセキュリティ"""
+  """アクセス制御方式"""
   auth: SurveyAuthType!
 
-  """アンケート作成日時"""
+  """作成日時"""
   createdAt: DateTime!
 
-  """アンケートID"""
+  """アンケートID(自動採番、内部用)"""
   id: Int!
 
-  """アンケート作成者"""
+  """アンケートの作成者・所有者"""
   owner: User!
 
-  """アンケート公開状態"""
+  """公開状態(true: 回答受付中 / false: 下書き、回答不可)"""
   published: Boolean!
 
-  """設問"""
+  """設問の一覧(orderの昇順)"""
   questions: [Question!]!
 
-  """アンケートURL識別子"""
+  """URL共有用の識別子(UUID。所有者以外でもこの値で参照可)"""
   shareId: String!
 
-  """提出一覧"""
-  submissions: [Submission!]!
+  """受信した回答件数"""
+  submissionCount: Int!
 
-  """アンケートタイトル"""
+  """アンケートのタイトル"""
   title: String!
 
-  """回答用トークン（セキュリティ設定時のみ）"""
+  """招待トークン一覧(PRIVATE時のみ。所有者にのみ返すこと。loadは明示ロードのみ)"""
   tokens: [SurveyToken!]!
 
-  """アンケート更新日時"""
+  """最終更新日時"""
   updatedAt: DateTime!
 }
 
-"""アンケート回答時の認証方式"""
+"""アンケート回答時のアクセス制御方式"""
 enum SurveyAuthType {
-  """トークンが必要"""
+  """発行された招待トークン保有者のみ回答可能"""
   PRIVATE
 
-  """誰でも回答可能"""
+  """誰でもURLを知っていれば回答可能"""
   PUBLIC
 }
 
@@ -230,12 +246,18 @@ type SurveyResult {
   totalSubmissions: Int!
 }
 
-"""アンケート回答用トークン"""
+"""PRIVATEアンケートへの回答を許可する招待トークン"""
 type SurveyToken {
+  """トークン発行日時"""
   createdAt: DateTime!
-  expiredAt: DateTime!
+
+  """使用済みフラグ(trueは消費済み)"""
   isUsed: Boolean!
+
+  """このトークンが対象とするアンケート"""
   survey: Survey!
+
+  """回答用トークン値(UUID)。所有者にのみ公開すること。1回使うと無効になる"""
   token: String!
 }
 

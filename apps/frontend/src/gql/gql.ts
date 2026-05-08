@@ -15,7 +15,7 @@ import * as types from './graphql';
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissions {\n        id\n      }\n    }\n  }\n": typeof types.GetSurveysDocument,
+    "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissionCount\n    }\n  }\n": typeof types.GetSurveysDocument,
     "\n  mutation CreateSurvey($input: CreateSurveyInput!) {\n    createSurvey(input: $input) {\n      id\n      title\n      shareId\n      auth\n      published\n      tokens {\n        token\n        isUsed\n      }\n    }\n  }\n": typeof types.CreateSurveyDocument,
     "\n  mutation DeleteSurvey($id: Int!) {\n    deleteSurvey(id: $id)\n  }\n": typeof types.DeleteSurveyDocument,
     "\n  mutation EditSurvey($input: EditSurveyInput!) {\n    editSurvey(input: $input) {\n      id\n      title\n      auth\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n": typeof types.EditSurveyDocument,
@@ -23,7 +23,7 @@ type Documents = {
     "\n  mutation TogglePublished($id: Int!, $published: Boolean!) {\n    togglePublished(id: $id, published: $published) {\n      id\n      published\n    }\n  }\n": typeof types.TogglePublishedDocument,
 };
 const documents: Documents = {
-    "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissions {\n        id\n      }\n    }\n  }\n": types.GetSurveysDocument,
+    "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissionCount\n    }\n  }\n": types.GetSurveysDocument,
     "\n  mutation CreateSurvey($input: CreateSurveyInput!) {\n    createSurvey(input: $input) {\n      id\n      title\n      shareId\n      auth\n      published\n      tokens {\n        token\n        isUsed\n      }\n    }\n  }\n": types.CreateSurveyDocument,
     "\n  mutation DeleteSurvey($id: Int!) {\n    deleteSurvey(id: $id)\n  }\n": types.DeleteSurveyDocument,
     "\n  mutation EditSurvey($input: EditSurveyInput!) {\n    editSurvey(input: $input) {\n      id\n      title\n      auth\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n": types.EditSurveyDocument,
@@ -34,7 +34,7 @@ const documents: Documents = {
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissions {\n        id\n      }\n    }\n  }\n"): typeof import('./graphql').GetSurveysDocument;
+export function graphql(source: "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissionCount\n    }\n  }\n"): typeof import('./graphql').GetSurveysDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

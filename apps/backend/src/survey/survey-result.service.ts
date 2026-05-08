@@ -101,4 +101,14 @@ export class SurveyResultService {
       questions,
     };
   }
+
+  /**
+   * 指定アンケートの回答件数を返す。
+   * 個別の回答内容は返さず件数のみ。集計表示やフロントの一覧バッジで利用する。
+   */
+  async countSubmissions(surveyId: number): Promise<number> {
+    return this.submitRepo.count({
+      where: { survey: { id: surveyId } },
+    });
+  }
 }

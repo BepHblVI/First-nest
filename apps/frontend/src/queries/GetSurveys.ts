@@ -27,9 +27,7 @@ export const GetSurveysQuery = graphql(`
         isUsed
         createdAt
       }
-      submissions {
-        id
-      }
+      submissionCount
     }
   }
 `);
