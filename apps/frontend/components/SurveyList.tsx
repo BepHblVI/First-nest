@@ -3,10 +3,9 @@ import { useRouter } from 'next/navigation';
 import { useAuthfetch } from '../utils/authfetch';
 import { TogglePublishedMutation } from '../src/queries/togglePublished';
 import { DeleteSurveyMutation } from '../src/queries/deleteSurvey';
-import type { GetSurveysQuery } from '../src/gql/graphql';
+import type { SearchSurveysQuery } from '../src/gql/graphql';
 
-// ★ 自動生成された型から Survey を抽出
-type Survey = GetSurveysQuery['getSurvey'][number];
+type Survey = SearchSurveysQuery['searchSurvey']['items'][number];
 
 type Props = {
   surveys: Survey[];

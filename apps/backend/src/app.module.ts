@@ -10,15 +10,29 @@ import { SurveyModule } from './survey/survey.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigService } from '@nestjs/config';
 import cookieParser = require('cookie-parser');
+import * as fs from 'fs';
+import * as path from 'path';
+
+function findWorkspaceRoot(start: string = __dirname): string {
+  let dir = start;
+  while (dir !== path.dirname(dir)) {
+    // turbo.json or package-lock.json などのマーカーで判定
+    if (fs.existsSync(path.join(dir, 'turbo.json'))) return dir;
+    dir = path.dirname(dir);
+  }
+  throw new Error('workspace root not found');
+}
+
+const ROOT = findWorkspaceRoot();
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath:
         process.env.NODE_ENV === 'test'
-          ? join(__dirname, '../../../.env.test')
-          : join(__dirname, '../../../.env'),
-      isGlobal: true, // アプリ全体でどこからでも使えるようにする
+          ? path.join(ROOT, '.env.test')
+          : path.join(ROOT, '.env'),
+      isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -31,7 +45,7 @@ import cookieParser = require('cookie-parser');
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
           autoLoadEntities: true,
-          synchronize: false,
+          synchronize: process.env.NODE_ENV === 'test',
           migrationsRun: true,
           migrations: [join(__dirname, 'migrations/*{.ts,.js}')],
           logging: false,

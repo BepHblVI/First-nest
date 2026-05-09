@@ -20,6 +20,7 @@ type Documents = {
     "\n  mutation DeleteSurvey($id: Int!) {\n    deleteSurvey(id: $id)\n  }\n": typeof types.DeleteSurveyDocument,
     "\n  mutation EditSurvey($input: EditSurveyInput!) {\n    editSurvey(input: $input) {\n      id\n      title\n      auth\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n": typeof types.EditSurveyDocument,
     "\n  query GetSurveyResults($shareId: String!) {\n    getSurveyResults(shareId: $shareId) {\n      surveyId\n      title\n      totalSubmissions\n      questions {\n        questionId\n        qtext\n        type\n        totalAnswersForThisQuestion\n        options {\n          optionId\n          text\n          count\n          percentage\n        }\n      }\n    }\n  }\n": typeof types.GetSurveyResultsDocument,
+    "\n  query SearchSurveys($input: SearchSurveyInput!) {\n    searchSurvey(input: $input) {\n      totalCount\n      hasNext\n      items {\n        id\n        title\n        published\n        auth\n        owner {\n          username\n        }\n        shareId\n        questions {\n          id\n          qtext\n          type\n          required\n          options {\n            id\n            text\n          }\n        }\n        tokens {\n          token\n          isUsed\n          createdAt\n        }\n        submissionCount\n      }\n    }\n  }\n": typeof types.SearchSurveysDocument,
     "\n  mutation TogglePublished($id: Int!, $published: Boolean!) {\n    togglePublished(id: $id, published: $published) {\n      id\n      published\n    }\n  }\n": typeof types.TogglePublishedDocument,
 };
 const documents: Documents = {
@@ -28,6 +29,7 @@ const documents: Documents = {
     "\n  mutation DeleteSurvey($id: Int!) {\n    deleteSurvey(id: $id)\n  }\n": types.DeleteSurveyDocument,
     "\n  mutation EditSurvey($input: EditSurveyInput!) {\n    editSurvey(input: $input) {\n      id\n      title\n      auth\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n": types.EditSurveyDocument,
     "\n  query GetSurveyResults($shareId: String!) {\n    getSurveyResults(shareId: $shareId) {\n      surveyId\n      title\n      totalSubmissions\n      questions {\n        questionId\n        qtext\n        type\n        totalAnswersForThisQuestion\n        options {\n          optionId\n          text\n          count\n          percentage\n        }\n      }\n    }\n  }\n": types.GetSurveyResultsDocument,
+    "\n  query SearchSurveys($input: SearchSurveyInput!) {\n    searchSurvey(input: $input) {\n      totalCount\n      hasNext\n      items {\n        id\n        title\n        published\n        auth\n        owner {\n          username\n        }\n        shareId\n        questions {\n          id\n          qtext\n          type\n          required\n          options {\n            id\n            text\n          }\n        }\n        tokens {\n          token\n          isUsed\n          createdAt\n        }\n        submissionCount\n      }\n    }\n  }\n": types.SearchSurveysDocument,
     "\n  mutation TogglePublished($id: Int!, $published: Boolean!) {\n    togglePublished(id: $id, published: $published) {\n      id\n      published\n    }\n  }\n": types.TogglePublishedDocument,
 };
 
@@ -51,6 +53,10 @@ export function graphql(source: "\n  mutation EditSurvey($input: EditSurveyInput
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query GetSurveyResults($shareId: String!) {\n    getSurveyResults(shareId: $shareId) {\n      surveyId\n      title\n      totalSubmissions\n      questions {\n        questionId\n        qtext\n        type\n        totalAnswersForThisQuestion\n        options {\n          optionId\n          text\n          count\n          percentage\n        }\n      }\n    }\n  }\n"): typeof import('./graphql').GetSurveyResultsDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query SearchSurveys($input: SearchSurveyInput!) {\n    searchSurvey(input: $input) {\n      totalCount\n      hasNext\n      items {\n        id\n        title\n        published\n        auth\n        owner {\n          username\n        }\n        shareId\n        questions {\n          id\n          qtext\n          type\n          required\n          options {\n            id\n            text\n          }\n        }\n        tokens {\n          token\n          isUsed\n          createdAt\n        }\n        submissionCount\n      }\n    }\n  }\n"): typeof import('./graphql').SearchSurveysDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

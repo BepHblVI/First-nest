@@ -111,3 +111,109 @@ export const submitAnswerOrThrow = async (
   );
   return data.submitSurveyAnswer;
 };
+
+interface CreateMultipleOptions {
+  count: number;
+  titlePrefix?: string;
+  authPattern?: ('PUBLIC' | 'PRIVATE')[];
+  publishedPattern?: boolean[];
+}
+
+/**
+ * テスト用に複数のアンケートをまとめて作成。
+ * 検索テストで多様なデータを用意するために使う。
+ */
+export const createMultipleTestSurveys = async (
+  app: INestApplication,
+  token: string,
+  options: CreateMultipleOptions,
+): Promise<CreatedSurvey[]> => {
+  const surveys: CreatedSurvey[] = [];
+  const prefix = options.titlePrefix ?? 'テスト';
+
+  for (let i = 0; i < options.count; i++) {
+    const auth =
+      options.authPattern?.[i % options.authPattern.length] ?? 'PUBLIC';
+    const published =
+      options.publishedPattern?.[i % options.publishedPattern.length] ?? true;
+
+    const survey = await createTestSurvey(app, token, {
+      title: `${prefix}${i + 1}`,
+      published,
+      auth,
+      tokens: auth === 'PRIVATE' ? 1 : 0,
+    });
+    surveys.push(survey);
+  }
+  return surveys;
+};
+
+const SEARCH_SURVEY_QUERY = `
+  query Search($input: SearchSurveyInput!) {
+    searchSurvey(input: $input) {
+      items {
+        id
+        title
+        published
+        auth
+        createdAt
+        submissionCount
+      }
+      totalCount
+      hasNext
+    }
+  }
+`;
+
+interface SearchInput {
+  keyword?: string;
+  scope?: 'TITLE_ONLY' | 'TITLE_AND_QUESTIONS';
+  publishStates?: ('PUBLISHED' | 'DRAFT')[];
+  authTypes?: ('PUBLIC' | 'PRIVATE')[];
+  answerStates?: ('UNANSWERED' | 'HAS_ANSWERS')[];
+  createdAt?: { from?: string; to?: string };
+  submissionCount?: { min?: number; max?: number };
+  sortBy?: 'CREATED_AT' | 'UPDATED_AT' | 'TITLE' | 'SUBMISSION_COUNT';
+  order?: 'ASC' | 'DESC';
+  limit?: number;
+  offset?: number;
+}
+
+interface SearchResult {
+  searchSurvey: {
+    items: Array<{
+      id: number;
+      title: string;
+      published: boolean;
+      auth: string;
+      createdAt: string;
+      submissionCount: number;
+    }>;
+    totalCount: number;
+    hasNext: boolean;
+  };
+}
+
+/** 検索クエリを実行(成功を期待) */
+export const searchSurvey = async (
+  app: INestApplication,
+  token: string,
+  input: SearchInput = {},
+): Promise<SearchResult['searchSurvey']> => {
+  // デフォルト値補完(scopeなど必須項目)
+  const fullInput = {
+    scope: 'TITLE_ONLY' as const,
+    sortBy: 'CREATED_AT' as const,
+    order: 'DESC' as const,
+    limit: 20,
+    offset: 0,
+    ...input,
+  };
+  const data = await sendGqlOrThrow<SearchResult>(
+    app,
+    SEARCH_SURVEY_QUERY,
+    token,
+    { input: fullInput },
+  );
+  return data.searchSurvey;
+};

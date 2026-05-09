@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SurveyService } from './survey.service';
 import { SurveyResolver } from './survey.resolver';
 import { SurveyResultService } from './survey-result.service';
+import { SurveySearchService } from './survey-search.service';
 import { AnswerValidator } from './validators/answer.validator';
 
 import { Survey } from './models/survey.model';
@@ -28,6 +29,7 @@ import { SurveyToken } from './models/survey-token.model';
     SurveyService,
     SurveyResolver,
     SurveyResultService,
+    SurveySearchService,
     AnswerValidator,
   ],
 })

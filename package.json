@@ -12,7 +12,8 @@
     "db:doc": "docker run --rm --network host --env-file .env -v $(pwd):/work -w /work ghcr.io/k1low/tbls doc --force",
     "m:gen": "turbo run m:gen --filter=backend --",
     "codegen:watch": "graphql-codegen --watch",
-    "codegen": "turbo run codegen"
+    "codegen": "turbo run codegen",
+    "e2e": "npm --prefix apps/frontend run test:e2e:full"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

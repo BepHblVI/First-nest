@@ -20,6 +20,7 @@
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
     "db:test:up": "docker compose -f ../../docker-compose.yml --env-file ../../.env.test up -d --wait db_test",
     "db:test:down": "docker compose -f ../../docker-compose.yml down db_test",
+    "db:test:reset": "docker compose -f ../../docker-compose.yml --env-file ../../.env.test rm -fsv db_test && npm run db:test:up",
     "pretest:e2e": "npm run db:test:up",
     "typeorm": "ts-node --project tsconfig.migration.json -r tsconfig-paths/register ../../node_modules/typeorm/cli.js",
     "m:gen": "sh -c 'npm run typeorm -- migration:generate -d src/data-source.ts src/migrations/$0'",

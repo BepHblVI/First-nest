@@ -6,13 +6,13 @@
   * [Query](#query)
   * [Mutation](#mutation)
   * [Objects](#objects)
-    * [Answer](#answer)
     * [CorrelationResult](#correlationresult)
     * [LoginResponse](#loginresponse)
     * [OptionResult](#optionresult)
     * [Question](#question)
     * [QuestionOption](#questionoption)
     * [QuestionResult](#questionresult)
+    * [SearchSurveyResult](#searchsurveyresult)
     * [Submission](#submission)
     * [Survey](#survey)
     * [SurveyResult](#surveyresult)
@@ -21,12 +21,20 @@
   * [Inputs](#inputs)
     * [AnswerInput](#answerinput)
     * [CreateSurveyInput](#createsurveyinput)
+    * [DateRangeInput](#daterangeinput)
     * [EditSurveyInput](#editsurveyinput)
+    * [IntRangeInput](#intrangeinput)
     * [QuestionInput](#questioninput)
+    * [SearchSurveyInput](#searchsurveyinput)
     * [SubmitSurveyAnswerInput](#submitsurveyanswerinput)
   * [Enums](#enums)
+    * [AnswerState](#answerstate)
+    * [PublishState](#publishstate)
     * [QuestionType](#questiontype)
+    * [SearchScope](#searchscope)
+    * [SortOrder](#sortorder)
     * [SurveyAuthType](#surveyauthtype)
+    * [SurveySortField](#surveysortfield)
   * [Scalars](#scalars)
     * [Boolean](#boolean)
     * [DateTime](#datetime)
@@ -71,6 +79,16 @@
 <tr>
 <td colspan="2" align="right" valign="top">shareId</td>
 <td valign="top"><a href="#string">String</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="query.searchsurvey">searchSurvey</strong></td>
+<td valign="top"><a href="#searchsurveyresult">SearchSurveyResult</a>!</td>
+<td></td>
+</tr>
+<tr>
+<td colspan="2" align="right" valign="top">input</td>
+<td valign="top"><a href="#searchsurveyinput">SearchSurveyInput</a>!</td>
 <td></td>
 </tr>
 </tbody>
@@ -182,52 +200,6 @@
 
 ## Objects
 
-### Answer
-
-回答
-
-<table>
-<thead>
-<tr>
-<th align="left">Field</th>
-<th align="right">Argument</th>
-<th align="left">Type</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td colspan="2" valign="top"><strong id="answer.id">id</strong></td>
-<td valign="top"><a href="#int">Int</a>!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong id="answer.question">question</strong></td>
-<td valign="top"><a href="#question">Question</a>!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong id="answer.selectedoptions">selectedOptions</strong></td>
-<td valign="top">[<a href="#questionoption">QuestionOption</a>!]</td>
-<td>
-
-選ばれた選択肢配列
-
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong id="answer.submission">submission</strong></td>
-<td valign="top"><a href="#submission">Submission</a>!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong id="answer.text">text</strong></td>
-<td valign="top"><a href="#string">String</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-
 ### CorrelationResult
 
 <table>
@@ -315,7 +287,7 @@
 
 ### Question
 
-アンケート設問
+アンケートの設問
 
 <table>
 <thead>
@@ -328,46 +300,74 @@
 </thead>
 <tbody>
 <tr>
-<td colspan="2" valign="top"><strong id="question.answers">answers</strong></td>
-<td valign="top">[<a href="#answer">Answer</a>!]!</td>
-<td></td>
-</tr>
-<tr>
 <td colspan="2" valign="top"><strong id="question.id">id</strong></td>
 <td valign="top"><a href="#int">Int</a>!</td>
-<td></td>
+<td>
+
+設問ID(自動採番)
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="question.options">options</strong></td>
 <td valign="top">[<a href="#questionoption">QuestionOption</a>!]!</td>
-<td></td>
+<td>
+
+選択肢(SINGLE/MULTIPLEのときのみ要素を持つ。orderの昇順)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="question.order">order</strong></td>
+<td valign="top"><a href="#int">Int</a>!</td>
+<td>
+
+同一アンケート内での表示順(0始まり、昇順)
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="question.qtext">qtext</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+設問のテキスト(本文)
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="question.required">required</strong></td>
 <td valign="top"><a href="#boolean">Boolean</a>!</td>
-<td></td>
+<td>
+
+回答必須フラグ
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="question.survey">survey</strong></td>
 <td valign="top"><a href="#survey">Survey</a>!</td>
-<td></td>
+<td>
+
+この設問が属するアンケート
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="question.type">type</strong></td>
 <td valign="top"><a href="#questiontype">QuestionType</a>!</td>
-<td></td>
+<td>
+
+設問の形式
+
+</td>
 </tr>
 </tbody>
 </table>
 
 ### QuestionOption
 
-選択肢
+選択式質問の1つの選択肢
 
 <table>
 <thead>
@@ -382,17 +382,38 @@
 <tr>
 <td colspan="2" valign="top"><strong id="questionoption.id">id</strong></td>
 <td valign="top"><a href="#int">Int</a>!</td>
-<td></td>
+<td>
+
+選択肢ID(自動採番)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="questionoption.order">order</strong></td>
+<td valign="top"><a href="#int">Int</a>!</td>
+<td>
+
+同一質問内での表示順(0始まり、昇順)
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="questionoption.question">question</strong></td>
 <td valign="top"><a href="#question">Question</a>!</td>
-<td></td>
+<td>
+
+この選択肢が属する設問
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="questionoption.text">text</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+選択肢の表示テキスト
+
+</td>
 </tr>
 </tbody>
 </table>
@@ -437,9 +458,9 @@
 </tbody>
 </table>
 
-### Submission
+### SearchSurveyResult
 
-提出一覧
+アンケート検索結果(ページング情報付き)
 
 <table>
 <thead>
@@ -452,36 +473,91 @@
 </thead>
 <tbody>
 <tr>
-<td colspan="2" valign="top"><strong id="submission.answers">answers</strong></td>
-<td valign="top">[<a href="#answer">Answer</a>!]!</td>
-<td></td>
+<td colspan="2" valign="top"><strong id="searchsurveyresult.hasnext">hasNext</strong></td>
+<td valign="top"><a href="#boolean">Boolean</a>!</td>
+<td>
+
+次のページがあるか
+
+</td>
 </tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyresult.items">items</strong></td>
+<td valign="top">[<a href="#survey">Survey</a>!]!</td>
+<td>
+
+検索ヒットしたアンケート(現在のページ分)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyresult.totalcount">totalCount</strong></td>
+<td valign="top"><a href="#int">Int</a>!</td>
+<td>
+
+条件にマッチした総件数(ページング前)
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### Submission
+
+アンケートへの1回分の回答送信
+
+<table>
+<thead>
+<tr>
+<th align="left">Field</th>
+<th align="right">Argument</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td colspan="2" valign="top"><strong id="submission.id">id</strong></td>
 <td valign="top"><a href="#int">Int</a>!</td>
-<td></td>
+<td>
+
+送信ID(自動採番)
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="submission.respondentid">respondentId</strong></td>
 <td valign="top"><a href="#string">String</a></td>
-<td></td>
+<td>
+
+回答者を識別する任意のID(クライアント発行、匿名集計用)
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="submission.submittedat">submittedAt</strong></td>
 <td valign="top"><a href="#datetime">DateTime</a>!</td>
-<td></td>
+<td>
+
+送信日時
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="submission.survey">survey</strong></td>
 <td valign="top"><a href="#survey">Survey</a>!</td>
-<td></td>
+<td>
+
+回答対象のアンケート
+
+</td>
 </tr>
 </tbody>
 </table>
 
 ### Survey
 
-アンケート本体
+アンケート本体(設問・回答送信・トークンの集約)
 
 <table>
 <thead>
@@ -498,7 +574,7 @@
 <td valign="top"><a href="#surveyauthtype">SurveyAuthType</a>!</td>
 <td>
 
-アンケートのセキュリティ
+アクセス制御方式
 
 </td>
 </tr>
@@ -507,7 +583,7 @@
 <td valign="top"><a href="#datetime">DateTime</a>!</td>
 <td>
 
-アンケート作成日時
+作成日時
 
 </td>
 </tr>
@@ -516,7 +592,7 @@
 <td valign="top"><a href="#int">Int</a>!</td>
 <td>
 
-アンケートID
+アンケートID(自動採番、内部用)
 
 </td>
 </tr>
@@ -525,7 +601,7 @@
 <td valign="top"><a href="#user">User</a>!</td>
 <td>
 
-アンケート作成者
+アンケートの作成者・所有者
 
 </td>
 </tr>
@@ -534,7 +610,7 @@
 <td valign="top"><a href="#boolean">Boolean</a>!</td>
 <td>
 
-アンケート公開状態
+公開状態(true: 回答受付中 / false: 下書き、回答不可)
 
 </td>
 </tr>
@@ -543,7 +619,7 @@
 <td valign="top">[<a href="#question">Question</a>!]!</td>
 <td>
 
-設問
+設問の一覧(orderの昇順)
 
 </td>
 </tr>
@@ -552,16 +628,16 @@
 <td valign="top"><a href="#string">String</a>!</td>
 <td>
 
-アンケートURL識別子
+URL共有用の識別子(UUID。所有者以外でもこの値で参照可)
 
 </td>
 </tr>
 <tr>
-<td colspan="2" valign="top"><strong id="survey.submissions">submissions</strong></td>
-<td valign="top">[<a href="#submission">Submission</a>!]!</td>
+<td colspan="2" valign="top"><strong id="survey.submissioncount">submissionCount</strong></td>
+<td valign="top"><a href="#int">Int</a>!</td>
 <td>
 
-提出一覧
+受信した回答件数
 
 </td>
 </tr>
@@ -570,7 +646,7 @@
 <td valign="top"><a href="#string">String</a>!</td>
 <td>
 
-アンケートタイトル
+アンケートのタイトル
 
 </td>
 </tr>
@@ -579,7 +655,7 @@
 <td valign="top">[<a href="#surveytoken">SurveyToken</a>!]!</td>
 <td>
 
-回答用トークン（セキュリティ設定時のみ）
+招待トークン一覧(PRIVATE時のみ。所有者にのみ返すこと。loadは明示ロードのみ)
 
 </td>
 </tr>
@@ -588,7 +664,7 @@
 <td valign="top"><a href="#datetime">DateTime</a>!</td>
 <td>
 
-アンケート更新日時
+最終更新日時
 
 </td>
 </tr>
@@ -637,7 +713,7 @@
 
 ### SurveyToken
 
-アンケート回答用トークン
+PRIVATEアンケートへの回答を許可する招待トークン
 
 <table>
 <thead>
@@ -652,27 +728,38 @@
 <tr>
 <td colspan="2" valign="top"><strong id="surveytoken.createdat">createdAt</strong></td>
 <td valign="top"><a href="#datetime">DateTime</a>!</td>
-<td></td>
-</tr>
-<tr>
-<td colspan="2" valign="top"><strong id="surveytoken.expiredat">expiredAt</strong></td>
-<td valign="top"><a href="#datetime">DateTime</a>!</td>
-<td></td>
+<td>
+
+トークン発行日時
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="surveytoken.isused">isUsed</strong></td>
 <td valign="top"><a href="#boolean">Boolean</a>!</td>
-<td></td>
+<td>
+
+使用済みフラグ(trueは消費済み)
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="surveytoken.survey">survey</strong></td>
 <td valign="top"><a href="#survey">Survey</a>!</td>
-<td></td>
+<td>
+
+このトークンが対象とするアンケート
+
+</td>
 </tr>
 <tr>
 <td colspan="2" valign="top"><strong id="surveytoken.token">token</strong></td>
 <td valign="top"><a href="#string">String</a>!</td>
-<td></td>
+<td>
+
+回答用トークン値(UUID)。所有者にのみ公開すること。1回使うと無効になる
+
+</td>
 </tr>
 </tbody>
 </table>
@@ -813,6 +900,40 @@
 </tbody>
 </table>
 
+### DateRangeInput
+
+日時の範囲指定。両方省略可
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong id="daterangeinput.from">from</strong></td>
+<td valign="top"><a href="#datetime">DateTime</a></td>
+<td>
+
+開始日時(この日時以降)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="daterangeinput.to">to</strong></td>
+<td valign="top"><a href="#datetime">DateTime</a></td>
+<td>
+
+終了日時(この日時以前)
+
+</td>
+</tr>
+</tbody>
+</table>
+
 ### EditSurveyInput
 
 アンケート編集の入力値。回答が1件以上ある場合は編集不可となる
@@ -874,6 +995,40 @@
 </tbody>
 </table>
 
+### IntRangeInput
+
+整数値の範囲指定。両方省略可
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong id="intrangeinput.max">max</strong></td>
+<td valign="top"><a href="#int">Int</a></td>
+<td>
+
+最大値(この値以下)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="intrangeinput.min">min</strong></td>
+<td valign="top"><a href="#int">Int</a></td>
+<td>
+
+最小値(この値以上)
+
+</td>
+</tr>
+</tbody>
+</table>
+
 ### QuestionInput
 
 アンケートの設問の入力値
@@ -920,6 +1075,121 @@
 <td>
 
 質問のタイプ(TEXT: 自由記述 / SINGLE: 単一選択 / MULTIPLE: 複数選択)
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### SearchSurveyInput
+
+アンケート一覧の検索・絞り込み・並び替え条件
+
+<table>
+<thead>
+<tr>
+<th colspan="2" align="left">Field</th>
+<th align="left">Type</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.answerstates">answerStates</strong></td>
+<td valign="top">[<a href="#answerstate">AnswerState</a>!]</td>
+<td>
+
+回答有無でのフィルタ。指定なし=すべて
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.authtypes">authTypes</strong></td>
+<td valign="top">[<a href="#surveyauthtype">SurveyAuthType</a>!]</td>
+<td>
+
+アクセス権限タイプでのフィルタ。指定なし=すべて
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.createdat">createdAt</strong></td>
+<td valign="top"><a href="#daterangeinput">DateRangeInput</a></td>
+<td>
+
+作成日時の範囲条件
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.keyword">keyword</strong></td>
+<td valign="top"><a href="#string">String</a></td>
+<td>
+
+検索キーワード(100文字以内)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.limit">limit</strong></td>
+<td valign="top"><a href="#int">Int</a>!</td>
+<td>
+
+1ページあたりの取得件数(1〜100)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.offset">offset</strong></td>
+<td valign="top"><a href="#int">Int</a>!</td>
+<td>
+
+取得開始位置(0以上)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.order">order</strong></td>
+<td valign="top"><a href="#sortorder">SortOrder</a>!</td>
+<td>
+
+並び順(昇順/降順)
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.publishstates">publishStates</strong></td>
+<td valign="top">[<a href="#publishstate">PublishState</a>!]</td>
+<td>
+
+公開状態でのフィルタ。指定なし=すべて
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.scope">scope</strong></td>
+<td valign="top"><a href="#searchscope">SearchScope</a>!</td>
+<td>
+
+キーワードの検索対象範囲
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.sortby">sortBy</strong></td>
+<td valign="top"><a href="#surveysortfield">SurveySortField</a>!</td>
+<td>
+
+並び替えの基準フィールド
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top"><strong id="searchsurveyinput.submissioncount">submissionCount</strong></td>
+<td valign="top"><a href="#intrangeinput">IntRangeInput</a></td>
+<td>
+
+回答件数の範囲条件
 
 </td>
 </tr>
@@ -980,6 +1250,68 @@
 
 ## Enums
 
+### AnswerState
+
+アンケートに対する回答の有無
+
+<table>
+<thead>
+<tr>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>HAS_ANSWERS</strong></td>
+<td>
+
+回答済み(回答が1件以上ある)
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>UNANSWERED</strong></td>
+<td>
+
+未回答(回答が1件もない)
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### PublishState
+
+アンケートの公開状態
+
+<table>
+<thead>
+<tr>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>DRAFT</strong></td>
+<td>
+
+下書き(非公開)
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>PUBLISHED</strong></td>
+<td>
+
+公開中
+
+</td>
+</tr>
+</tbody>
+</table>
+
 ### QuestionType
 
 質問の形式
@@ -996,7 +1328,7 @@
 <td valign="top"><strong>MULTIPLE</strong></td>
 <td>
 
-複数選択
+複数選択(選択肢から複数選択可)
 
 </td>
 </tr>
@@ -1004,7 +1336,7 @@
 <td valign="top"><strong>SINGLE</strong></td>
 <td>
 
-単一選択
+単一選択(選択肢から1つだけ)
 
 </td>
 </tr>
@@ -1012,7 +1344,69 @@
 <td valign="top"><strong>TEXT</strong></td>
 <td>
 
-テキスト入力
+テキスト入力(自由記述)
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### SearchScope
+
+キーワード検索の対象範囲
+
+<table>
+<thead>
+<tr>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>TITLE_AND_QUESTIONS</strong></td>
+<td>
+
+タイトルと質問文の両方を検索対象にする
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>TITLE_ONLY</strong></td>
+<td>
+
+タイトルのみを検索対象にする
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### SortOrder
+
+並び順
+
+<table>
+<thead>
+<tr>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>ASC</strong></td>
+<td>
+
+昇順
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>DESC</strong></td>
+<td>
+
+降順
 
 </td>
 </tr>
@@ -1021,7 +1415,7 @@
 
 ### SurveyAuthType
 
-アンケート回答時の認証方式
+アンケート回答時のアクセス制御方式
 
 <table>
 <thead>
@@ -1035,7 +1429,7 @@
 <td valign="top"><strong>PRIVATE</strong></td>
 <td>
 
-トークンが必要
+発行された招待トークン保有者のみ回答可能
 
 </td>
 </tr>
@@ -1043,7 +1437,54 @@
 <td valign="top"><strong>PUBLIC</strong></td>
 <td>
 
-誰でも回答可能
+誰でもURLを知っていれば回答可能
+
+</td>
+</tr>
+</tbody>
+</table>
+
+### SurveySortField
+
+アンケート一覧の並び替え基準フィールド
+
+<table>
+<thead>
+<tr>
+<th align="left">Value</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td valign="top"><strong>CREATED_AT</strong></td>
+<td>
+
+作成日時
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>SUBMISSION_COUNT</strong></td>
+<td>
+
+回答件数
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>TITLE</strong></td>
+<td>
+
+タイトル(辞書順)
+
+</td>
+</tr>
+<tr>
+<td valign="top"><strong>UPDATED_AT</strong></td>
+<td>
+
+更新日時
 
 </td>
 </tr>

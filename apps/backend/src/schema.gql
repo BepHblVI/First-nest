@@ -14,6 +14,15 @@ input AnswerInput {
   text: String
 }
 
+"""アンケートに対する回答の有無"""
+enum AnswerState {
+  """回答済み(回答が1件以上ある)"""
+  HAS_ANSWERS
+
+  """未回答(回答が1件もない)"""
+  UNANSWERED
+}
+
 type CorrelationResult {
   coOccurrenceCount: Int!
   option1Id: Int!
@@ -36,6 +45,15 @@ input CreateSurveyInput {
 
   """生成する回答用トークン数(PRIVATE時のみ有効、0以上)"""
   tokens: Int = 0
+}
+
+"""日時の範囲指定。両方省略可"""
+input DateRangeInput {
+  """開始日時(この日時以降)"""
+  from: DateTime
+
+  """終了日時(この日時以前)"""
+  to: DateTime
 }
 
 """
@@ -61,6 +79,15 @@ input EditSurveyInput {
   tokens: Int = 0
 }
 
+"""整数値の範囲指定。両方省略可"""
+input IntRangeInput {
+  """最大値(この値以下)"""
+  max: Int
+
+  """最小値(この値以上)"""
+  min: Int
+}
+
 type LoginResponse {
   access_token: String!
 }
@@ -83,10 +110,20 @@ type OptionResult {
   text: String!
 }
 
+"""アンケートの公開状態"""
+enum PublishState {
+  """下書き(非公開)"""
+  DRAFT
+
+  """公開中"""
+  PUBLISHED
+}
+
 type Query {
   getSurvey: [Survey!]!
   getSurveyForAnswer(shareId: String!): Survey!
   getSurveyResults(shareId: String!): SurveyResult!
+  searchSurvey(input: SearchSurveyInput!): SearchSurveyResult!
 }
 
 """アンケートの設問"""
@@ -161,6 +198,72 @@ enum QuestionType {
 
   """テキスト入力(自由記述)"""
   TEXT
+}
+
+"""キーワード検索の対象範囲"""
+enum SearchScope {
+  """タイトルと質問文の両方を検索対象にする"""
+  TITLE_AND_QUESTIONS
+
+  """タイトルのみを検索対象にする"""
+  TITLE_ONLY
+}
+
+"""アンケート一覧の検索・絞り込み・並び替え条件"""
+input SearchSurveyInput {
+  """回答有無でのフィルタ。指定なし=すべて"""
+  answerStates: [AnswerState!]
+
+  """アクセス権限タイプでのフィルタ。指定なし=すべて"""
+  authTypes: [SurveyAuthType!]
+
+  """作成日時の範囲条件"""
+  createdAt: DateRangeInput
+
+  """検索キーワード(100文字以内)"""
+  keyword: String
+
+  """1ページあたりの取得件数(1〜100)"""
+  limit: Int! = 20
+
+  """取得開始位置(0以上)"""
+  offset: Int! = 0
+
+  """並び順(昇順/降順)"""
+  order: SortOrder! = DESC
+
+  """公開状態でのフィルタ。指定なし=すべて"""
+  publishStates: [PublishState!]
+
+  """キーワードの検索対象範囲"""
+  scope: SearchScope! = TITLE_ONLY
+
+  """並び替えの基準フィールド"""
+  sortBy: SurveySortField! = CREATED_AT
+
+  """回答件数の範囲条件"""
+  submissionCount: IntRangeInput
+}
+
+"""アンケート検索結果(ページング情報付き)"""
+type SearchSurveyResult {
+  """次のページがあるか"""
+  hasNext: Boolean!
+
+  """検索ヒットしたアンケート(現在のページ分)"""
+  items: [Survey!]!
+
+  """条件にマッチした総件数(ページング前)"""
+  totalCount: Int!
+}
+
+"""並び順"""
+enum SortOrder {
+  """昇順"""
+  ASC
+
+  """降順"""
+  DESC
 }
 
 """アンケートへの1回分の回答送信"""
@@ -244,6 +347,21 @@ type SurveyResult {
   surveyId: Int!
   title: String!
   totalSubmissions: Int!
+}
+
+"""アンケート一覧の並び替え基準フィールド"""
+enum SurveySortField {
+  """作成日時"""
+  CREATED_AT
+
+  """回答件数"""
+  SUBMISSION_COUNT
+
+  """タイトル(辞書順)"""
+  TITLE
+
+  """更新日時"""
+  UPDATED_AT
 }
 
 """PRIVATEアンケートへの回答を許可する招待トークン"""

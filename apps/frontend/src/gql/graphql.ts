@@ -28,6 +28,14 @@ export type AnswerInput = {
   text?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** アンケートに対する回答の有無 */
+export enum AnswerState {
+  /** 回答済み(回答が1件以上ある) */
+  HasAnswers = 'HAS_ANSWERS',
+  /** 未回答(回答が1件もない) */
+  Unanswered = 'UNANSWERED'
+}
+
 export type CorrelationResult = {
   __typename?: 'CorrelationResult';
   coOccurrenceCount: Scalars['Int']['output'];
@@ -49,6 +57,14 @@ export type CreateSurveyInput = {
   tokens?: InputMaybe<Scalars['Int']['input']>;
 };
 
+/** 日時の範囲指定。両方省略可 */
+export type DateRangeInput = {
+  /** 開始日時(この日時以降) */
+  from?: InputMaybe<Scalars['DateTime']['input']>;
+  /** 終了日時(この日時以前) */
+  to?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
 /** アンケート編集の入力値。回答が1件以上ある場合は編集不可となる */
 export type EditSurveyInput = {
   /** アクセス権限(PUBLIC: 誰でも回答可 / PRIVATE: トークン保有者のみ) */
@@ -61,6 +77,14 @@ export type EditSurveyInput = {
   title: Scalars['String']['input'];
   /** 再生成する回答用トークン数(PRIVATE時のみ有効、0以上) */
   tokens?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/** 整数値の範囲指定。両方省略可 */
+export type IntRangeInput = {
+  /** 最大値(この値以下) */
+  max?: InputMaybe<Scalars['Int']['input']>;
+  /** 最小値(この値以上) */
+  min?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type LoginResponse = {
@@ -126,11 +150,20 @@ export type OptionResult = {
   text: Scalars['String']['output'];
 };
 
+/** アンケートの公開状態 */
+export enum PublishState {
+  /** 下書き(非公開) */
+  Draft = 'DRAFT',
+  /** 公開中 */
+  Published = 'PUBLISHED'
+}
+
 export type Query = {
   __typename?: 'Query';
   getSurvey: Array<Survey>;
   getSurveyForAnswer: Survey;
   getSurveyResults: SurveyResult;
+  searchSurvey: SearchSurveyResult;
 };
 
 
@@ -141,6 +174,11 @@ export type QueryGetSurveyForAnswerArgs = {
 
 export type QueryGetSurveyResultsArgs = {
   shareId: Scalars['String']['input'];
+};
+
+
+export type QuerySearchSurveyArgs = {
+  input: SearchSurveyInput;
 };
 
 /** アンケートの設問 */
@@ -204,6 +242,59 @@ export enum QuestionType {
   Single = 'SINGLE',
   /** テキスト入力(自由記述) */
   Text = 'TEXT'
+}
+
+/** キーワード検索の対象範囲 */
+export enum SearchScope {
+  /** タイトルと質問文の両方を検索対象にする */
+  TitleAndQuestions = 'TITLE_AND_QUESTIONS',
+  /** タイトルのみを検索対象にする */
+  TitleOnly = 'TITLE_ONLY'
+}
+
+/** アンケート一覧の検索・絞り込み・並び替え条件 */
+export type SearchSurveyInput = {
+  /** 回答有無でのフィルタ。指定なし=すべて */
+  answerStates?: InputMaybe<Array<AnswerState>>;
+  /** アクセス権限タイプでのフィルタ。指定なし=すべて */
+  authTypes?: InputMaybe<Array<SurveyAuthType>>;
+  /** 作成日時の範囲条件 */
+  createdAt?: InputMaybe<DateRangeInput>;
+  /** 検索キーワード(100文字以内) */
+  keyword?: InputMaybe<Scalars['String']['input']>;
+  /** 1ページあたりの取得件数(1〜100) */
+  limit?: Scalars['Int']['input'];
+  /** 取得開始位置(0以上) */
+  offset?: Scalars['Int']['input'];
+  /** 並び順(昇順/降順) */
+  order?: SortOrder;
+  /** 公開状態でのフィルタ。指定なし=すべて */
+  publishStates?: InputMaybe<Array<PublishState>>;
+  /** キーワードの検索対象範囲 */
+  scope?: SearchScope;
+  /** 並び替えの基準フィールド */
+  sortBy?: SurveySortField;
+  /** 回答件数の範囲条件 */
+  submissionCount?: InputMaybe<IntRangeInput>;
+};
+
+/** アンケート検索結果(ページング情報付き) */
+export type SearchSurveyResult = {
+  __typename?: 'SearchSurveyResult';
+  /** 次のページがあるか */
+  hasNext: Scalars['Boolean']['output'];
+  /** 検索ヒットしたアンケート(現在のページ分) */
+  items: Array<Survey>;
+  /** 条件にマッチした総件数(ページング前) */
+  totalCount: Scalars['Int']['output'];
+};
+
+/** 並び順 */
+export enum SortOrder {
+  /** 昇順 */
+  Asc = 'ASC',
+  /** 降順 */
+  Desc = 'DESC'
 }
 
 /** アンケートへの1回分の回答送信 */
@@ -275,6 +366,18 @@ export type SurveyResult = {
   totalSubmissions: Scalars['Int']['output'];
 };
 
+/** アンケート一覧の並び替え基準フィールド */
+export enum SurveySortField {
+  /** 作成日時 */
+  CreatedAt = 'CREATED_AT',
+  /** 回答件数 */
+  SubmissionCount = 'SUBMISSION_COUNT',
+  /** タイトル(辞書順) */
+  Title = 'TITLE',
+  /** 更新日時 */
+  UpdatedAt = 'UPDATED_AT'
+}
+
 /** PRIVATEアンケートへの回答を許可する招待トークン */
 export type SurveyToken = {
   __typename?: 'SurveyToken';
@@ -327,6 +430,13 @@ export type GetSurveyResultsQueryVariables = Exact<{
 
 
 export type GetSurveyResultsQuery = { __typename?: 'Query', getSurveyResults: { __typename?: 'SurveyResult', surveyId: number, title: string, totalSubmissions: number, questions: Array<{ __typename?: 'QuestionResult', questionId: number, qtext: string, type: string, totalAnswersForThisQuestion: number, options: Array<{ __typename?: 'OptionResult', optionId: number, text: string, count: number, percentage: number }> }> } };
+
+export type SearchSurveysQueryVariables = Exact<{
+  input: SearchSurveyInput;
+}>;
+
+
+export type SearchSurveysQuery = { __typename?: 'Query', searchSurvey: { __typename?: 'SearchSurveyResult', totalCount: number, hasNext: boolean, items: Array<{ __typename?: 'Survey', id: number, title: string, published: boolean, auth: SurveyAuthType, shareId: string, submissionCount: number, owner: { __typename?: 'User', username: string }, questions: Array<{ __typename?: 'Question', id: number, qtext: string, type: QuestionType, required: boolean, options: Array<{ __typename?: 'QuestionOption', id: number, text: string }> }>, tokens: Array<{ __typename?: 'SurveyToken', token: string, isUsed: boolean, createdAt: any }> }> } };
 
 export type TogglePublishedMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -445,6 +555,40 @@ export const GetSurveyResultsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<GetSurveyResultsQuery, GetSurveyResultsQueryVariables>;
+export const SearchSurveysDocument = new TypedDocumentString(`
+    query SearchSurveys($input: SearchSurveyInput!) {
+  searchSurvey(input: $input) {
+    totalCount
+    hasNext
+    items {
+      id
+      title
+      published
+      auth
+      owner {
+        username
+      }
+      shareId
+      questions {
+        id
+        qtext
+        type
+        required
+        options {
+          id
+          text
+        }
+      }
+      tokens {
+        token
+        isUsed
+        createdAt
+      }
+      submissionCount
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<SearchSurveysQuery, SearchSurveysQueryVariables>;
 export const TogglePublishedDocument = new TypedDocumentString(`
     mutation TogglePublished($id: Int!, $published: Boolean!) {
   togglePublished(id: $id, published: $published) {

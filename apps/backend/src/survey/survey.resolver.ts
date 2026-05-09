@@ -10,18 +10,21 @@ import {
 } from '@nestjs/graphql';
 import { SurveyService } from './survey.service';
 import { SurveyResultService } from './survey-result.service';
+import { SurveySearchService } from './survey-search.service';
 import { Survey } from './models/survey.model';
 import { Submission } from './models/submission.model';
-import { SurveyResult } from './dto/result.output';
+import { SurveyResult, SearchSurveyResult } from './dto/result.output';
 import {
   CreateSurveyInput,
   SubmitSurveyAnswerInput,
   EditSurveyInput,
+  SearchSurveyInput,
 } from './dto/inputs';
 
 import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { SurveyAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { User } from '../auth/user.model';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 @Resolver(() => Survey)
@@ -30,12 +33,13 @@ export class SurveyResolver {
   constructor(
     private readonly surveyService: SurveyService,
     private readonly surveyResultService: SurveyResultService,
+    private readonly surveySearchService: SurveySearchService,
   ) {}
 
   // ─── Queries ───────────────────────────────
   @Query(() => [Survey])
   @UseGuards(SurveyAuthGuard)
-  async getSurvey(@CurrentUser() currentUser: any): Promise<Survey[]> {
+  async getSurvey(@CurrentUser() currentUser: User): Promise<Survey[]> {
     return this.surveyService.getData(currentUser);
   }
 
@@ -48,9 +52,18 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async getSurveyResults(
     @Args('shareId') shareId: string,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: User,
   ): Promise<SurveyResult> {
     return this.surveyResultService.getResults(shareId, currentUser);
+  }
+
+  @Query(() => SearchSurveyResult)
+  @UseGuards(SurveyAuthGuard)
+  async searchSurvey(
+    @Args('input') input: SearchSurveyInput,
+    @CurrentUser() currentUser: User,
+  ): Promise<SearchSurveyResult> {
+    return this.surveySearchService.searchData(input, currentUser);
   }
 
   // ─── Mutations ─────────────────────────────
@@ -58,7 +71,7 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async createSurvey(
     @Args('input') input: CreateSurveyInput,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: User,
   ): Promise<Survey> {
     return this.surveyService.createData(input, currentUser);
   }
@@ -67,7 +80,7 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async editSurvey(
     @Args('input') input: EditSurveyInput,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: User,
   ): Promise<Survey> {
     return this.surveyService.editData(input, currentUser);
   }
@@ -76,7 +89,7 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async deleteSurvey(
     @Args('id', { type: () => Int }) id: number,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: User,
   ) {
     return this.surveyService.deleteData(id, currentUser);
   }
@@ -85,7 +98,7 @@ export class SurveyResolver {
   @UseGuards(SurveyAuthGuard)
   async togglePublished(
     @Args('id', { type: () => Int }) id: number,
-    @CurrentUser() currentUser: any,
+    @CurrentUser() currentUser: User,
     @Args('published') published: boolean,
   ) {
     return this.surveyService.togglePublished(id, currentUser, published);
