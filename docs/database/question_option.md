@@ -8,12 +8,13 @@
 ```sql
 CREATE TABLE `question_option` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `text` varchar(255) NOT NULL,
-  `questionId` int NOT NULL,
+  `text` varchar(200) NOT NULL,
+  `order` int NOT NULL,
+  `question_id` int NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `FK_ba19747af180520381a117f5986` (`questionId`),
-  CONSTRAINT `FK_ba19747af180520381a117f5986` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  KEY `IDX_6aaa48b4788f7f99210d3bce92` (`question_id`,`order`),
+  CONSTRAINT `FK_747190c37a39feced5efcbb303f` FOREIGN KEY (`question_id`) REFERENCES `question` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
 </details>
@@ -22,22 +23,23 @@ CREATE TABLE `question_option` (
 
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
-| id | int |  | false | auto_increment | [answer_selected_options_question_option](answer_selected_options_question_option.md) |  |  |
-| text | varchar(255) |  | false |  |  |  |  |
-| questionId | int |  | false |  |  | [question](question.md) |  |
+| id | int |  | false | auto_increment | [answer_options](answer_options.md) |  |  |
+| text | varchar(200) |  | false |  |  |  |  |
+| order | int |  | false |  |  |  |  |
+| question_id | int |  | false |  |  | [question](question.md) |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| FK_ba19747af180520381a117f5986 | FOREIGN KEY | FOREIGN KEY (questionId) REFERENCES question (id) |
+| FK_747190c37a39feced5efcbb303f | FOREIGN KEY | FOREIGN KEY (question_id) REFERENCES question (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| FK_ba19747af180520381a117f5986 | KEY FK_ba19747af180520381a117f5986 (questionId) USING BTREE |
+| IDX_6aaa48b4788f7f99210d3bce92 | KEY IDX_6aaa48b4788f7f99210d3bce92 (question_id, order) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations
@@ -45,24 +47,26 @@ CREATE TABLE `question_option` (
 ```mermaid
 erDiagram
 
-"answer_selected_options_question_option" }o--|| "question_option" : "FOREIGN KEY (questionOptionId) REFERENCES question_option (id)"
-"question_option" }o--|| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
+"answer_options" }o--|| "question_option" : "FOREIGN KEY (option_id) REFERENCES question_option (id)"
+"question_option" }o--|| "question" : "FOREIGN KEY (question_id) REFERENCES question (id)"
 
 "question_option" {
   int id PK
-  varchar_255_ text
-  int questionId FK
+  varchar_200_ text
+  int order
+  int question_id FK
 }
-"answer_selected_options_question_option" {
-  int answerId PK
-  int questionOptionId PK
+"answer_options" {
+  int answer_id PK
+  int option_id PK
 }
 "question" {
   int id PK
-  varchar_255_ qtext
-  int surveyId FK
-  tinyint required
+  int order
+  varchar_500_ qtext
   enum__TEXT___SINGLE___MULTIPLE__ type
+  tinyint required
+  int survey_id FK
 }
 ```
 

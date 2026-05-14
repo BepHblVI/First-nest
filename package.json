@@ -8,8 +8,11 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "typecheck": "turbo run typecheck",
     "test:e2e": "turbo run test:e2e",
+    "test:e2e:backend": "turbo run test:e2e --filter=backend",
+    "test:e2e:frontend": "turbo run test:e2e --filter=frontend",
+    "test:cross": "npm --prefix apps/backend run test:e2e -- --testPathPatterns cross-tabulation",
     "api": "npx graphql-markdown http://localhost:3001/graphql > api.md",
-    "db:doc": "docker run --rm --network host --env-file .env -v $(pwd):/work -w /work ghcr.io/k1low/tbls doc --force",
+    "db:doc": "docker run --rm --network host --env-file .env -v $(pwd):/work -w /work --user $(id -u):$(id -g) ghcr.io/k1low/tbls doc --rm-dist",
     "m:gen": "turbo run m:gen --filter=backend --",
     "codegen:watch": "graphql-codegen --watch",
     "codegen": "turbo run codegen",
@@ -52,6 +55,7 @@
     "next": "^16.2.4",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.28",
+    "typeorm-naming-strategies": "^4.1.0"
   }
 }

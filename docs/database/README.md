@@ -4,14 +4,14 @@
 
 | Name | Columns | Comment | Type |
 | ---- | ------- | ------- | ---- |
-| [answer](answer.md) | 4 |  | BASE TABLE |
-| [answer_selected_options_question_option](answer_selected_options_question_option.md) | 2 |  | BASE TABLE |
+| [answer](answer.md) | 5 |  | BASE TABLE |
+| [answer_options](answer_options.md) | 2 |  | BASE TABLE |
 | [migrations](migrations.md) | 3 |  | BASE TABLE |
-| [question](question.md) | 5 |  | BASE TABLE |
-| [question_option](question_option.md) | 3 |  | BASE TABLE |
+| [question](question.md) | 6 |  | BASE TABLE |
+| [question_option](question_option.md) | 4 |  | BASE TABLE |
 | [submission](submission.md) | 4 |  | BASE TABLE |
 | [survey](survey.md) | 8 |  | BASE TABLE |
-| [survey_token](survey_token.md) | 5 |  | BASE TABLE |
+| [survey_token](survey_token.md) | 4 |  | BASE TABLE |
 | [user](user.md) | 3 |  | BASE TABLE |
 
 ## Relations
@@ -19,25 +19,26 @@
 ```mermaid
 erDiagram
 
-"answer" }o--o| "submission" : "FOREIGN KEY (submissionId) REFERENCES submission (id)"
-"answer" }o--|| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
-"answer_selected_options_question_option" }o--|| "answer" : "FOREIGN KEY (answerId) REFERENCES answer (id)"
-"answer_selected_options_question_option" }o--|| "question_option" : "FOREIGN KEY (questionOptionId) REFERENCES question_option (id)"
-"question" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
-"question_option" }o--|| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
-"submission" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
-"survey" }o--|| "user" : "FOREIGN KEY (ownerId) REFERENCES user (id)"
-"survey_token" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"answer" }o--|| "submission" : "FOREIGN KEY (submission_id) REFERENCES submission (id)"
+"answer" }o--|| "question" : "FOREIGN KEY (question_id) REFERENCES question (id)"
+"answer_options" }o--|| "question_option" : "FOREIGN KEY (option_id) REFERENCES question_option (id)"
+"answer_options" }o--|| "answer" : "FOREIGN KEY (answer_id) REFERENCES answer (id)"
+"question" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
+"question_option" }o--|| "question" : "FOREIGN KEY (question_id) REFERENCES question (id)"
+"submission" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
+"survey" }o--|| "user" : "FOREIGN KEY (owner_id) REFERENCES user (id)"
+"survey_token" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
 
 "answer" {
   int id PK
-  varchar_255_ text
-  int questionId FK
-  int submissionId FK
+  text text
+  timestamp_6_ created_at
+  int question_id FK
+  int submission_id FK
 }
-"answer_selected_options_question_option" {
-  int answerId PK
-  int questionOptionId PK
+"answer_options" {
+  int answer_id PK
+  int option_id PK
 }
 "migrations" {
   int id PK
@@ -46,38 +47,39 @@ erDiagram
 }
 "question" {
   int id PK
-  varchar_255_ qtext
-  int surveyId FK
-  tinyint required
+  int order
+  varchar_500_ qtext
   enum__TEXT___SINGLE___MULTIPLE__ type
+  tinyint required
+  int survey_id FK
 }
 "question_option" {
   int id PK
-  varchar_255_ text
-  int questionId FK
+  varchar_200_ text
+  int order
+  int question_id FK
 }
 "submission" {
   int id PK
-  datetime_6_ submittedAt
-  varchar_255_ respondentId
-  int surveyId FK
+  timestamp_6_ submitted_at
+  varchar_100_ respondent_id
+  int survey_id FK
 }
 "survey" {
   int id PK
-  varchar_36_ shareId
-  varchar_255_ title
+  varchar_200_ title
   tinyint published
-  datetime_6_ createdAt
-  datetime_6_ updatedAt
-  int ownerId FK
   enum__PUBLIC___PRIVATE__ auth
+  varchar_36_ share_id
+  timestamp_6_ created_at
+  timestamp_6_ updated_at
+  int owner_id FK
 }
 "survey_token" {
   varchar_36_ token PK
-  tinyint isUsed
-  datetime_6_ createdAt
-  datetime expiredAt
-  int surveyId FK
+  tinyint is_used
+  timestamp_6_ created_at
+  int survey_id FK
 }
 "user" {
   int id PK

@@ -8,13 +8,13 @@
 ```sql
 CREATE TABLE `submission` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `submittedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  `respondentId` varchar(255) DEFAULT NULL,
-  `surveyId` int NOT NULL,
+  `submitted_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `respondent_id` varchar(100) DEFAULT NULL,
+  `survey_id` int NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `FK_445eeaad33ae6464ac85f6ea46b` (`surveyId`),
-  CONSTRAINT `FK_445eeaad33ae6464ac85f6ea46b` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  KEY `IDX_a7cb7a8716f01cc5f73ccbc594` (`survey_id`),
+  CONSTRAINT `FK_a7cb7a8716f01cc5f73ccbc5946` FOREIGN KEY (`survey_id`) REFERENCES `survey` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
 </details>
@@ -24,22 +24,22 @@ CREATE TABLE `submission` (
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | id | int |  | false | auto_increment | [answer](answer.md) |  |  |
-| submittedAt | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
-| respondentId | varchar(255) |  | true |  |  |  |  |
-| surveyId | int |  | false |  |  | [survey](survey.md) |  |
+| submitted_at | timestamp(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
+| respondent_id | varchar(100) |  | true |  |  |  |  |
+| survey_id | int |  | false |  |  | [survey](survey.md) |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| FK_445eeaad33ae6464ac85f6ea46b | FOREIGN KEY | FOREIGN KEY (surveyId) REFERENCES survey (id) |
+| FK_a7cb7a8716f01cc5f73ccbc5946 | FOREIGN KEY | FOREIGN KEY (survey_id) REFERENCES survey (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| FK_445eeaad33ae6464ac85f6ea46b | KEY FK_445eeaad33ae6464ac85f6ea46b (surveyId) USING BTREE |
+| IDX_a7cb7a8716f01cc5f73ccbc594 | KEY IDX_a7cb7a8716f01cc5f73ccbc594 (survey_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations
@@ -47,30 +47,31 @@ CREATE TABLE `submission` (
 ```mermaid
 erDiagram
 
-"answer" }o--o| "submission" : "FOREIGN KEY (submissionId) REFERENCES submission (id)"
-"submission" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"answer" }o--|| "submission" : "FOREIGN KEY (submission_id) REFERENCES submission (id)"
+"submission" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
 
 "submission" {
   int id PK
-  datetime_6_ submittedAt
-  varchar_255_ respondentId
-  int surveyId FK
+  timestamp_6_ submitted_at
+  varchar_100_ respondent_id
+  int survey_id FK
 }
 "answer" {
   int id PK
-  varchar_255_ text
-  int questionId FK
-  int submissionId FK
+  text text
+  timestamp_6_ created_at
+  int question_id FK
+  int submission_id FK
 }
 "survey" {
   int id PK
-  varchar_36_ shareId
-  varchar_255_ title
+  varchar_200_ title
   tinyint published
-  datetime_6_ createdAt
-  datetime_6_ updatedAt
-  int ownerId FK
   enum__PUBLIC___PRIVATE__ auth
+  varchar_36_ share_id
+  timestamp_6_ created_at
+  timestamp_6_ updated_at
+  int owner_id FK
 }
 ```
 

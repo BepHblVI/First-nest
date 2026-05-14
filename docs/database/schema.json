@@ -13,35 +13,42 @@
         },
         {
           "name": "text",
-          "type": "varchar(255)",
+          "type": "text",
           "nullable": true
         },
         {
-          "name": "questionId",
+          "name": "created_at",
+          "type": "timestamp(6)",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(6)",
+          "extra_def": "DEFAULT_GENERATED"
+        },
+        {
+          "name": "question_id",
           "type": "int",
           "nullable": false
         },
         {
-          "name": "submissionId",
+          "name": "submission_id",
           "type": "int",
-          "nullable": true
+          "nullable": false
         }
       ],
       "indexes": [
         {
-          "name": "FK_1398cb4bf7f1ccc37fa0dd538ff",
-          "def": "KEY FK_1398cb4bf7f1ccc37fa0dd538ff (submissionId) USING BTREE",
+          "name": "IDX_83373a8dab1b67c46bb813e86e",
+          "def": "KEY IDX_83373a8dab1b67c46bb813e86e (submission_id) USING BTREE",
           "table": "answer",
           "columns": [
-            "submissionId"
+            "submission_id"
           ]
         },
         {
-          "name": "FK_a4013f10cd6924793fbd5f0d637",
-          "def": "KEY FK_a4013f10cd6924793fbd5f0d637 (questionId) USING BTREE",
+          "name": "IDX_c3d19a89541e4f0813f2fe0919",
+          "def": "KEY IDX_c3d19a89541e4f0813f2fe0919 (question_id) USING BTREE",
           "table": "answer",
           "columns": [
-            "questionId"
+            "question_id"
           ]
         },
         {
@@ -55,26 +62,26 @@
       ],
       "constraints": [
         {
-          "name": "FK_1398cb4bf7f1ccc37fa0dd538ff",
+          "name": "FK_83373a8dab1b67c46bb813e86e1",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (submissionId) REFERENCES submission (id)",
+          "def": "FOREIGN KEY (submission_id) REFERENCES submission (id)",
           "table": "answer",
           "referenced_table": "submission",
           "columns": [
-            "submissionId"
+            "submission_id"
           ],
           "referenced_columns": [
             "id"
           ]
         },
         {
-          "name": "FK_a4013f10cd6924793fbd5f0d637",
+          "name": "FK_c3d19a89541e4f0813f2fe09194",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (questionId) REFERENCES question (id)",
+          "def": "FOREIGN KEY (question_id) REFERENCES question (id)",
           "table": "answer",
           "referenced_table": "question",
           "columns": [
-            "questionId"
+            "question_id"
           ],
           "referenced_columns": [
             "id"
@@ -90,72 +97,72 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `answer` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(255) DEFAULT NULL,\n  `questionId` int NOT NULL,\n  `submissionId` int DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_a4013f10cd6924793fbd5f0d637` (`questionId`),\n  KEY `FK_1398cb4bf7f1ccc37fa0dd538ff` (`submissionId`),\n  CONSTRAINT `FK_1398cb4bf7f1ccc37fa0dd538ff` FOREIGN KEY (`submissionId`) REFERENCES `submission` (`id`),\n  CONSTRAINT `FK_a4013f10cd6924793fbd5f0d637` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `answer` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` text,\n  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `question_id` int NOT NULL,\n  `submission_id` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `IDX_c3d19a89541e4f0813f2fe0919` (`question_id`),\n  KEY `IDX_83373a8dab1b67c46bb813e86e` (`submission_id`),\n  CONSTRAINT `FK_83373a8dab1b67c46bb813e86e1` FOREIGN KEY (`submission_id`) REFERENCES `submission` (`id`) ON DELETE CASCADE,\n  CONSTRAINT `FK_c3d19a89541e4f0813f2fe09194` FOREIGN KEY (`question_id`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
-      "name": "answer_selected_options_question_option",
+      "name": "answer_options",
       "type": "BASE TABLE",
       "columns": [
         {
-          "name": "answerId",
+          "name": "answer_id",
           "type": "int",
           "nullable": false
         },
         {
-          "name": "questionOptionId",
+          "name": "option_id",
           "type": "int",
           "nullable": false
         }
       ],
       "indexes": [
         {
-          "name": "IDX_7c36f35a3fcb6c5fe610023447",
-          "def": "KEY IDX_7c36f35a3fcb6c5fe610023447 (answerId) USING BTREE",
-          "table": "answer_selected_options_question_option",
+          "name": "IDX_a471e2b4413da05fecea7b9e82",
+          "def": "KEY IDX_a471e2b4413da05fecea7b9e82 (option_id) USING BTREE",
+          "table": "answer_options",
           "columns": [
-            "answerId"
+            "option_id"
           ]
         },
         {
-          "name": "IDX_a28062e701efff0f2680f6eafd",
-          "def": "KEY IDX_a28062e701efff0f2680f6eafd (questionOptionId) USING BTREE",
-          "table": "answer_selected_options_question_option",
+          "name": "IDX_c9e3904ebdcfc37c86dfcd3f9a",
+          "def": "KEY IDX_c9e3904ebdcfc37c86dfcd3f9a (answer_id) USING BTREE",
+          "table": "answer_options",
           "columns": [
-            "questionOptionId"
+            "answer_id"
           ]
         },
         {
           "name": "PRIMARY",
-          "def": "PRIMARY KEY (answerId, questionOptionId) USING BTREE",
-          "table": "answer_selected_options_question_option",
+          "def": "PRIMARY KEY (answer_id, option_id) USING BTREE",
+          "table": "answer_options",
           "columns": [
-            "answerId",
-            "questionOptionId"
+            "answer_id",
+            "option_id"
           ]
         }
       ],
       "constraints": [
         {
-          "name": "FK_7c36f35a3fcb6c5fe6100234479",
+          "name": "FK_a471e2b4413da05fecea7b9e828",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (answerId) REFERENCES answer (id)",
-          "table": "answer_selected_options_question_option",
-          "referenced_table": "answer",
+          "def": "FOREIGN KEY (option_id) REFERENCES question_option (id)",
+          "table": "answer_options",
+          "referenced_table": "question_option",
           "columns": [
-            "answerId"
+            "option_id"
           ],
           "referenced_columns": [
             "id"
           ]
         },
         {
-          "name": "FK_a28062e701efff0f2680f6eafd1",
+          "name": "FK_c9e3904ebdcfc37c86dfcd3f9a3",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (questionOptionId) REFERENCES question_option (id)",
-          "table": "answer_selected_options_question_option",
-          "referenced_table": "question_option",
+          "def": "FOREIGN KEY (answer_id) REFERENCES answer (id)",
+          "table": "answer_options",
+          "referenced_table": "answer",
           "columns": [
-            "questionOptionId"
+            "answer_id"
           ],
           "referenced_columns": [
             "id"
@@ -164,15 +171,15 @@
         {
           "name": "PRIMARY",
           "type": "PRIMARY KEY",
-          "def": "PRIMARY KEY (answerId, questionOptionId)",
-          "table": "answer_selected_options_question_option",
+          "def": "PRIMARY KEY (answer_id, option_id)",
+          "table": "answer_options",
           "columns": [
-            "answerId",
-            "questionOptionId"
+            "answer_id",
+            "option_id"
           ]
         }
       ],
-      "def": "CREATE TABLE `answer_selected_options_question_option` (\n  `answerId` int NOT NULL,\n  `questionOptionId` int NOT NULL,\n  PRIMARY KEY (`answerId`,`questionOptionId`),\n  KEY `IDX_7c36f35a3fcb6c5fe610023447` (`answerId`),\n  KEY `IDX_a28062e701efff0f2680f6eafd` (`questionOptionId`),\n  CONSTRAINT `FK_7c36f35a3fcb6c5fe6100234479` FOREIGN KEY (`answerId`) REFERENCES `answer` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  CONSTRAINT `FK_a28062e701efff0f2680f6eafd1` FOREIGN KEY (`questionOptionId`) REFERENCES `question_option` (`id`) ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `answer_options` (\n  `answer_id` int NOT NULL,\n  `option_id` int NOT NULL,\n  PRIMARY KEY (`answer_id`,`option_id`),\n  KEY `IDX_c9e3904ebdcfc37c86dfcd3f9a` (`answer_id`),\n  KEY `IDX_a471e2b4413da05fecea7b9e82` (`option_id`),\n  CONSTRAINT `FK_a471e2b4413da05fecea7b9e828` FOREIGN KEY (`option_id`) REFERENCES `question_option` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  CONSTRAINT `FK_c9e3904ebdcfc37c86dfcd3f9a3` FOREIGN KEY (`answer_id`) REFERENCES `answer` (`id`) ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "migrations",
@@ -229,13 +236,18 @@
           "extra_def": "auto_increment"
         },
         {
-          "name": "qtext",
-          "type": "varchar(255)",
+          "name": "order",
+          "type": "int",
           "nullable": false
         },
         {
-          "name": "surveyId",
-          "type": "int",
+          "name": "qtext",
+          "type": "varchar(500)",
+          "nullable": false
+        },
+        {
+          "name": "type",
+          "type": "enum('TEXT','SINGLE','MULTIPLE')",
           "nullable": false
         },
         {
@@ -245,18 +257,19 @@
           "default": "0"
         },
         {
-          "name": "type",
-          "type": "enum('TEXT','SINGLE','MULTIPLE')",
+          "name": "survey_id",
+          "type": "int",
           "nullable": false
         }
       ],
       "indexes": [
         {
-          "name": "FK_a1188e0f702ab268e0982049e5c",
-          "def": "KEY FK_a1188e0f702ab268e0982049e5c (surveyId) USING BTREE",
+          "name": "IDX_b38a3cdf1ccc1098f2d8757bd8",
+          "def": "KEY IDX_b38a3cdf1ccc1098f2d8757bd8 (survey_id, order) USING BTREE",
           "table": "question",
           "columns": [
-            "surveyId"
+            "survey_id",
+            "order"
           ]
         },
         {
@@ -270,13 +283,13 @@
       ],
       "constraints": [
         {
-          "name": "FK_a1188e0f702ab268e0982049e5c",
+          "name": "FK_a74e5e8dfbf68d7d1cd39c8c9fc",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (surveyId) REFERENCES survey (id)",
+          "def": "FOREIGN KEY (survey_id) REFERENCES survey (id)",
           "table": "question",
           "referenced_table": "survey",
           "columns": [
-            "surveyId"
+            "survey_id"
           ],
           "referenced_columns": [
             "id"
@@ -292,7 +305,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `question` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `qtext` varchar(255) NOT NULL,\n  `surveyId` int NOT NULL,\n  `required` tinyint NOT NULL DEFAULT '0',\n  `type` enum('TEXT','SINGLE','MULTIPLE') NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_a1188e0f702ab268e0982049e5c` (`surveyId`),\n  CONSTRAINT `FK_a1188e0f702ab268e0982049e5c` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `question` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `order` int NOT NULL,\n  `qtext` varchar(500) NOT NULL,\n  `type` enum('TEXT','SINGLE','MULTIPLE') NOT NULL,\n  `required` tinyint NOT NULL DEFAULT '0',\n  `survey_id` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `IDX_b38a3cdf1ccc1098f2d8757bd8` (`survey_id`,`order`),\n  CONSTRAINT `FK_a74e5e8dfbf68d7d1cd39c8c9fc` FOREIGN KEY (`survey_id`) REFERENCES `survey` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "question_option",
@@ -306,22 +319,28 @@
         },
         {
           "name": "text",
-          "type": "varchar(255)",
+          "type": "varchar(200)",
           "nullable": false
         },
         {
-          "name": "questionId",
+          "name": "order",
+          "type": "int",
+          "nullable": false
+        },
+        {
+          "name": "question_id",
           "type": "int",
           "nullable": false
         }
       ],
       "indexes": [
         {
-          "name": "FK_ba19747af180520381a117f5986",
-          "def": "KEY FK_ba19747af180520381a117f5986 (questionId) USING BTREE",
+          "name": "IDX_6aaa48b4788f7f99210d3bce92",
+          "def": "KEY IDX_6aaa48b4788f7f99210d3bce92 (question_id, order) USING BTREE",
           "table": "question_option",
           "columns": [
-            "questionId"
+            "question_id",
+            "order"
           ]
         },
         {
@@ -335,13 +354,13 @@
       ],
       "constraints": [
         {
-          "name": "FK_ba19747af180520381a117f5986",
+          "name": "FK_747190c37a39feced5efcbb303f",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (questionId) REFERENCES question (id)",
+          "def": "FOREIGN KEY (question_id) REFERENCES question (id)",
           "table": "question_option",
           "referenced_table": "question",
           "columns": [
-            "questionId"
+            "question_id"
           ],
           "referenced_columns": [
             "id"
@@ -357,7 +376,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `question_option` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(255) NOT NULL,\n  `questionId` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_ba19747af180520381a117f5986` (`questionId`),\n  CONSTRAINT `FK_ba19747af180520381a117f5986` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `question_option` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(200) NOT NULL,\n  `order` int NOT NULL,\n  `question_id` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `IDX_6aaa48b4788f7f99210d3bce92` (`question_id`,`order`),\n  CONSTRAINT `FK_747190c37a39feced5efcbb303f` FOREIGN KEY (`question_id`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "submission",
@@ -370,30 +389,30 @@
           "extra_def": "auto_increment"
         },
         {
-          "name": "submittedAt",
-          "type": "datetime(6)",
+          "name": "submitted_at",
+          "type": "timestamp(6)",
           "nullable": false,
           "default": "CURRENT_TIMESTAMP(6)",
           "extra_def": "DEFAULT_GENERATED"
         },
         {
-          "name": "respondentId",
-          "type": "varchar(255)",
+          "name": "respondent_id",
+          "type": "varchar(100)",
           "nullable": true
         },
         {
-          "name": "surveyId",
+          "name": "survey_id",
           "type": "int",
           "nullable": false
         }
       ],
       "indexes": [
         {
-          "name": "FK_445eeaad33ae6464ac85f6ea46b",
-          "def": "KEY FK_445eeaad33ae6464ac85f6ea46b (surveyId) USING BTREE",
+          "name": "IDX_a7cb7a8716f01cc5f73ccbc594",
+          "def": "KEY IDX_a7cb7a8716f01cc5f73ccbc594 (survey_id) USING BTREE",
           "table": "submission",
           "columns": [
-            "surveyId"
+            "survey_id"
           ]
         },
         {
@@ -407,13 +426,13 @@
       ],
       "constraints": [
         {
-          "name": "FK_445eeaad33ae6464ac85f6ea46b",
+          "name": "FK_a7cb7a8716f01cc5f73ccbc5946",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (surveyId) REFERENCES survey (id)",
+          "def": "FOREIGN KEY (survey_id) REFERENCES survey (id)",
           "table": "submission",
           "referenced_table": "survey",
           "columns": [
-            "surveyId"
+            "survey_id"
           ],
           "referenced_columns": [
             "id"
@@ -429,7 +448,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `submission` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `submittedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `respondentId` varchar(255) DEFAULT NULL,\n  `surveyId` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `FK_445eeaad33ae6464ac85f6ea46b` (`surveyId`),\n  CONSTRAINT `FK_445eeaad33ae6464ac85f6ea46b` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `submission` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `submitted_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `respondent_id` varchar(100) DEFAULT NULL,\n  `survey_id` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `IDX_a7cb7a8716f01cc5f73ccbc594` (`survey_id`),\n  CONSTRAINT `FK_a7cb7a8716f01cc5f73ccbc5946` FOREIGN KEY (`survey_id`) REFERENCES `survey` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "survey",
@@ -442,13 +461,8 @@
           "extra_def": "auto_increment"
         },
         {
-          "name": "shareId",
-          "type": "varchar(36)",
-          "nullable": false
-        },
-        {
           "name": "title",
-          "type": "varchar(255)",
+          "type": "varchar(200)",
           "nullable": false
         },
         {
@@ -458,38 +472,43 @@
           "default": "0"
         },
         {
-          "name": "createdAt",
-          "type": "datetime(6)",
+          "name": "auth",
+          "type": "enum('PUBLIC','PRIVATE')",
+          "nullable": false,
+          "default": "PUBLIC"
+        },
+        {
+          "name": "share_id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp(6)",
           "nullable": false,
           "default": "CURRENT_TIMESTAMP(6)",
           "extra_def": "DEFAULT_GENERATED"
         },
         {
-          "name": "updatedAt",
-          "type": "datetime(6)",
+          "name": "updated_at",
+          "type": "timestamp(6)",
           "nullable": false,
           "default": "CURRENT_TIMESTAMP(6)",
           "extra_def": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP(6)"
         },
         {
-          "name": "ownerId",
+          "name": "owner_id",
           "type": "int",
           "nullable": false
-        },
-        {
-          "name": "auth",
-          "type": "enum('PUBLIC','PRIVATE')",
-          "nullable": false,
-          "default": "PUBLIC"
         }
       ],
       "indexes": [
         {
-          "name": "FK_a2e6e9ab8f1ff04cbf31da646e7",
-          "def": "KEY FK_a2e6e9ab8f1ff04cbf31da646e7 (ownerId) USING BTREE",
+          "name": "IDX_ec8daff33708a5bc68df09e8fe",
+          "def": "KEY IDX_ec8daff33708a5bc68df09e8fe (owner_id) USING BTREE",
           "table": "survey",
           "columns": [
-            "ownerId"
+            "owner_id"
           ]
         },
         {
@@ -501,35 +520,35 @@
           ]
         },
         {
-          "name": "IDX_76268d52f6deafc75cb9987c21",
-          "def": "UNIQUE KEY IDX_76268d52f6deafc75cb9987c21 (shareId) USING BTREE",
+          "name": "IDX_5294383ae2244a90612a681883",
+          "def": "UNIQUE KEY IDX_5294383ae2244a90612a681883 (share_id) USING BTREE",
           "table": "survey",
           "columns": [
-            "shareId"
+            "share_id"
           ]
         }
       ],
       "constraints": [
         {
-          "name": "FK_a2e6e9ab8f1ff04cbf31da646e7",
+          "name": "FK_ec8daff33708a5bc68df09e8fe5",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (ownerId) REFERENCES user (id)",
+          "def": "FOREIGN KEY (owner_id) REFERENCES user (id)",
           "table": "survey",
           "referenced_table": "user",
           "columns": [
-            "ownerId"
+            "owner_id"
           ],
           "referenced_columns": [
             "id"
           ]
         },
         {
-          "name": "IDX_76268d52f6deafc75cb9987c21",
+          "name": "IDX_5294383ae2244a90612a681883",
           "type": "UNIQUE",
-          "def": "UNIQUE KEY IDX_76268d52f6deafc75cb9987c21 (shareId)",
+          "def": "UNIQUE KEY IDX_5294383ae2244a90612a681883 (share_id)",
           "table": "survey",
           "columns": [
-            "shareId"
+            "share_id"
           ]
         },
         {
@@ -542,7 +561,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `survey` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `shareId` varchar(36) NOT NULL,\n  `title` varchar(255) NOT NULL,\n  `published` tinyint NOT NULL DEFAULT '0',\n  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),\n  `ownerId` int NOT NULL,\n  `auth` enum('PUBLIC','PRIVATE') NOT NULL DEFAULT 'PUBLIC',\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `IDX_76268d52f6deafc75cb9987c21` (`shareId`),\n  KEY `FK_a2e6e9ab8f1ff04cbf31da646e7` (`ownerId`),\n  CONSTRAINT `FK_a2e6e9ab8f1ff04cbf31da646e7` FOREIGN KEY (`ownerId`) REFERENCES `user` (`id`)\n) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `survey` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `title` varchar(200) NOT NULL,\n  `published` tinyint NOT NULL DEFAULT '0',\n  `auth` enum('PUBLIC','PRIVATE') NOT NULL DEFAULT 'PUBLIC',\n  `share_id` varchar(36) NOT NULL,\n  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `updated_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),\n  `owner_id` int NOT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `IDX_5294383ae2244a90612a681883` (`share_id`),\n  KEY `IDX_ec8daff33708a5bc68df09e8fe` (`owner_id`),\n  CONSTRAINT `FK_ec8daff33708a5bc68df09e8fe5` FOREIGN KEY (`owner_id`) REFERENCES `user` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "survey_token",
@@ -554,36 +573,39 @@
           "nullable": false
         },
         {
-          "name": "isUsed",
+          "name": "is_used",
           "type": "tinyint",
           "nullable": false,
           "default": "0"
         },
         {
-          "name": "createdAt",
-          "type": "datetime(6)",
+          "name": "created_at",
+          "type": "timestamp(6)",
           "nullable": false,
           "default": "CURRENT_TIMESTAMP(6)",
           "extra_def": "DEFAULT_GENERATED"
         },
         {
-          "name": "expiredAt",
-          "type": "datetime",
-          "nullable": true
-        },
-        {
-          "name": "surveyId",
+          "name": "survey_id",
           "type": "int",
           "nullable": false
         }
       ],
       "indexes": [
         {
-          "name": "FK_beeccb051103b4b15ee1ca81547",
-          "def": "KEY FK_beeccb051103b4b15ee1ca81547 (surveyId) USING BTREE",
+          "name": "IDX_367730178794cb6266d0c08500",
+          "def": "KEY IDX_367730178794cb6266d0c08500 (survey_id) USING BTREE",
           "table": "survey_token",
           "columns": [
-            "surveyId"
+            "survey_id"
+          ]
+        },
+        {
+          "name": "IDX_fc20e76ece85282732bc26223b",
+          "def": "KEY IDX_fc20e76ece85282732bc26223b (is_used) USING BTREE",
+          "table": "survey_token",
+          "columns": [
+            "is_used"
           ]
         },
         {
@@ -597,13 +619,13 @@
       ],
       "constraints": [
         {
-          "name": "FK_beeccb051103b4b15ee1ca81547",
+          "name": "FK_367730178794cb6266d0c08500d",
           "type": "FOREIGN KEY",
-          "def": "FOREIGN KEY (surveyId) REFERENCES survey (id)",
+          "def": "FOREIGN KEY (survey_id) REFERENCES survey (id)",
           "table": "survey_token",
           "referenced_table": "survey",
           "columns": [
-            "surveyId"
+            "survey_id"
           ],
           "referenced_columns": [
             "id"
@@ -619,7 +641,7 @@
           ]
         }
       ],
-      "def": "CREATE TABLE `survey_token` (\n  `token` varchar(36) NOT NULL,\n  `isUsed` tinyint NOT NULL DEFAULT '0',\n  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `expiredAt` datetime DEFAULT NULL,\n  `surveyId` int NOT NULL,\n  PRIMARY KEY (`token`),\n  KEY `FK_beeccb051103b4b15ee1ca81547` (`surveyId`),\n  CONSTRAINT `FK_beeccb051103b4b15ee1ca81547` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+      "def": "CREATE TABLE `survey_token` (\n  `token` varchar(36) NOT NULL,\n  `is_used` tinyint NOT NULL DEFAULT '0',\n  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `survey_id` int NOT NULL,\n  PRIMARY KEY (`token`),\n  KEY `IDX_fc20e76ece85282732bc26223b` (`is_used`),\n  KEY `IDX_367730178794cb6266d0c08500` (`survey_id`),\n  CONSTRAINT `FK_367730178794cb6266d0c08500d` FOREIGN KEY (`survey_id`) REFERENCES `survey` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
       "name": "user",
@@ -687,20 +709,20 @@
     {
       "table": "answer",
       "columns": [
-        "submissionId"
+        "submission_id"
       ],
       "cardinality": "zero_or_more",
       "parent_table": "submission",
       "parent_columns": [
         "id"
       ],
-      "parent_cardinality": "zero_or_one",
-      "def": "FOREIGN KEY (submissionId) REFERENCES submission (id)"
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (submission_id) REFERENCES submission (id)"
     },
     {
       "table": "answer",
       "columns": [
-        "questionId"
+        "question_id"
       ],
       "cardinality": "zero_or_more",
       "parent_table": "question",
@@ -708,25 +730,12 @@
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (questionId) REFERENCES question (id)"
+      "def": "FOREIGN KEY (question_id) REFERENCES question (id)"
     },
     {
-      "table": "answer_selected_options_question_option",
+      "table": "answer_options",
       "columns": [
-        "answerId"
-      ],
-      "cardinality": "zero_or_more",
-      "parent_table": "answer",
-      "parent_columns": [
-        "id"
-      ],
-      "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (answerId) REFERENCES answer (id)"
-    },
-    {
-      "table": "answer_selected_options_question_option",
-      "columns": [
-        "questionOptionId"
+        "option_id"
       ],
       "cardinality": "zero_or_more",
       "parent_table": "question_option",
@@ -734,12 +743,25 @@
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (questionOptionId) REFERENCES question_option (id)"
+      "def": "FOREIGN KEY (option_id) REFERENCES question_option (id)"
+    },
+    {
+      "table": "answer_options",
+      "columns": [
+        "answer_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "answer",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (answer_id) REFERENCES answer (id)"
     },
     {
       "table": "question",
       "columns": [
-        "surveyId"
+        "survey_id"
       ],
       "cardinality": "zero_or_more",
       "parent_table": "survey",
@@ -747,12 +769,12 @@
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+      "def": "FOREIGN KEY (survey_id) REFERENCES survey (id)"
     },
     {
       "table": "question_option",
       "columns": [
-        "questionId"
+        "question_id"
       ],
       "cardinality": "zero_or_more",
       "parent_table": "question",
@@ -760,12 +782,12 @@
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (questionId) REFERENCES question (id)"
+      "def": "FOREIGN KEY (question_id) REFERENCES question (id)"
     },
     {
       "table": "submission",
       "columns": [
-        "surveyId"
+        "survey_id"
       ],
       "cardinality": "zero_or_more",
       "parent_table": "survey",
@@ -773,12 +795,12 @@
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+      "def": "FOREIGN KEY (survey_id) REFERENCES survey (id)"
     },
     {
       "table": "survey",
       "columns": [
-        "ownerId"
+        "owner_id"
       ],
       "cardinality": "zero_or_more",
       "parent_table": "user",
@@ -786,12 +808,12 @@
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (ownerId) REFERENCES user (id)"
+      "def": "FOREIGN KEY (owner_id) REFERENCES user (id)"
     },
     {
       "table": "survey_token",
       "columns": [
-        "surveyId"
+        "survey_id"
       ],
       "cardinality": "zero_or_more",
       "parent_table": "survey",
@@ -799,7 +821,7 @@
         "id"
       ],
       "parent_cardinality": "exactly_one",
-      "def": "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+      "def": "FOREIGN KEY (survey_id) REFERENCES survey (id)"
     }
   ],
   "driver": {

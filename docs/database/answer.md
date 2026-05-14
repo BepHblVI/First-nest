@@ -8,15 +8,16 @@
 ```sql
 CREATE TABLE `answer` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `text` varchar(255) DEFAULT NULL,
-  `questionId` int NOT NULL,
-  `submissionId` int DEFAULT NULL,
+  `text` text,
+  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `question_id` int NOT NULL,
+  `submission_id` int NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `FK_a4013f10cd6924793fbd5f0d637` (`questionId`),
-  KEY `FK_1398cb4bf7f1ccc37fa0dd538ff` (`submissionId`),
-  CONSTRAINT `FK_1398cb4bf7f1ccc37fa0dd538ff` FOREIGN KEY (`submissionId`) REFERENCES `submission` (`id`),
-  CONSTRAINT `FK_a4013f10cd6924793fbd5f0d637` FOREIGN KEY (`questionId`) REFERENCES `question` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  KEY `IDX_c3d19a89541e4f0813f2fe0919` (`question_id`),
+  KEY `IDX_83373a8dab1b67c46bb813e86e` (`submission_id`),
+  CONSTRAINT `FK_83373a8dab1b67c46bb813e86e1` FOREIGN KEY (`submission_id`) REFERENCES `submission` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `FK_c3d19a89541e4f0813f2fe09194` FOREIGN KEY (`question_id`) REFERENCES `question` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
 </details>
@@ -25,25 +26,26 @@ CREATE TABLE `answer` (
 
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
-| id | int |  | false | auto_increment | [answer_selected_options_question_option](answer_selected_options_question_option.md) |  |  |
-| text | varchar(255) |  | true |  |  |  |  |
-| questionId | int |  | false |  |  | [question](question.md) |  |
-| submissionId | int |  | true |  |  | [submission](submission.md) |  |
+| id | int |  | false | auto_increment | [answer_options](answer_options.md) |  |  |
+| text | text |  | true |  |  |  |  |
+| created_at | timestamp(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
+| question_id | int |  | false |  |  | [question](question.md) |  |
+| submission_id | int |  | false |  |  | [submission](submission.md) |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| FK_1398cb4bf7f1ccc37fa0dd538ff | FOREIGN KEY | FOREIGN KEY (submissionId) REFERENCES submission (id) |
-| FK_a4013f10cd6924793fbd5f0d637 | FOREIGN KEY | FOREIGN KEY (questionId) REFERENCES question (id) |
+| FK_83373a8dab1b67c46bb813e86e1 | FOREIGN KEY | FOREIGN KEY (submission_id) REFERENCES submission (id) |
+| FK_c3d19a89541e4f0813f2fe09194 | FOREIGN KEY | FOREIGN KEY (question_id) REFERENCES question (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| FK_1398cb4bf7f1ccc37fa0dd538ff | KEY FK_1398cb4bf7f1ccc37fa0dd538ff (submissionId) USING BTREE |
-| FK_a4013f10cd6924793fbd5f0d637 | KEY FK_a4013f10cd6924793fbd5f0d637 (questionId) USING BTREE |
+| IDX_83373a8dab1b67c46bb813e86e | KEY IDX_83373a8dab1b67c46bb813e86e (submission_id) USING BTREE |
+| IDX_c3d19a89541e4f0813f2fe0919 | KEY IDX_c3d19a89541e4f0813f2fe0919 (question_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations
@@ -51,32 +53,34 @@ CREATE TABLE `answer` (
 ```mermaid
 erDiagram
 
-"answer_selected_options_question_option" }o--|| "answer" : "FOREIGN KEY (answerId) REFERENCES answer (id)"
-"answer" }o--|| "question" : "FOREIGN KEY (questionId) REFERENCES question (id)"
-"answer" }o--o| "submission" : "FOREIGN KEY (submissionId) REFERENCES submission (id)"
+"answer_options" }o--|| "answer" : "FOREIGN KEY (answer_id) REFERENCES answer (id)"
+"answer" }o--|| "question" : "FOREIGN KEY (question_id) REFERENCES question (id)"
+"answer" }o--|| "submission" : "FOREIGN KEY (submission_id) REFERENCES submission (id)"
 
 "answer" {
   int id PK
-  varchar_255_ text
-  int questionId FK
-  int submissionId FK
+  text text
+  timestamp_6_ created_at
+  int question_id FK
+  int submission_id FK
 }
-"answer_selected_options_question_option" {
-  int answerId PK
-  int questionOptionId PK
+"answer_options" {
+  int answer_id PK
+  int option_id PK
 }
 "question" {
   int id PK
-  varchar_255_ qtext
-  int surveyId FK
-  tinyint required
+  int order
+  varchar_500_ qtext
   enum__TEXT___SINGLE___MULTIPLE__ type
+  tinyint required
+  int survey_id FK
 }
 "submission" {
   int id PK
-  datetime_6_ submittedAt
-  varchar_255_ respondentId
-  int surveyId FK
+  timestamp_6_ submitted_at
+  varchar_100_ respondent_id
+  int survey_id FK
 }
 ```
 

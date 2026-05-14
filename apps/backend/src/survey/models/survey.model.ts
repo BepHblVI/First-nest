@@ -49,7 +49,6 @@ export class Survey {
   @Field(() => String, {
     description: 'URL共有用の識別子(UUID。所有者以外でもこの値で参照可)',
   })
-  @Index({ unique: true })
   @Column({ type: 'varchar', length: 36, unique: true })
   @Generated('uuid')
   shareId!: string;
@@ -115,7 +114,6 @@ export class Survey {
   })
   @OneToMany(() => SurveyToken, (token) => token.survey, {
     cascade: true,
-    // eager: false に変更。所有者のクエリで明示的に relations 指定する。
     orphanedRowAction: 'delete',
   })
   tokens!: SurveyToken[];

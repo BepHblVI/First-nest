@@ -23,6 +23,18 @@ enum AnswerState {
   UNANSWERED
 }
 
+"""クロス集計表の行/列ごとの合計情報"""
+type AxisSummary {
+  """この行/列の合計件数。MULTIPLEを含む場合は重複カウントを含む"""
+  count: Int!
+
+  """行または列の選択肢ID"""
+  optionId: Int!
+
+  """grandTotalに対するこの行/列の割合(%)"""
+  percentage: Float!
+}
+
 type CorrelationResult {
   coOccurrenceCount: Int!
   option1Id: Int!
@@ -45,6 +57,84 @@ input CreateSurveyInput {
 
   """生成する回答用トークン数(PRIVATE時のみ有効、0以上)"""
   tokens: Int = 0
+}
+
+"""クロス集計表の1セル。(rowOptionId, columnOptionId)の組合せごとに1つ存在し、回答0件のセルも含まれる"""
+type CrossTabCell {
+  """列の選択肢ID"""
+  columnOptionId: Int!
+
+  """列内比率(%)。同じ列の合計に対するこのセルの割合。列合計が0なら0.0を返す"""
+  columnPercentage: Float!
+
+  """該当する回答件数。MULTIPLE質問が絡む場合、同一回答者が複数セルに加算されることがある"""
+  count: Int!
+
+  """行の選択肢ID"""
+  rowOptionId: Int!
+
+  """行内比率(%)。同じ行の合計に対するこのセルの割合。行合計が0なら0.0を返す"""
+  rowPercentage: Float!
+
+  """全体比率(%)。grandTotalに対するこのセルの割合。grandTotalが0なら0.0を返す"""
+  totalPercentage: Float!
+}
+
+"""選択肢のメタ情報(クロス集計用)"""
+type CrossTabOptionMeta {
+  """選択肢ID"""
+  id: Int!
+
+  """選択肢の表示テキスト"""
+  text: String!
+}
+
+"""クロス集計に使う質問のメタ情報"""
+type CrossTabQuestionMeta {
+  """質問ID"""
+  id: Int!
+
+  """選択肢の一覧(orderの昇順)"""
+  options: [CrossTabOptionMeta!]!
+
+  """質問文(本文)"""
+  qtext: String!
+
+  """質問の形式(SINGLE/MULTIPLE)。MULTIPLEのとき同一回答者が複数セルに重複してカウントされうる"""
+  type: QuestionType!
+}
+
+"""2つの選択式質問のクロス集計"""
+input CrossTabulationInput {
+  """列に展開する質問ID"""
+  columnQuestionId: Int!
+
+  """行に展開する質問ID"""
+  rowQuestionId: Int!
+
+  """対象アンケートID"""
+  surveyId: Int!
+}
+
+"""2つの選択式質問のクロス集計結果。行(rowQuestion) × 列(columnQuestion)の表形式データを返す"""
+type CrossTabulationResult {
+  """集計表の全セル(0件セルも含む直積)。要素数 = rowOptions.length × columnOptions.length"""
+  cells: [CrossTabCell!]!
+
+  """列(横軸)に展開された質問の情報"""
+  columnQuestion: CrossTabQuestionMeta!
+
+  """各列の合計(columnQuestion.optionsの順序に対応)"""
+  columnSummary: [AxisSummary!]!
+
+  """集計対象の総件数。SINGLEのみなら回答者数と一致、MULTIPLEを含む場合は重複カウント込みとなる"""
+  grandTotal: Int!
+
+  """行(縦軸)に展開された質問の情報"""
+  rowQuestion: CrossTabQuestionMeta!
+
+  """各行の合計(rowQuestion.optionsの順序に対応)"""
+  rowSummary: [AxisSummary!]!
 }
 
 """日時の範囲指定。両方省略可"""
@@ -120,6 +210,7 @@ enum PublishState {
 }
 
 type Query {
+  getCrossTabulationResults(input: CrossTabulationInput!): CrossTabulationResult!
   getSurvey: [Survey!]!
   getSurveyForAnswer(shareId: String!): Survey!
   getSurveyResults(shareId: String!): SurveyResult!

@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { SurveyModule } from './survey/survey.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigService } from '@nestjs/config';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import cookieParser = require('cookie-parser');
 import * as fs from 'fs';
 import * as path from 'path';
@@ -48,6 +49,7 @@ const ROOT = findWorkspaceRoot();
           synchronize: process.env.NODE_ENV === 'test',
           migrationsRun: true,
           migrations: [join(__dirname, 'migrations/*{.ts,.js}')],
+          namingStrategy: new SnakeNamingStrategy(),
           logging: false,
         };
       },

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Survey } from './models/survey.model';
-import { SearchSurveyResult } from './dto/result.output';
+import { SearchSurveyResult } from './dto/outputs';
 import { User } from '../auth/user.model';
 import { SearchSurveyInput } from './dto/inputs';
 import {

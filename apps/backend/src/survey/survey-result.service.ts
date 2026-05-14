@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { Survey } from './models/survey.model';
 import { Submission } from './models/submission.model';
 import { Answer } from './models/answer.model';
-import { SurveyResult } from './dto/result.output';
+import { SurveyResult } from './dto/outputs/survey-result.output';
 import { User } from '../auth/user.model';
 
 @Injectable()

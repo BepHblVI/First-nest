@@ -39,7 +39,7 @@ export class Answer {
   })
   @ManyToMany(() => QuestionOption)
   @JoinTable({
-    name: 'answer_selected_options',
+    name: 'answer_options',
     joinColumn: { name: 'answer_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'option_id', referencedColumnName: 'id' },
   })

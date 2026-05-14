@@ -8,13 +8,13 @@
 ```sql
 CREATE TABLE `survey_token` (
   `token` varchar(36) NOT NULL,
-  `isUsed` tinyint NOT NULL DEFAULT '0',
-  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  `expiredAt` datetime DEFAULT NULL,
-  `surveyId` int NOT NULL,
+  `is_used` tinyint NOT NULL DEFAULT '0',
+  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `survey_id` int NOT NULL,
   PRIMARY KEY (`token`),
-  KEY `FK_beeccb051103b4b15ee1ca81547` (`surveyId`),
-  CONSTRAINT `FK_beeccb051103b4b15ee1ca81547` FOREIGN KEY (`surveyId`) REFERENCES `survey` (`id`) ON DELETE CASCADE
+  KEY `IDX_fc20e76ece85282732bc26223b` (`is_used`),
+  KEY `IDX_367730178794cb6266d0c08500` (`survey_id`),
+  CONSTRAINT `FK_367730178794cb6266d0c08500d` FOREIGN KEY (`survey_id`) REFERENCES `survey` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
@@ -25,23 +25,23 @@ CREATE TABLE `survey_token` (
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | token | varchar(36) |  | false |  |  |  |  |
-| isUsed | tinyint | 0 | false |  |  |  |  |
-| createdAt | datetime(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
-| expiredAt | datetime |  | true |  |  |  |  |
-| surveyId | int |  | false |  |  | [survey](survey.md) |  |
+| is_used | tinyint | 0 | false |  |  |  |  |
+| created_at | timestamp(6) | CURRENT_TIMESTAMP(6) | false | DEFAULT_GENERATED |  |  |  |
+| survey_id | int |  | false |  |  | [survey](survey.md) |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| FK_beeccb051103b4b15ee1ca81547 | FOREIGN KEY | FOREIGN KEY (surveyId) REFERENCES survey (id) |
+| FK_367730178794cb6266d0c08500d | FOREIGN KEY | FOREIGN KEY (survey_id) REFERENCES survey (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (token) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| FK_beeccb051103b4b15ee1ca81547 | KEY FK_beeccb051103b4b15ee1ca81547 (surveyId) USING BTREE |
+| IDX_367730178794cb6266d0c08500 | KEY IDX_367730178794cb6266d0c08500 (survey_id) USING BTREE |
+| IDX_fc20e76ece85282732bc26223b | KEY IDX_fc20e76ece85282732bc26223b (is_used) USING BTREE |
 | PRIMARY | PRIMARY KEY (token) USING BTREE |
 
 ## Relations
@@ -49,24 +49,23 @@ CREATE TABLE `survey_token` (
 ```mermaid
 erDiagram
 
-"survey_token" }o--|| "survey" : "FOREIGN KEY (surveyId) REFERENCES survey (id)"
+"survey_token" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
 
 "survey_token" {
   varchar_36_ token PK
-  tinyint isUsed
-  datetime_6_ createdAt
-  datetime expiredAt
-  int surveyId FK
+  tinyint is_used
+  timestamp_6_ created_at
+  int survey_id FK
 }
 "survey" {
   int id PK
-  varchar_36_ shareId
-  varchar_255_ title
+  varchar_200_ title
   tinyint published
-  datetime_6_ createdAt
-  datetime_6_ updatedAt
-  int ownerId FK
   enum__PUBLIC___PRIVATE__ auth
+  varchar_36_ share_id
+  timestamp_6_ created_at
+  timestamp_6_ updated_at
+  int owner_id FK
 }
 ```
 

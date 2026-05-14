@@ -5,6 +5,7 @@ import { SurveyService } from './survey.service';
 import { SurveyResolver } from './survey.resolver';
 import { SurveyResultService } from './survey-result.service';
 import { SurveySearchService } from './survey-search.service';
+import { CrossResultService } from './cross-result.service';
 import { AnswerValidator } from './validators/answer.validator';
 
 import { Survey } from './models/survey.model';
@@ -30,6 +31,7 @@ import { SurveyToken } from './models/survey-token.model';
     SurveyResolver,
     SurveyResultService,
     SurveySearchService,
+    CrossResultService,
     AnswerValidator,
   ],
 })

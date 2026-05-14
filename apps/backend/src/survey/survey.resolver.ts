@@ -11,14 +11,20 @@ import {
 import { SurveyService } from './survey.service';
 import { SurveyResultService } from './survey-result.service';
 import { SurveySearchService } from './survey-search.service';
+import { CrossResultService } from './cross-result.service';
 import { Survey } from './models/survey.model';
 import { Submission } from './models/submission.model';
-import { SurveyResult, SearchSurveyResult } from './dto/result.output';
+import {
+  SurveyResult,
+  SearchSurveyResult,
+  CrossTabulationResult,
+} from './dto/outputs';
 import {
   CreateSurveyInput,
   SubmitSurveyAnswerInput,
   EditSurveyInput,
   SearchSurveyInput,
+  CrossTabulationInput,
 } from './dto/inputs';
 
 import { UseGuards, UseInterceptors } from '@nestjs/common';
@@ -34,6 +40,7 @@ export class SurveyResolver {
     private readonly surveyService: SurveyService,
     private readonly surveyResultService: SurveyResultService,
     private readonly surveySearchService: SurveySearchService,
+    private readonly crossResultService: CrossResultService,
   ) {}
 
   // ─── Queries ───────────────────────────────
@@ -55,6 +62,15 @@ export class SurveyResolver {
     @CurrentUser() currentUser: User,
   ): Promise<SurveyResult> {
     return this.surveyResultService.getResults(shareId, currentUser);
+  }
+
+  @Query(() => CrossTabulationResult)
+  @UseGuards(SurveyAuthGuard)
+  async getCrossTabulationResults(
+    @Args('input') input: CrossTabulationInput,
+    @CurrentUser() currentUser: User,
+  ): Promise<CrossTabulationResult> {
+    return this.crossResultService.getCrossResults(input, currentUser);
   }
 
   @Query(() => SearchSurveyResult)
