@@ -107,3 +107,16 @@ export const refreshAccessToken = async (
     cookie,
   });
 };
+/**
+ * refresh して、新しい refresh_token Cookie も取得する
+ */
+export const refreshWithRotation = async (
+  app: INestApplication,
+  cookie: string,
+) => {
+  const res = await refreshAccessToken(app, cookie);
+  const accessToken = res.body.data?.refresh?.access_token;
+  const setCookie = extractRefreshCookie(res);
+  const newRefreshCookie = setCookie ? cookieToHeader(setCookie) : undefined;
+  return { accessToken, newRefreshCookie, response: res };
+};

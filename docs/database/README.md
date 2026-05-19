@@ -9,6 +9,7 @@
 | [migrations](migrations.md) | 3 |  | BASE TABLE |
 | [question](question.md) | 6 |  | BASE TABLE |
 | [question_option](question_option.md) | 4 |  | BASE TABLE |
+| [refresh_token](refresh_token.md) | 9 |  | BASE TABLE |
 | [submission](submission.md) | 4 |  | BASE TABLE |
 | [survey](survey.md) | 8 |  | BASE TABLE |
 | [survey_token](survey_token.md) | 4 |  | BASE TABLE |
@@ -25,6 +26,7 @@ erDiagram
 "answer_options" }o--|| "answer" : "FOREIGN KEY (answer_id) REFERENCES answer (id)"
 "question" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
 "question_option" }o--|| "question" : "FOREIGN KEY (question_id) REFERENCES question (id)"
+"refresh_token" }o--|| "user" : "FOREIGN KEY (user_id) REFERENCES user (id)"
 "submission" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
 "survey" }o--|| "user" : "FOREIGN KEY (owner_id) REFERENCES user (id)"
 "survey_token" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
@@ -58,6 +60,17 @@ erDiagram
   varchar_200_ text
   int order
   int question_id FK
+}
+"refresh_token" {
+  varchar_36_ id PK
+  varchar_64_ token_hash
+  timestamp expires_at
+  timestamp_6_ created_at
+  tinyint revoked
+  varchar_36_ replaced_by_token_id
+  varchar_255_ user_agent
+  varchar_45_ ip
+  int user_id FK
 }
 "submission" {
   int id PK

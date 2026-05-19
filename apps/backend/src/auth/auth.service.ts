@@ -1,6 +1,6 @@
 import {
-  Injectable,
   ConflictException,
+  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -8,62 +8,131 @@ import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.model';
+import { RefreshToken } from './refresh-token.model';
 import { ConfigService } from '@nestjs/config';
+import { SignUpInput } from './dto/sign-up.input';
+import { hashToken } from './helpers/hash-token';
+import { DataSource } from 'typeorm';
+
+const DUMMY_PASS = bcrypt.hashSync('Dummy-password', 10);
+const REFRESH_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepo: Repository<RefreshToken>,
+    private dataSource: DataSource,
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
 
-  // ユーザー登録
-  async signUp(username: string, pass: string) {
-    const existing = await this.userRepo.findOne({ where: { username } });
+  async signUp(input: SignUpInput): Promise<User> {
+    const existing = await this.userRepo.findOne({
+      where: { username: input.username },
+    });
     if (existing) {
       throw new ConflictException('このユーザー名は既に使用されています');
     }
-    const hashedPass = await bcrypt.hash(pass, 10);
-    const user = this.userRepo.create({ username, password: hashedPass });
+    const hashedPass = await bcrypt.hash(input.password, 10);
+    const user = this.userRepo.create({
+      username: input.username,
+      password: hashedPass,
+    });
     return this.userRepo.save(user);
   }
 
-  // 2. ログイン
-  async login(username: string, pass: string) {
+  async login(
+    username: string,
+    pass: string,
+  ): Promise<{ access_token: string; refresh_token: string }> {
     const user = await this.userRepo.findOne({ where: { username } });
-    if (!user)
-      throw new UnauthorizedException('ユーザー名またはパスワードが違います');
-
-    const isMatch = await bcrypt.compare(pass, user.password);
-    if (!isMatch)
+    const isMatch = await bcrypt.compare(pass, user?.password ?? DUMMY_PASS);
+    if (!user || !isMatch)
       throw new UnauthorizedException('ユーザー名またはパスワードが違います');
 
     const payload = { sub: user.id, username: user.username };
+    const access_token = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('SECRET_KEY'),
+      expiresIn: '15m',
+    });
+    const refresh_token = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('REFRESH_KEY'),
+      expiresIn: '1d',
+    });
+    const refresh = this.refreshTokenRepo.create({
+      tokenHash: hashToken(refresh_token),
+      user: user,
+      revoked: false,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    });
+    await this.refreshTokenRepo.save(refresh);
+
     return {
-      access_token: this.jwtService.sign(payload, {
-        secret: this.configService.get<string>('SECRET_KEY'),
-        expiresIn: '15m',
-      }),
-      refresh_token: this.jwtService.sign(payload, {
-        secret: this.configService.get<string>('REFRESH_KEY'),
-        expiresIn: '1d',
-      }),
+      access_token,
+      refresh_token,
     };
   }
 
-  async refresh(refreshToken: string) {
-    const payload = this.jwtService.verify(refreshToken, {
-      secret: this.configService.get<string>('REFRESH_KEY'),
+  async refresh(
+    refreshToken: string,
+  ): Promise<{ access_token: string; refresh_token: string }> {
+    let payload: { sub: number; username: string };
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('REFRESH_KEY'),
+      });
+    } catch (e) {
+      throw new UnauthorizedException(
+        '有効なリフレッシュトークンではありません',
+      );
+    }
+    return this.dataSource.transaction(async (manager) => {
+      const oldToken = await manager.findOne(RefreshToken, {
+        where: { tokenHash: hashToken(refreshToken), revoked: false },
+        relations: { user: true },
+      });
+
+      if (!oldToken || payload.sub !== oldToken.user.id)
+        throw new UnauthorizedException(
+          '有効なリフレッシュトークンではありません',
+        );
+      const newPayload = {
+        sub: oldToken.user.id,
+        username: oldToken.user.username,
+      };
+      const newToken = this.jwtService.sign(newPayload, {
+        secret: this.configService.get<string>('REFRESH_KEY'),
+        expiresIn: '1d',
+      });
+      const newRefresh = manager.create(RefreshToken, {
+        tokenHash: hashToken(newToken),
+        user: oldToken.user,
+        revoked: false,
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+      });
+      const savedNew = await manager.save(newRefresh);
+      oldToken.revoked = true;
+      oldToken.replacedByTokenId = savedNew.id;
+      await manager.save(oldToken);
+      const access_token = this.jwtService.sign(
+        { sub: newPayload.sub, username: newPayload.username },
+        {
+          secret: this.configService.get<string>('SECRET_KEY'),
+          expiresIn: '15m',
+        },
+      );
+
+      return { access_token, refresh_token: newToken };
     });
-    const access_token = this.jwtService.sign(
-      { sub: payload.sub, username: payload.username },
-      {
-        secret: this.configService.get<string>('SECRET_KEY'),
-        expiresIn: '15m',
-      },
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    await this.refreshTokenRepo.update(
+      { tokenHash: hashToken(refreshToken) },
+      { revoked: true },
     );
-    return { access_token };
   }
 }

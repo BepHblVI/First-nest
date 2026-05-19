@@ -12,16 +12,30 @@ import { Submission } from './models/submission.model';
 import { Answer } from './models/answer.model';
 import { User } from '../auth/user.model';
 import { CrossTabulationInput } from './dto/inputs';
-import { CrossTabulationResult } from './dto/outputs';
+import {
+  CrossTabulationResult,
+  CrossTabCell,
+  AxisSummary,
+} from './dto/outputs';
 import { QuestionType } from './models/question.model';
+
+interface CrossTab {
+  row_id: number;
+  col_id: number;
+  count: string;
+  row_total: string;
+  col_total: string;
+  grand_total: string;
+  row_percentage: string;
+  column_percentage: string;
+  total_percentage: string;
+}
 
 @Injectable()
 export class CrossResultService {
   constructor(
     @InjectRepository(Survey) private surveyRepo: Repository<Survey>,
     @InjectRepository(Question) private questionRepo: Repository<Question>,
-    @InjectRepository(Submission) private submitRepo: Repository<Submission>,
-    @InjectRepository(Answer) private answerRepo: Repository<Answer>,
     private dataSource: DataSource,
   ) {}
 
@@ -39,36 +53,111 @@ export class CrossResultService {
         '他人のアンケートを操作する権限がありません',
       );
     }
-    const rowQuestion = await this.questionRepo.findOne({
-      where: { id: input.rowQuestionId },
-      relations: { options: true, survey: true },
-    });
-    const columnQuestion = await this.questionRepo.findOne({
-      where: { id: input.columnQuestionId },
-      relations: { options: true, survey: true },
-    });
-    if (!rowQuestion || !columnQuestion)
+    const [rowQ, columnQ] = await Promise.all([
+      this.questionRepo.findOne({
+        where: { id: input.rowQuestionId },
+        relations: { options: true, survey: true },
+      }),
+      this.questionRepo.findOne({
+        where: { id: input.columnQuestionId },
+        relations: { options: true, survey: true },
+      }),
+    ]);
+    if (!rowQ || !columnQ)
       throw new NotFoundException('集計する質問が見つかりません');
 
     if (
-      rowQuestion.survey.id != input.surveyId ||
-      columnQuestion.survey.id != input.surveyId
+      rowQ.survey.id !== input.surveyId ||
+      columnQ.survey.id !== input.surveyId
     ) {
       throw new BadRequestException('集計対象が同一アンケートにありません');
     }
 
-    if (rowQuestion.id == columnQuestion.id) {
+    if (rowQ.id === columnQ.id) {
       throw new BadRequestException('集計対象が二つとも同じ質問になっています');
     }
 
-    if (
-      rowQuestion.type === QuestionType.TEXT ||
-      columnQuestion.type === QuestionType.TEXT
-    ) {
+    if (rowQ.type === QuestionType.TEXT || columnQ.type === QuestionType.TEXT) {
       throw new BadRequestException('TEXT 型の質問はクロス集計の対象外です');
     }
 
-    const result = await this.dataSource.query(
+    const result: CrossTab[] = await this.fetchCrossTabData(
+      rowQ.id,
+      columnQ.id,
+      survey.id,
+    );
+
+    const cells: CrossTabCell[] = result.map((row) => ({
+      rowOptionId: row.row_id,
+      columnOptionId: row.col_id,
+      count: Number(row.count),
+      rowPercentage: Number(row.row_percentage),
+      columnPercentage: Number(row.column_percentage),
+      totalPercentage: Number(row.total_percentage),
+    }));
+
+    const grandTotal = Number(result[0]?.grand_total ?? 0);
+
+    // 行/列の合計を Map に保存（DBが計算済みなのでただ取り出すだけ）
+    const rowTotalsMap = new Map<number, number>();
+    const colTotalsMap = new Map<number, number>();
+    for (const row of result) {
+      rowTotalsMap.set(row.row_id, Number(row.row_total));
+      colTotalsMap.set(row.col_id, Number(row.col_total));
+    }
+
+    // サマリ作成
+    const rowSummary: AxisSummary[] = rowQ.options.map((opt) => {
+      const count = rowTotalsMap.get(opt.id) ?? 0;
+      return {
+        optionId: opt.id,
+        count,
+        percentage: grandTotal === 0 ? 0 : (count / grandTotal) * 100,
+      };
+    });
+
+    const columnSummary: AxisSummary[] = columnQ.options.map((opt) => {
+      const count = colTotalsMap.get(opt.id) ?? 0;
+      return {
+        optionId: opt.id,
+        count,
+        percentage: grandTotal === 0 ? 0 : (count / grandTotal) * 100,
+      };
+    });
+
+    const rowQuestion = {
+      id: rowQ.id,
+      qtext: rowQ.qtext,
+      type: rowQ.type,
+      options: rowQ.options
+        .sort((a, b) => a.order - b.order)
+        .map((o) => ({ id: o.id, text: o.text })),
+    };
+
+    const columnQuestion = {
+      id: columnQ.id,
+      qtext: columnQ.qtext,
+      type: columnQ.type,
+      options: columnQ.options
+        .sort((a, b) => a.order - b.order)
+        .map((o) => ({ id: o.id, text: o.text })),
+    };
+
+    return {
+      rowQuestion,
+      columnQuestion,
+      cells,
+      rowSummary,
+      columnSummary,
+      grandTotal,
+    };
+  }
+  private async fetchCrossTabData(
+    rowId: number,
+    columnId: number,
+    surveyId: number,
+  ): Promise<CrossTab[]> {
+    return this.dataSource.query(
       `WITH 
       get_options AS(
       SELECT row_ao.option_id AS row_option_id,
@@ -113,37 +202,7 @@ export class CrossResultService {
       FROM cells_with_totals
       ORDER BY row_order, col_order
       `,
-      [
-        rowQuestion.id,
-        columnQuestion.id,
-        survey.id,
-        rowQuestion.id,
-        columnQuestion.id,
-      ],
+      [rowId, columnId, surveyId, rowId, columnId],
     );
-    console.log(result);
-
-    return {
-      rowQuestion: {
-        id: rowQuestion.id,
-        qtext: rowQuestion.qtext,
-        type: rowQuestion.type,
-        options: rowQuestion.options
-          .sort((a, b) => a.order - b.order)
-          .map((o) => ({ id: o.id, text: o.text })),
-      },
-      columnQuestion: {
-        id: columnQuestion.id,
-        qtext: columnQuestion.qtext,
-        type: columnQuestion.type,
-        options: columnQuestion.options
-          .sort((a, b) => a.order - b.order)
-          .map((o) => ({ id: o.id, text: o.text })),
-      },
-      cells: [], // ← 後で実装
-      rowSummary: [], // ← 後で実装
-      columnSummary: [], // ← 後で実装
-      grandTotal: 0, // ← 後で実装
-    };
   }
 }

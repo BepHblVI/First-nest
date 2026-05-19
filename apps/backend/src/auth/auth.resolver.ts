@@ -10,6 +10,10 @@ import { AuthService } from './auth.service';
 import { User } from './user.model';
 import { Response } from 'express';
 import { UnauthorizedException } from '@nestjs/common';
+import { SignUpInput } from './dto/sign-up.input';
+import { GqlThrottlerGuard } from './gql-throttler.guard';
+import { UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 
 @ObjectType()
 class LoginResponse {
@@ -22,14 +26,15 @@ export class AuthResolver {
   constructor(private authService: AuthService) {}
 
   @Mutation(() => User)
-  async signUp(
-    @Args('username') username: string,
-    @Args('password') password: string,
-  ) {
-    return this.authService.signUp(username, password);
+  @UseGuards(GqlThrottlerGuard)
+  @Throttle({ default: { limit: 3, ttl: 60_000 } }) // 1分に3回まで
+  async signUp(@Args('input') input: SignUpInput) {
+    return this.authService.signUp(input);
   }
 
   @Mutation(() => LoginResponse)
+  @UseGuards(GqlThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 1分に5回まで
   async login(
     @Args('username') username: string,
     @Args('password') password: string,

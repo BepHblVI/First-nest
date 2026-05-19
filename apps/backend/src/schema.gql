@@ -188,7 +188,7 @@ type Mutation {
   editSurvey(input: EditSurveyInput!): Survey!
   login(password: String!, username: String!): LoginResponse!
   refresh: LoginResponse!
-  signUp(password: String!, username: String!): User!
+  signUp(input: SignUpInput!): User!
   submitSurveyAnswer(input: SubmitSurveyAnswerInput!): Submission!
   togglePublished(id: Int!, published: Boolean!): Survey!
 }
@@ -346,6 +346,11 @@ type SearchSurveyResult {
 
   """条件にマッチした総件数(ページング前)"""
   totalCount: Int!
+}
+
+input SignUpInput {
+  password: String!
+  username: String!
 }
 
 """並び順"""

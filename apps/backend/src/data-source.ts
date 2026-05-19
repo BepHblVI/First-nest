@@ -11,6 +11,7 @@ import { Submission } from './survey/models/submission.model';
 import { Answer } from './survey/models/answer.model';
 import { SurveyToken } from './survey/models/survey-token.model';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { RefreshToken } from './auth/refresh-token.model';
 
 dotenv.config({ path: '../../.env' });
 
@@ -26,6 +27,7 @@ export const AppDataSource = new DataSource({
   namingStrategy: new SnakeNamingStrategy(),
   entities: [
     User,
+    RefreshToken,
     Survey,
     Question,
     QuestionOption,

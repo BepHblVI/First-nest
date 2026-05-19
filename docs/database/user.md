@@ -21,7 +21,7 @@ CREATE TABLE `user` (
 
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
-| id | int |  | false | auto_increment | [survey](survey.md) |  |  |
+| id | int |  | false | auto_increment | [refresh_token](refresh_token.md) [survey](survey.md) |  |  |
 | username | varchar(255) |  | false |  |  |  |  |
 | password | varchar(255) |  | false |  |  |  |  |
 
@@ -44,12 +44,24 @@ CREATE TABLE `user` (
 ```mermaid
 erDiagram
 
+"refresh_token" }o--|| "user" : "FOREIGN KEY (user_id) REFERENCES user (id)"
 "survey" }o--|| "user" : "FOREIGN KEY (owner_id) REFERENCES user (id)"
 
 "user" {
   int id PK
   varchar_255_ username
   varchar_255_ password
+}
+"refresh_token" {
+  varchar_36_ id PK
+  varchar_64_ token_hash
+  timestamp expires_at
+  timestamp_6_ created_at
+  tinyint revoked
+  varchar_36_ replaced_by_token_id
+  varchar_255_ user_agent
+  varchar_45_ ip
+  int user_id FK
 }
 "survey" {
   int id PK

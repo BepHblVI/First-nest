@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import cookieParser = require('cookie-parser');
+import { ThrottlerModule } from '@nestjs/throttler';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -55,6 +56,19 @@ const ROOT = findWorkspaceRoot();
       },
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1_000, // 1秒間に
+        limit: 10, // 10リクエスト
+      },
+      {
+        name: 'medium',
+        ttl: 60_000, // 1分間に
+        limit: 100, // 100リクエスト
+      },
+      { name: 'default', ttl: 60_000, limit: 60 },
+    ]),
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,

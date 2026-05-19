@@ -379,6 +379,120 @@
       "def": "CREATE TABLE `question_option` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `text` varchar(200) NOT NULL,\n  `order` int NOT NULL,\n  `question_id` int NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `IDX_6aaa48b4788f7f99210d3bce92` (`question_id`,`order`),\n  CONSTRAINT `FK_747190c37a39feced5efcbb303f` FOREIGN KEY (`question_id`) REFERENCES `question` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     {
+      "name": "refresh_token",
+      "type": "BASE TABLE",
+      "columns": [
+        {
+          "name": "id",
+          "type": "varchar(36)",
+          "nullable": false
+        },
+        {
+          "name": "token_hash",
+          "type": "varchar(64)",
+          "nullable": false
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp",
+          "nullable": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp(6)",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP(6)",
+          "extra_def": "DEFAULT_GENERATED"
+        },
+        {
+          "name": "revoked",
+          "type": "tinyint",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "replaced_by_token_id",
+          "type": "varchar(36)",
+          "nullable": true
+        },
+        {
+          "name": "user_agent",
+          "type": "varchar(255)",
+          "nullable": true
+        },
+        {
+          "name": "ip",
+          "type": "varchar(45)",
+          "nullable": true
+        },
+        {
+          "name": "user_id",
+          "type": "int",
+          "nullable": false
+        }
+      ],
+      "indexes": [
+        {
+          "name": "FK_6bbe63d2fe75e7f0ba1710351d4",
+          "def": "KEY FK_6bbe63d2fe75e7f0ba1710351d4 (user_id) USING BTREE",
+          "table": "refresh_token",
+          "columns": [
+            "user_id"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "def": "PRIMARY KEY (id) USING BTREE",
+          "table": "refresh_token",
+          "columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "IDX_f0812282fad2e352cdaf83ef0a",
+          "def": "UNIQUE KEY IDX_f0812282fad2e352cdaf83ef0a (token_hash) USING BTREE",
+          "table": "refresh_token",
+          "columns": [
+            "token_hash"
+          ]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "FK_6bbe63d2fe75e7f0ba1710351d4",
+          "type": "FOREIGN KEY",
+          "def": "FOREIGN KEY (user_id) REFERENCES user (id)",
+          "table": "refresh_token",
+          "referenced_table": "user",
+          "columns": [
+            "user_id"
+          ],
+          "referenced_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "IDX_f0812282fad2e352cdaf83ef0a",
+          "type": "UNIQUE",
+          "def": "UNIQUE KEY IDX_f0812282fad2e352cdaf83ef0a (token_hash)",
+          "table": "refresh_token",
+          "columns": [
+            "token_hash"
+          ]
+        },
+        {
+          "name": "PRIMARY",
+          "type": "PRIMARY KEY",
+          "def": "PRIMARY KEY (id)",
+          "table": "refresh_token",
+          "columns": [
+            "id"
+          ]
+        }
+      ],
+      "def": "CREATE TABLE `refresh_token` (\n  `id` varchar(36) NOT NULL,\n  `token_hash` varchar(64) NOT NULL,\n  `expires_at` timestamp NOT NULL,\n  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),\n  `revoked` tinyint NOT NULL DEFAULT '0',\n  `replaced_by_token_id` varchar(36) DEFAULT NULL,\n  `user_agent` varchar(255) DEFAULT NULL,\n  `ip` varchar(45) DEFAULT NULL,\n  `user_id` int NOT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `IDX_f0812282fad2e352cdaf83ef0a` (`token_hash`),\n  KEY `FK_6bbe63d2fe75e7f0ba1710351d4` (`user_id`),\n  CONSTRAINT `FK_6bbe63d2fe75e7f0ba1710351d4` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+    },
+    {
       "name": "submission",
       "type": "BASE TABLE",
       "columns": [
@@ -783,6 +897,19 @@
       ],
       "parent_cardinality": "exactly_one",
       "def": "FOREIGN KEY (question_id) REFERENCES question (id)"
+    },
+    {
+      "table": "refresh_token",
+      "columns": [
+        "user_id"
+      ],
+      "cardinality": "zero_or_more",
+      "parent_table": "user",
+      "parent_columns": [
+        "id"
+      ],
+      "parent_cardinality": "exactly_one",
+      "def": "FOREIGN KEY (user_id) REFERENCES user (id)"
     },
     {
       "table": "submission",

@@ -9,7 +9,7 @@ async function main() {
   const auth = app.get(AuthService);
 
   try {
-    await auth.signUp('e2e_user', 'e2e_pass');
+    await auth.signUp({ username: 'e2e_user', password: 'e2e_pass' });
     console.log('✅ e2e_user 作成');
   } catch (e) {
     console.log('ℹ️  e2e_user は既に存在します');
