@@ -5,17 +5,20 @@ import {
 } from '@nestjs/common';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Survey, SurveyAuthType } from './models/survey.model';
-import { Submission } from './models/submission.model';
-import { SurveyToken } from './models/survey-token.model';
-import { User } from '../auth/user.model';
+import { Survey, SurveyAuthType } from '../models/survey.model';
+import { Submission } from '../models/submission.model';
+import { SurveyToken } from '../models/survey-token.model';
+import { User } from '../../auth/models/user.model';
 import {
   CreateSurveyInput,
   EditSurveyInput,
   SubmitSurveyAnswerInput,
-} from './dto/inputs';
-import { AnswerValidator } from './validators/answer.validator';
-import { buildTokenEntities, mapQuestionInputs } from './helpers/survey-mapper';
+} from '../dto/inputs';
+import { AnswerValidator } from '../validators/answer.validator';
+import {
+  buildTokenEntities,
+  mapQuestionInputs,
+} from '../helpers/survey-mapper';
 
 const FULL_SURVEY_RELATIONS = [
   'owner',

@@ -1,26 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { graphqlFetch } from '../../../utils/gqlFetch';
+import { GetSurveyForAnswerQuery, SubmitSurveyAnswerMutation } from '../../../src/queries/answer';
+import type {
+  GetSurveysQuery as GetSurveyForAnswerQueryType,
+  SubmitSurveyAnswerInput,
+} from '../../../src/gql/graphql';
 
-type Option = {
-  id: number;
-  text: string;
-};
-
-type Question = {
-  id: number;
-  qtext: string;
-  type: string;
-  options: Option[];
-};
-
-type SurveyData = {
-  id: number;
-  title: string;
-  auth: string;
-  owner: { username: string };
-  questions: Question[];
-};
+// Codegen 生成の型から派生 ── 手書き type を撤去
+type SurveyData = NonNullable<GetSurveyForAnswerQueryType['getSurvey']>;
 
 type AnswerState = {
   [questionId: number]: {
@@ -32,7 +21,7 @@ type AnswerState = {
 type PageStatus = 'loading' | 'ready' | 'unpublished' | 'notfound' | 'submitted' | 'needToken';
 
 export default function AnswerPage() {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const shareId = params.id;
 
   const [survey, setSurvey] = useState<SurveyData | null>(null);
@@ -44,50 +33,17 @@ export default function AnswerPage() {
   useEffect(() => {
     if (!shareId) return;
 
-    const fetchSurvey = async () => {
+    (async () => {
       try {
-        const response = await fetch('http://localhost:3001/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: `
-              query GetSurveyForAnswer($shareId: String!) {
-                getSurveyForAnswer(shareId: $shareId) {
-                  id
-                  title
-                  auth
-                  owner { username }
-                  questions {
-                    id
-                    qtext
-                    type
-                    options { id text }
-                  }
-                }
-              }
-            `,
-            variables: { shareId },
-          }),
-        });
-
-        const result = await response.json();
+        const result = await graphqlFetch(GetSurveyForAnswerQuery, { shareId });
 
         if (result.data?.getSurveyForAnswer) {
           const surveyData = result.data.getSurveyForAnswer;
           setSurvey(surveyData);
-
-          if (surveyData.auth === 'PRIVATE') {
-            setPageStatus('needToken');
-          } else {
-            setPageStatus('ready');
-          }
+          setPageStatus(surveyData.auth === 'PRIVATE' ? 'needToken' : 'ready');
         } else if (result.errors) {
-          const errorMessage = result.errors[0]?.message || '';
-          if (errorMessage === 'このアンケートは非公開です') {
-            setPageStatus('unpublished');
-          } else {
-            setPageStatus('notfound');
-          }
+          const errorMessage = result.errors[0]?.message ?? '';
+          setPageStatus(errorMessage === 'このアンケートは非公開です' ? 'unpublished' : 'notfound');
         } else {
           setPageStatus('notfound');
         }
@@ -95,9 +51,7 @@ export default function AnswerPage() {
         console.error('取得エラー:', error);
         setPageStatus('notfound');
       }
-    };
-
-    fetchSurvey();
+    })();
   }, [shareId]);
 
   const handleTokenSubmit = () => {
@@ -121,7 +75,7 @@ export default function AnswerPage() {
 
   const handleMultipleSelect = (questionId: number, optionId: number, checked: boolean) => {
     setAnswers((prev) => {
-      const current = prev[questionId]?.selectionIds || [];
+      const current = prev[questionId]?.selectionIds ?? [];
       const updated = checked ? [...current, optionId] : current.filter((id) => id !== optionId);
       return {
         ...prev,
@@ -148,39 +102,18 @@ export default function AnswerPage() {
     setSubmitting(true);
 
     try {
-      const formattedAnswers = survey.questions.map((q) => ({
-        questionId: q.id,
-        text: answers[q.id]?.text || null,
-        selectionIds: answers[q.id]?.selectionIds || null,
-      }));
-
-      const input: any = {
+      // any を撤廃、Codegen の Input 型をそのまま使用
+      const input: SubmitSurveyAnswerInput = {
         surveyId: survey.id,
-        answers: formattedAnswers,
+        answers: survey.questions.map((q) => ({
+          questionId: q.id,
+          text: answers[q.id]?.text ?? null,
+          selectionIds: answers[q.id]?.selectionIds ?? null,
+        })),
+        ...(survey.auth === 'PRIVATE' && inviteToken ? { token: inviteToken } : {}),
       };
 
-      // PRIVATE の場合はトークンを含める
-      if (survey.auth === 'PRIVATE' && inviteToken) {
-        input.token = inviteToken;
-      }
-
-      const response = await fetch('http://localhost:3000/api/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `
-            mutation SubmitSurveyAnswer($input: SubmitSurveyAnswerInput!) {
-              submitSurveyAnswer(input: $input) {
-                id
-                submittedAt
-              }
-            }
-          `,
-          variables: { input },
-        }),
-      });
-
-      const result = await response.json();
+      const result = await graphqlFetch(SubmitSurveyAnswerMutation, { input });
 
       if (result.errors) {
         alert(`送信エラー: ${result.errors[0].message}`);
@@ -198,7 +131,7 @@ export default function AnswerPage() {
     }
   };
 
-  // === 表示 ===
+  // === 表示 (元のまま) ===
 
   if (pageStatus === 'loading') {
     return (
@@ -255,14 +188,13 @@ export default function AnswerPage() {
             backgroundColor: '#f0fff0',
           }}
         >
-          <h1 style={{ color: '#28a745' }}>✅ 回答を送信しました！</h1>
+          <h1 style={{ color: '#28a745' }}>✅ 回答を送信しました!</h1>
           <p style={{ color: '#666' }}>ご協力ありがとうございました。</p>
         </div>
       </main>
     );
   }
 
-  // トークン入力画面
   if (pageStatus === 'needToken') {
     return (
       <main

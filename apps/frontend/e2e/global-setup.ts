@@ -40,7 +40,7 @@ export default async function globalSetup(_config: FullConfig) {
   // 1. signUp（既に居ても無視）
   const signUpRes = await gql(
     `mutation($u: String!, $p: String!) {
-       signUp(username: $u, password: $p) { id }
+       signUp(input:{username: $u, password: $p}) { id }
      }`,
     { u: USER.username, p: USER.password },
   );

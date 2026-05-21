@@ -5,11 +5,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 
-import { User } from './user.model';
+import { User } from './models/user.model';
 import { AuthService } from './auth.service';
 import { AuthResolver } from './auth.resolver';
-import { JwtStrategy } from './jwt.strategy';
-import { RefreshToken } from './refresh-token.model';
+import { JwtStrategy } from './guards/jwt.strategy';
+import { RefreshToken } from './models/refresh-token.model';
 
 @Module({
   imports: [

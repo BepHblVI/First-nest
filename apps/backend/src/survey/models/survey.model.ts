@@ -11,7 +11,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Question } from './question.model';
-import { User } from '../../auth/user.model';
+import { User } from '../../auth/models/user.model';
 import { Submission } from './submission.model';
 import { SurveyToken } from './survey-token.model';
 

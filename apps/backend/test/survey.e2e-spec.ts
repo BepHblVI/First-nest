@@ -10,6 +10,7 @@ import {
   submitAnswer,
   CreatedSurvey,
 } from './utils/survey-helpers';
+import { GqlThrottlerGuard } from '../src/auth/guards/gql-throttler.guard';
 
 describe('Survey GraphQL API (e2e)', () => {
   let app: INestApplication;
@@ -20,7 +21,10 @@ describe('Survey GraphQL API (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(GqlThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
     await app.init();

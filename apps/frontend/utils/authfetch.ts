@@ -1,47 +1,22 @@
-// apps/frontend/utils/authfetch.ts
+// utils/authfetch.ts
 'use client';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import type { TypedDocumentString } from '../src/gql/graphql';
-
-// GraphQL のレスポンス型
-type GraphQLResponse<TResult> = {
-  data?: TResult;
-  errors?: {
-    message: string;
-    extensions?: { code?: string };
-  }[];
-};
+import { RefreshMutation } from '../src/queries/auth';
+import { graphqlFetch, type GraphQLResponse } from './gqlFetch';
 
 export function useAuthfetch() {
   const router = useRouter();
 
-  // リフレッシュトークンでアクセストークンを再取得
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
     try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          query: `
-            mutation {
-              refresh {
-                access_token
-              }
-            }
-          `,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.data?.refresh?.access_token) {
-        const newToken = result.data.refresh.access_token;
+      const result = await graphqlFetch(RefreshMutation);
+      const newToken = result.data?.refresh?.access_token;
+      if (newToken) {
         localStorage.setItem('access_token', newToken);
         return newToken;
       }
-
       console.log('refresh failed:', result);
       return null;
     } catch (error) {
@@ -50,7 +25,6 @@ export function useAuthfetch() {
     }
   }, []);
 
-  // 実際の fetch 処理（ジェネリック対応）
   const sendRequest = useCallback(
     async <TResult, TVariables>(
       query: TypedDocumentString<TResult, TVariables>,
@@ -58,17 +32,7 @@ export function useAuthfetch() {
       token: string,
     ): Promise<GraphQLResponse<TResult> | null> => {
       try {
-        const response = await fetch('/api/graphql', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: 'include',
-          body: JSON.stringify({ query: query.toString(), variables }),
-        });
-
-        const result: GraphQLResponse<TResult> = await response.json();
+        const result = await graphqlFetch(query, variables, token);
 
         if (result.errors) {
           const isUnauthorized = result.errors.some(
@@ -80,24 +44,12 @@ export function useAuthfetch() {
             const newToken = await refreshAccessToken();
 
             if (newToken) {
-              const retryResponse = await fetch('/api/graphql', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${newToken}`,
-                },
-                credentials: 'include',
-                body: JSON.stringify({ query: query.toString(), variables }),
-              });
-
-              const retryResult: GraphQLResponse<TResult> = await retryResponse.json();
-
-              if (retryResult.errors) {
-                alert(`エラー: ${retryResult.errors[0]?.message}`);
+              const retry = await graphqlFetch(query, variables, newToken);
+              if (retry.errors) {
+                alert(`エラー: ${retry.errors[0]?.message}`);
                 return null;
               }
-
-              return retryResult;
+              return retry;
             }
 
             localStorage.removeItem('access_token');
@@ -120,7 +72,6 @@ export function useAuthfetch() {
     [refreshAccessToken, router],
   );
 
-  // GraphQL リクエストを実行（リフレッシュ付き、型推論対応）
   const authFetch = useCallback(
     async <TResult, TVariables>(
       query: TypedDocumentString<TResult, TVariables>,
@@ -135,10 +86,10 @@ export function useAuthfetch() {
           router.push('/login');
           return null;
         }
-        return await sendRequest(query, variables, newToken);
+        return sendRequest(query, variables, newToken);
       }
 
-      return await sendRequest(query, variables, token);
+      return sendRequest(query, variables, token);
     },
     [refreshAccessToken, sendRequest, router],
   );

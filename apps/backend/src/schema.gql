@@ -187,6 +187,7 @@ type Mutation {
   deleteSurvey(id: Int!): Boolean!
   editSurvey(input: EditSurveyInput!): Survey!
   login(password: String!, username: String!): LoginResponse!
+  logout: Boolean!
   refresh: LoginResponse!
   signUp(input: SignUpInput!): User!
   submitSurveyAnswer(input: SubmitSurveyAnswerInput!): Submission!

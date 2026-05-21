@@ -14,6 +14,7 @@ import cookieParser = require('cookie-parser');
 import { ThrottlerModule } from '@nestjs/throttler';
 import * as fs from 'fs';
 import * as path from 'path';
+import { TenantModule } from './tenant/tenant.module';
 
 function findWorkspaceRoot(start: string = __dirname): string {
   let dir = start;
@@ -82,6 +83,7 @@ const ROOT = findWorkspaceRoot();
     }),
     SurveyModule,
     AuthModule,
+    TenantModule,
   ],
 })
 export class AppModule implements NestModule {

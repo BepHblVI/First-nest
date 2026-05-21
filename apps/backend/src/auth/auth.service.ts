@@ -7,12 +7,13 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.model';
-import { RefreshToken } from './refresh-token.model';
+import { User } from './models/user.model';
+import { RefreshToken } from './models/refresh-token.model';
 import { ConfigService } from '@nestjs/config';
 import { SignUpInput } from './dto/sign-up.input';
 import { hashToken } from './helpers/hash-token';
 import { DataSource } from 'typeorm';
+import { randomUUID } from 'crypto';
 
 const DUMMY_PASS = bcrypt.hashSync('Dummy-password', 10);
 const REFRESH_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -57,10 +58,12 @@ export class AuthService {
     const access_token = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('SECRET_KEY'),
       expiresIn: '15m',
+      jwtid: randomUUID(),
     });
     const refresh_token = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('REFRESH_KEY'),
       expiresIn: '1d',
+      jwtid: randomUUID(),
     });
     const refresh = this.refreshTokenRepo.create({
       tokenHash: hashToken(refresh_token),
@@ -106,6 +109,7 @@ export class AuthService {
       const newToken = this.jwtService.sign(newPayload, {
         secret: this.configService.get<string>('REFRESH_KEY'),
         expiresIn: '1d',
+        jwtid: randomUUID(),
       });
       const newRefresh = manager.create(RefreshToken, {
         tokenHash: hashToken(newToken),
@@ -122,6 +126,7 @@ export class AuthService {
         {
           secret: this.configService.get<string>('SECRET_KEY'),
           expiresIn: '15m',
+          jwtid: randomUUID(),
         },
       );
 
@@ -129,10 +134,11 @@ export class AuthService {
     });
   }
 
-  async logout(refreshToken: string): Promise<void> {
+  async logout(refreshToken: string): Promise<boolean> {
     await this.refreshTokenRepo.update(
       { tokenHash: hashToken(refreshToken) },
       { revoked: true },
     );
+    return true;
   }
 }

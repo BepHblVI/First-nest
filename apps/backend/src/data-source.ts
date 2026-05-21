@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 
-import { User } from './auth/user.model';
+import { User } from './auth/models/user.model';
 import { Survey } from './survey/models/survey.model';
 import { Question } from './survey/models/question.model';
 import { QuestionOption } from './survey/models/options.model';
@@ -11,7 +11,8 @@ import { Submission } from './survey/models/submission.model';
 import { Answer } from './survey/models/answer.model';
 import { SurveyToken } from './survey/models/survey-token.model';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { RefreshToken } from './auth/refresh-token.model';
+import { RefreshToken } from './auth/models/refresh-token.model';
+import { Tenant } from './tenant/tenant.model';
 
 dotenv.config({ path: '../../.env' });
 
@@ -34,6 +35,7 @@ export const AppDataSource = new DataSource({
     Submission,
     Answer,
     SurveyToken,
+    Tenant,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
 });

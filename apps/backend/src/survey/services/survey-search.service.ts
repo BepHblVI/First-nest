@@ -4,17 +4,17 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Survey } from './models/survey.model';
-import { SearchSurveyResult } from './dto/outputs';
-import { User } from '../auth/user.model';
-import { SearchSurveyInput } from './dto/inputs';
+import { Survey } from '../models/survey.model';
+import { SearchSurveyResult } from '../dto/outputs';
+import { User } from '../../auth/models/user.model';
+import { SearchSurveyInput } from '../dto/inputs';
 import {
   SurveySortField,
   SortOrder,
   SearchScope,
   PublishState,
   AnswerState,
-} from './dto/enums';
+} from '../dto/enums';
 import {
   FindOptionsOrder,
   FindOptionsWhere,
@@ -91,7 +91,7 @@ export class SurveySearchService {
       .createQueryBuilder('survey')
       .leftJoin('survey.submissions', 'sub')
       .select('survey.id', 'id')
-      .where('survey.ownerId = :uid', { uid: currentUser.id })
+      .where('survey.owner_id = :uid', { uid: currentUser.id })
       .groupBy('survey.id');
 
     if (needsAnswerState) {

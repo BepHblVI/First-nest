@@ -7,8 +7,8 @@ import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { AuthService } from './auth.service';
-import { User } from './user.model';
-import { RefreshToken } from './refresh-token.model';
+import { User } from './models/user.model';
+import { RefreshToken } from './models/refresh-token.model';
 import { hashToken } from './helpers/hash-token';
 
 // bcrypt をモック化(全テストに影響)

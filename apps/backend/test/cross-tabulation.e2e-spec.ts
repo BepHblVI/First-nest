@@ -7,6 +7,7 @@ import { signUpAndLogin } from './utils/auth-client';
 import { cleanDatabase } from './utils/db-cleaner';
 import { createTestSurvey, submitAnswer } from './utils/survey-helpers';
 import { getCrossTab, rawCrossTab } from './utils/cross-tabulation.helper';
+import { GqlThrottlerGuard } from '../src/auth/guards/gql-throttler.guard';
 
 describe('Cross Tabulation (e2e)', () => {
   let app: INestApplication;
@@ -16,7 +17,10 @@ describe('Cross Tabulation (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(GqlThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
     await app.init();

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { SurveyService } from './survey.service';
+import { SurveyService } from './services/survey.service';
 import { SurveyResolver } from './survey.resolver';
-import { SurveyResultService } from './survey-result.service';
-import { SurveySearchService } from './survey-search.service';
-import { CrossResultService } from './cross-result.service';
+import { SurveyResultService } from './services/survey-result.service';
+import { SurveySearchService } from './services/survey-search.service';
+import { CrossResultService } from './services/cross-result.service';
 import { AnswerValidator } from './validators/answer.validator';
 
 import { Survey } from './models/survey.model';

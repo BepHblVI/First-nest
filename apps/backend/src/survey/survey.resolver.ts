@@ -8,10 +8,10 @@ import {
   ResolveField, // ← 追加
   Parent, // ← 追加
 } from '@nestjs/graphql';
-import { SurveyService } from './survey.service';
-import { SurveyResultService } from './survey-result.service';
-import { SurveySearchService } from './survey-search.service';
-import { CrossResultService } from './cross-result.service';
+import { SurveyService } from './services/survey.service';
+import { SurveyResultService } from './services/survey-result.service';
+import { SurveySearchService } from './services/survey-search.service';
+import { CrossResultService } from './services/cross-result.service';
 import { Survey } from './models/survey.model';
 import { Submission } from './models/submission.model';
 import {
@@ -28,9 +28,9 @@ import {
 } from './dto/inputs';
 
 import { UseGuards, UseInterceptors } from '@nestjs/common';
-import { SurveyAuthGuard } from '../auth/auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
-import { User } from '../auth/user.model';
+import { SurveyAuthGuard } from '../auth/guards/auth.guard';
+import { CurrentUser } from '../auth/helpers/current-user.decorator';
+import { User } from '../auth/models/user.model';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 @Resolver(() => Survey)

@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Survey } from './models/survey.model';
-import { Submission } from './models/submission.model';
-import { Answer } from './models/answer.model';
-import { SurveyResult } from './dto/outputs/survey-result.output';
-import { User } from '../auth/user.model';
+import { Survey } from '../models/survey.model';
+import { Submission } from '../models/submission.model';
+import { Answer } from '../models/answer.model';
+import { SurveyResult } from '../dto/outputs/survey-result.output';
+import { User } from '../../auth/models/user.model';
 
 @Injectable()
 export class SurveyResultService {
@@ -40,7 +40,7 @@ export class SurveyResultService {
       .innerJoin('answer.question', 'question')
       .select('question.id', 'questionId')
       .addSelect('COUNT(answer.id)', 'count')
-      .where('question.surveyId = :sId', { sId: survey.id })
+      .where('question.survey_id = :sId', { sId: survey.id })
       .groupBy('question.id')
       .getRawMany();
 
@@ -50,7 +50,7 @@ export class SurveyResultService {
       .select('option.id', 'optionId')
       .innerJoin('answer.question', 'question')
       .addSelect('COUNT(answer.id)', 'count')
-      .where('question.surveyId = :sId', { sId: survey.id })
+      .where('question.survey_id = :sId', { sId: survey.id })
       .groupBy('option.id')
       .getRawMany();
 
