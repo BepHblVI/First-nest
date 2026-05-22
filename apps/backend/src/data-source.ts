@@ -12,7 +12,8 @@ import { Answer } from './survey/models/answer.model';
 import { SurveyToken } from './survey/models/survey-token.model';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { RefreshToken } from './auth/models/refresh-token.model';
-import { Tenant } from './tenant/tenant.model';
+import { Tenant } from './tenant/models/tenant.model';
+import { Membership } from './tenant/models/membership.model';
 
 dotenv.config({ path: '../../.env' });
 
@@ -36,6 +37,7 @@ export const AppDataSource = new DataSource({
     Answer,
     SurveyToken,
     Tenant,
+    Membership,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
 });

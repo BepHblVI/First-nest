@@ -14,7 +14,7 @@ import { SurveyAuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/helpers/current-user.decorator';
 import { User } from '../auth/models/user.model';
 import { TenantService } from './tenant.service';
-import { Tenant } from './tenant.model';
+import { Tenant } from './models/tenant.model';
 
 @Resolver(() => Tenant)
 export class TenantResolver {

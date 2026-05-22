@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+
+import { Membership } from './membership.model';
 @Entity()
 export class Tenant {
   @PrimaryGeneratedColumn()
@@ -22,6 +25,7 @@ export class Tenant {
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt!: Date;
 
-  // Phase 3-2 で Membership リレーション追加
+  @OneToMany(() => Membership, (membership) => membership.tenant)
+  memberships!: Membership[];
   // Phase 3-5 で Survey リレーション追加
 }

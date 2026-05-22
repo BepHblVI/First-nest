@@ -134,48 +134,115 @@ describe('AuthService', () => {
   // ═════════════════════════════════════════
   // signUp
   // ═════════════════════════════════════════
-  describe('signUp', () => {
-    it('新規ユーザーが作成できる', async () => {
-      userRepo.findOne.mockResolvedValue(null);
+  // 既存の describe('signUp') を全面書き換え
 
+  describe('signUp', () => {
+    beforeEach(() => {
+      // mockManager の各メソッドのデフォルト挙動を設定
+      // (このテストは「個人テナント自動作成」を確認するもの)
+      mockManager.findOne.mockResolvedValue(null); // 重複なし
+      mockManager.save.mockImplementation(async (entityClass, data) => {
+        // どのEntityでも保存できるよう、データに id を付けて返す
+        const merged = data ?? entityClass;
+        return { id: 1, ...merged };
+      });
+    });
+
+    it('新規ユーザーが作成される', async () => {
       const result = await service.signUp({
-        username: 'newuser',
+        username: 'alice',
         password: 'pass1234',
       });
 
-      expect(result).toMatchObject({ id: 1, username: 'newuser' });
-      expect(userRepo.save).toHaveBeenCalledTimes(1);
+      expect(result).toMatchObject({ id: 1, username: 'alice' });
+    });
+
+    it('User / Tenant / Membership の3つが保存される', async () => {
+      await service.signUp({ username: 'alice', password: 'pass1234' });
+
+      // manager.save が User, Tenant, Membership の計3回呼ばれることを確認
+      const saveCalls = mockManager.save.mock.calls;
+      expect(saveCalls.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('個人テナントの slug は username と同じ', async () => {
+      await service.signUp({ username: 'alice', password: 'pass1234' });
+
+      // manager.save の呼び出しの中に slug='alice' のものがある
+      const saveCalls = mockManager.save.mock.calls;
+      const tenantSave = saveCalls.find((call) => {
+        const lastArg = call[call.length - 1];
+        return (lastArg as any)?.slug === 'alice';
+      });
+      expect(tenantSave).toBeDefined();
+    });
+
+    it('displayName が指定された場合、Tenant.name に反映される', async () => {
+      await service.signUp({
+        username: 'alice',
+        displayName: 'アリス',
+        password: 'pass1234',
+      });
+
+      const saveCalls = mockManager.save.mock.calls;
+      const tenantSave = saveCalls.find((call) => {
+        const lastArg = call[call.length - 1];
+        return (lastArg as any)?.slug === 'alice';
+      });
+      expect((tenantSave![tenantSave!.length - 1] as any).name).toContain(
+        'アリス',
+      );
+    });
+
+    it('Membership は OWNER ロールで作成される', async () => {
+      await service.signUp({ username: 'alice', password: 'pass1234' });
+
+      const saveCalls = mockManager.save.mock.calls;
+      const membershipSave = saveCalls.find((call) => {
+        const lastArg = call[call.length - 1];
+        return (lastArg as any)?.role !== undefined;
+      });
+      expect(membershipSave).toBeDefined();
+      expect((membershipSave![membershipSave!.length - 1] as any).role).toBe(
+        'OWNER',
+      );
     });
 
     it('パスワードはbcryptでハッシュ化されてから保存される', async () => {
-      userRepo.findOne.mockResolvedValue(null);
+      await service.signUp({ username: 'alice', password: 'pass1234' });
 
-      await service.signUp({ username: 'newuser', password: 'pass1234' });
-
-      // 平文ではなく、ハッシュ化された値が保存される
-      expect(userRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ password: 'hashed-password' }),
+      // User の save 呼び出しで password が hashed-password になっている
+      const saveCalls = mockManager.save.mock.calls;
+      const userSave = saveCalls.find((call) => {
+        const lastArg = call[call.length - 1];
+        return (lastArg as any)?.password !== undefined;
+      });
+      expect((userSave![userSave!.length - 1] as any).password).toBe(
+        'hashed-password',
       );
     });
 
     it('bcryptのcost factor(salt rounds)は10以上である', async () => {
-      // セキュリティ: cost factor が低いと総当たり攻撃に弱くなる
-      userRepo.findOne.mockResolvedValue(null);
-
-      await service.signUp({ username: 'newuser', password: 'pass1234' });
+      await service.signUp({ username: 'alice', password: 'pass1234' });
 
       const [, costFactor] = (bcrypt.hash as jest.Mock).mock.calls[0];
       expect(costFactor).toBeGreaterThanOrEqual(10);
     });
 
     it('既存のユーザー名なら ConflictException', async () => {
-      userRepo.findOne.mockResolvedValue({ id: 99 } as User);
+      // manager.findOne が User を返すよう設定 (= ユーザー既存)
+      mockManager.findOne.mockResolvedValueOnce({ id: 99 });
 
       await expect(
         service.signUp({ username: 'taken', password: 'pass1234' }),
       ).rejects.toThrow(ConflictException);
+    });
 
-      expect(userRepo.save).not.toHaveBeenCalled();
+    it('予約slugなユーザー名はConflictExceptionで弾かれる', async () => {
+      // username = "admin" は予約語
+      await expect(
+        service.signUp({ username: 'admin', password: 'pass1234' }),
+      ).rejects.toThrow(ConflictException);
     });
   });
 

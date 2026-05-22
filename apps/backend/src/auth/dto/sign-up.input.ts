@@ -1,18 +1,21 @@
 import { InputType, Field } from '@nestjs/graphql';
-import { IsString, MinLength, MaxLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  MinLength,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 
-/**
- * パスワード強度のポリシー(NISTガイドラインに沿った緩やかな条件):
- *   - 英字を1文字以上含む
- *   - 数字を1文字以上含む
- *   - その他の文字種(記号など)は許可するが必須にしない
- *
- * 「複雑な記号必須」を強要するとUXが落ち、結果として
- * ユーザーが推測しやすいパターン(例: Pa$$w0rd)を使うので避ける。
- */
+// パスワード
 export const PASSWORD_REGEX = /^(?=.*[a-zA-Z])(?=.*\d).+$/;
 export const PASSWORD_MESSAGE =
   'パスワードは英字と数字をそれぞれ1文字以上含めてください';
+
+// ユーザー名 (slug 互換)
+export const USERNAME_REGEX = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+export const USERNAME_MESSAGE =
+  'ユーザー名は英小文字・数字・ハイフンのみ使用可能、ハイフンで開始/終了不可';
 
 @InputType()
 export class SignUpInput {
@@ -20,14 +23,19 @@ export class SignUpInput {
   @IsString()
   @MinLength(3)
   @MaxLength(50)
+  @Matches(USERNAME_REGEX, { message: USERNAME_MESSAGE })
   username!: string;
+
+  // 表示名 (省略可)
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  displayName?: string;
 
   @Field()
   @IsString()
   @MinLength(8)
-  // bcrypt は内部的に 72バイトまでしか見ない仕様。
-  // 長いパスワードを受け付けても 73文字目以降は無視されるので、
-  // ユーザーに誤解を与えないよう DTO 層で 72 で制限する。
   @MaxLength(72)
   @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
   password!: string;

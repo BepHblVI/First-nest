@@ -4,7 +4,7 @@ import { ConflictException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 
 import { TenantService } from './tenant.service';
-import { Tenant } from './tenant.model';
+import { Tenant } from './models/tenant.model';
 
 describe('TenantService', () => {
   let service: TenantService;

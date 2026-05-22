@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { AuthResolver } from './auth.resolver';
 import { JwtStrategy } from './guards/jwt.strategy';
 import { RefreshToken } from './models/refresh-token.model';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RefreshToken } from './models/refresh-token.model';
         secret: config.get<string>('SECRET_KEY'),
       }),
     }),
+    TenantModule,
   ],
   providers: [AuthService, AuthResolver, JwtStrategy],
 })

@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
-import { SignUpInput, PASSWORD_REGEX } from './sign-up.input';
+import { SignUpInput, PASSWORD_REGEX, USERNAME_REGEX } from './sign-up.input';
 
 /**
  * SignUpInput のバリデーションを実行し、フィールドごとの違反一覧を返すヘルパー。
@@ -15,7 +15,7 @@ import { SignUpInput, PASSWORD_REGEX } from './sign-up.input';
  * 抽象的に検証できる(メッセージ文字列に依存しないテストになる)。
  */
 async function validateInput(
-  data: Partial<{ username: unknown; password: unknown }>,
+  data: Partial<{ username: unknown; password: unknown; displayName: unknown }>,
 ): Promise<Record<string, string[]>> {
   const instance = plainToInstance(SignUpInput, data);
   const errors: ValidationError[] = await validate(instance);
@@ -144,5 +144,82 @@ describe('PASSWORD_REGEX', () => {
     ['!@#$%^&*', false, '記号のみ'],
   ])('"%s" => %s (%s)', (input, expected) => {
     expect(PASSWORD_REGEX.test(input)).toBe(expected);
+  });
+  // describe('SignUpInput バリデーション') 内、describe('username') の末尾に追加
+
+  it('大文字を含むユーザー名は拒否される(slug 互換性のため)', async () => {
+    const errors = await validateInput({
+      username: 'Alice',
+      password: 'valid12345',
+    });
+    expect(errors.username).toContain('matches');
+  });
+
+  it('ハイフン以外の記号を含むユーザー名は拒否される', async () => {
+    const errors = await validateInput({
+      username: 'user_name',
+      password: 'valid12345',
+    });
+    expect(errors.username).toContain('matches');
+  });
+
+  it('ハイフンで開始するユーザー名は拒否される', async () => {
+    const errors = await validateInput({
+      username: '-alice',
+      password: 'valid12345',
+    });
+    expect(errors.username).toContain('matches');
+  });
+
+  // describe('SignUpInput バリデーション') 内、新規 describe を追加
+
+  describe('displayName', () => {
+    it('省略可能', async () => {
+      const errors = await validateInput({
+        username: 'alice',
+        password: 'valid12345',
+        // displayName は省略
+      });
+      expect(errors.displayName).toBeUndefined();
+    });
+
+    it('日本語を含んでもOK', async () => {
+      const errors = await validateInput({
+        username: 'alice',
+        password: 'valid12345',
+        displayName: 'アリス 🌸',
+      });
+      expect(errors.displayName).toBeUndefined();
+    });
+
+    it('100文字超は拒否される', async () => {
+      const errors = await validateInput({
+        username: 'alice',
+        password: 'valid12345',
+        displayName: 'a'.repeat(101),
+      });
+      expect(errors.displayName).toContain('maxLength');
+    });
+  });
+
+  // USERNAME_REGEX の純粋テスト追加 (describe('PASSWORD_REGEX') の隣)
+
+  describe('USERNAME_REGEX', () => {
+    it.each([
+      ['alice', true, '英小文字のみ'],
+      ['alice-co', true, 'ハイフン入り'],
+      ['user1', true, '数字混在'],
+      ['123', true, '数字のみ'],
+
+      ['', false, '空文字'],
+      ['Alice', false, '大文字を含む'],
+      ['-alice', false, 'ハイフン開始'],
+      ['alice-', false, 'ハイフン終了'],
+      ['user_name', false, 'アンダースコア'],
+      ['user.name', false, 'ピリオド'],
+      ['日本語', false, '非ASCII'],
+    ])('"%s" => %s (%s)', (input, expected) => {
+      expect(USERNAME_REGEX.test(input)).toBe(expected);
+    });
   });
 });
