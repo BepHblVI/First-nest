@@ -11,6 +11,16 @@ import { Answer } from '../models/answer.model';
 import { SurveyResult } from '../dto/outputs/survey-result.output';
 import { User } from '../../auth/models/user.model';
 
+type RawQuestionCount = {
+  questionId: number;
+  count: string; // MySQLのCOUNTは文字列で返る
+};
+
+type RawOptionCount = {
+  optionId: number;
+  count: string;
+};
+
 @Injectable()
 export class SurveyResultService {
   constructor(
@@ -35,16 +45,16 @@ export class SurveyResultService {
       where: { survey: { id: survey.id } },
     });
 
-    const rawQuestionCounts = await this.answerRepo
+    const rawQuestionCounts = (await this.answerRepo
       .createQueryBuilder('answer')
       .innerJoin('answer.question', 'question')
       .select('question.id', 'questionId')
       .addSelect('COUNT(answer.id)', 'count')
       .where('question.survey_id = :sId', { sId: survey.id })
       .groupBy('question.id')
-      .getRawMany();
+      .getRawMany()) as unknown as RawQuestionCount[];
 
-    const rawOptionCounts = await this.answerRepo
+    const rawOptionCounts = (await this.answerRepo
       .createQueryBuilder('answer')
       .innerJoin('answer.selectedOptions', 'option')
       .select('option.id', 'optionId')
@@ -52,7 +62,7 @@ export class SurveyResultService {
       .addSelect('COUNT(answer.id)', 'count')
       .where('question.survey_id = :sId', { sId: survey.id })
       .groupBy('option.id')
-      .getRawMany();
+      .getRawMany()) as unknown as RawOptionCount[];
 
     return this.buildResult(
       survey,

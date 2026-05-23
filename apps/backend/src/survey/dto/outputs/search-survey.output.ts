@@ -1,4 +1,4 @@
-import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+import { ObjectType, Field, Int } from '@nestjs/graphql';
 import { Survey } from '../../models/survey.model';
 
 @ObjectType({ description: 'アンケート検索結果(ページング情報付き)' })

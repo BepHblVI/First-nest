@@ -4,7 +4,6 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   CreateDateColumn,
-  Index,
 } from 'typeorm';
 import { User } from './user.model';
 

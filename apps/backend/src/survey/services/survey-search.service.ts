@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Survey } from '../models/survey.model';
 import { SearchSurveyResult } from '../dto/outputs';
@@ -123,7 +119,7 @@ export class SurveySearchService {
     // find() の where を流用したいので、まず ID と件数を取る
     const [allMatched, totalCount] = await this.surveyRepo.findAndCount({
       where,
-      select: { id: true } as any, // id だけ取得
+      select: { id: true },
     });
     if (totalCount === 0) return [[], 0];
 

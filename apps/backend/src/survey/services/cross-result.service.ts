@@ -8,8 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Survey } from '../models/survey.model';
 import { Question } from '../models/question.model';
-import { Submission } from '../models/submission.model';
-import { Answer } from '../models/answer.model';
 import { User } from '../../auth/models/user.model';
 import { CrossTabulationInput } from '../dto/inputs';
 import {

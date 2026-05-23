@@ -1,14 +1,13 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { GqlContext } from '../../types/gql-context';
 
 @Injectable()
 export class GqlThrottlerGuard extends ThrottlerGuard {
-  // ThrottlerGuard はデフォルトでHTTPコンテキストからreq/resを取るが、
-  // GraphQLは別のコンテキストなので、ここで取得方法をオーバーライド
-  getRequestResponse(context: ExecutionContext) {
+  getRequestResponse(context: ExecutionContext): GqlContext {
     const gqlCtx = GqlExecutionContext.create(context);
-    const ctx = gqlCtx.getContext();
+    const ctx = gqlCtx.getContext<GqlContext>();
     return { req: ctx.req, res: ctx.res };
   }
 }
