@@ -14,6 +14,10 @@ import { SignUpInput } from './dto/sign-up.input';
 import { hashToken } from './helpers/hash-token';
 import { DataSource } from 'typeorm';
 import { randomUUID } from 'crypto';
+import { RESERVED_SLUGS } from '../tenant/constants/reserved-slug';
+import { Tenant } from '../tenant/models/tenant.model';
+import { Membership } from '../tenant/models/membership.model';
+import { Role } from '../tenant/constants/enums';
 
 const DUMMY_PASS = bcrypt.hashSync('Dummy-password', 10);
 const REFRESH_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -31,18 +35,37 @@ export class AuthService {
   ) {}
 
   async signUp(input: SignUpInput): Promise<User> {
-    const existing = await this.userRepo.findOne({
-      where: { username: input.username },
-    });
-    if (existing) {
-      throw new ConflictException('このユーザー名は既に使用されています');
+    if (RESERVED_SLUGS.includes(input.username)) {
+      throw new ConflictException('このユーザー名は使用できません');
     }
     const hashedPass = await bcrypt.hash(input.password, 10);
-    const user = this.userRepo.create({
-      username: input.username,
-      password: hashedPass,
+    return this.dataSource.transaction(async (manager) => {
+      const existing = await manager.findOne(User, {
+        where: { username: input.username },
+      });
+      if (existing)
+        throw new ConflictException('このユーザー名は既に使用されています');
+
+      const user = manager.create(User, {
+        username: input.username,
+        displayName: input.displayName ?? null,
+        password: hashedPass,
+      });
+      const tenant = manager.create(Tenant, {
+        name: input.displayName ?? input.username + "'s tenant",
+        slug: input.username,
+      });
+      const savedUser = await manager.save(user);
+      await manager.save(tenant);
+      const membership = manager.create(Membership, {
+        user,
+        tenant,
+        role: Role.OWNER,
+      });
+      await manager.save(membership);
+
+      return savedUser;
     });
-    return this.userRepo.save(user);
   }
 
   async login(
@@ -87,7 +110,7 @@ export class AuthService {
       payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('REFRESH_KEY'),
       });
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException(
         '有効なリフレッシュトークンではありません',
       );

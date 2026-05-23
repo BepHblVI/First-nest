@@ -28,8 +28,8 @@ describe('Cross Tabulation (e2e)', () => {
 
   beforeEach(async () => {
     await cleanDatabase(app);
-    tokenA = (await signUpAndLogin(app, 'userA', 'pwA12345')).accessToken;
-    tokenB = (await signUpAndLogin(app, 'userB', 'pwB12345')).accessToken;
+    tokenA = (await signUpAndLogin(app, 'user1', 'pwA12345')).accessToken;
+    tokenB = (await signUpAndLogin(app, 'user2', 'pwB12345')).accessToken;
   });
 
   afterAll(async () => await app.close());

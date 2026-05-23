@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { sendGql, sendGqlOrThrow, expectGqlError } from './utils/gql-client';
 import { signUpAndLogin } from './utils/auth-client';
@@ -36,7 +35,7 @@ describe('Survey GraphQL API (e2e)', () => {
     const userA = await signUpAndLogin(app, 'testuser', 'password123');
     validToken = userA.accessToken;
 
-    const userB = await signUpAndLogin(app, 'testuserB', 'password321');
+    const userB = await signUpAndLogin(app, 'testuser2', 'password321');
     validTokenB = userB.accessToken;
 
     otherUserSurvey = await createTestSurvey(app, validTokenB, {
@@ -88,7 +87,7 @@ describe('Survey GraphQL API (e2e)', () => {
            login(username: $username, password: $password) { access_token }
          }`,
         undefined,
-        { username: 'testuserB', password: 'password321' },
+        { username: 'testuser2', password: 'password321' },
       );
       expect(typeof res.body.data.login.access_token).toBe('string');
 

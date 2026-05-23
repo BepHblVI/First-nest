@@ -350,6 +350,7 @@ type SearchSurveyResult {
 }
 
 input SignUpInput {
+  displayName: String
   password: String!
   username: String!
 }
@@ -477,6 +478,7 @@ type SurveyToken {
 }
 
 type User {
+  displayName: String
   id: ID!
   surveys: [Survey!]!
   username: String!

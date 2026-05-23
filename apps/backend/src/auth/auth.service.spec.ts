@@ -139,7 +139,6 @@ describe('AuthService', () => {
   describe('signUp', () => {
     beforeEach(() => {
       // mockManager の各メソッドのデフォルト挙動を設定
-      // (このテストは「個人テナント自動作成」を確認するもの)
       mockManager.findOne.mockResolvedValue(null); // 重複なし
       mockManager.save.mockImplementation(async (entityClass, data) => {
         // どのEntityでも保存できるよう、データに id を付けて返す

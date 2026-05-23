@@ -14,14 +14,22 @@ export class MembershipService {
     userId: number,
     tenantId: number,
   ): Promise<Membership | null> {
-    throw new Error('Not implemented');
+    return this.membershipRepo.findOne({
+      where: { user: { id: userId }, tenant: { id: tenantId } },
+    });
   }
 
   async listByUser(userId: number): Promise<Membership[]> {
-    throw new Error('Not implemented');
+    return this.membershipRepo.find({
+      where: { user: { id: userId } },
+      relations: { tenant: true },
+    });
   }
 
   async listByTenant(tenantId: number): Promise<Membership[]> {
-    throw new Error('Not implemented');
+    return this.membershipRepo.find({
+      where: { tenant: { id: tenantId } },
+      relations: { user: true },
+    });
   }
 }

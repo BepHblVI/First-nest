@@ -40,6 +40,7 @@ const ROOT = findWorkspaceRoot();
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
+        const isTest = process.env.NODE_ENV === 'test';
         return {
           type: 'mysql',
           host: configService.get<string>('DB_HOST'),
@@ -48,8 +49,8 @@ const ROOT = findWorkspaceRoot();
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_DATABASE'),
           autoLoadEntities: true,
-          synchronize: process.env.NODE_ENV === 'test',
-          migrationsRun: true,
+          synchronize: isTest, // テスト時: Entityから自動生成
+          migrationsRun: !isTest, // テスト時: マイグレーション不要
           migrations: [join(__dirname, 'migrations/*{.ts,.js}')],
           namingStrategy: new SnakeNamingStrategy(),
           logging: false,
@@ -75,7 +76,10 @@ const ROOT = findWorkspaceRoot();
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
-      context: ({ req, res }) => ({ req, res }),
+      context: ({ req, res }: { req: Request; res: Response }) => ({
+        req,
+        res,
+      }),
       validationRules: [depthLimit(5)],
       subscriptions: {
         'graphql-ws': true,

@@ -10,6 +10,7 @@ CREATE TABLE `user` (
   `id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `display_name` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `IDX_78a916df40e02a9deb1c4b75ed` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
@@ -21,9 +22,10 @@ CREATE TABLE `user` (
 
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
-| id | int |  | false | auto_increment | [refresh_token](refresh_token.md) [survey](survey.md) |  |  |
+| id | int |  | false | auto_increment | [membership](membership.md) [refresh_token](refresh_token.md) [survey](survey.md) |  |  |
 | username | varchar(255) |  | false |  |  |  |  |
 | password | varchar(255) |  | false |  |  |  |  |
+| display_name | varchar(100) |  | true |  |  |  |  |
 
 ## Constraints
 
@@ -44,6 +46,7 @@ CREATE TABLE `user` (
 ```mermaid
 erDiagram
 
+"membership" }o--|| "user" : "FOREIGN KEY (user_id) REFERENCES user (id)"
 "refresh_token" }o--|| "user" : "FOREIGN KEY (user_id) REFERENCES user (id)"
 "survey" }o--|| "user" : "FOREIGN KEY (owner_id) REFERENCES user (id)"
 
@@ -51,6 +54,14 @@ erDiagram
   int id PK
   varchar_255_ username
   varchar_255_ password
+  varchar_100_ display_name
+}
+"membership" {
+  int id PK
+  enum__OWNER___ADMIN___EDITOR___VIEWER__ role
+  timestamp_6_ created_at
+  int user_id FK
+  int tenant_id FK
 }
 "refresh_token" {
   varchar_36_ id PK

@@ -15,7 +15,7 @@ export class User {
   @Column({ unique: true })
   username!: string;
 
-  @Field({ nullable: true }) // ← 🆕 GraphQL に公開
+  @Field(() => String, { nullable: true })
   @Column({ type: 'varchar', length: 100, nullable: true })
   displayName?: string | null;
 

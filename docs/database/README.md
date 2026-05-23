@@ -6,6 +6,7 @@
 | ---- | ------- | ------- | ---- |
 | [answer](answer.md) | 5 |  | BASE TABLE |
 | [answer_options](answer_options.md) | 2 |  | BASE TABLE |
+| [membership](membership.md) | 5 |  | BASE TABLE |
 | [migrations](migrations.md) | 3 |  | BASE TABLE |
 | [question](question.md) | 6 |  | BASE TABLE |
 | [question_option](question_option.md) | 4 |  | BASE TABLE |
@@ -13,7 +14,8 @@
 | [submission](submission.md) | 4 |  | BASE TABLE |
 | [survey](survey.md) | 8 |  | BASE TABLE |
 | [survey_token](survey_token.md) | 4 |  | BASE TABLE |
-| [user](user.md) | 3 |  | BASE TABLE |
+| [tenant](tenant.md) | 5 |  | BASE TABLE |
+| [user](user.md) | 4 |  | BASE TABLE |
 
 ## Relations
 
@@ -24,6 +26,8 @@ erDiagram
 "answer" }o--|| "question" : "FOREIGN KEY (question_id) REFERENCES question (id)"
 "answer_options" }o--|| "question_option" : "FOREIGN KEY (option_id) REFERENCES question_option (id)"
 "answer_options" }o--|| "answer" : "FOREIGN KEY (answer_id) REFERENCES answer (id)"
+"membership" }o--|| "tenant" : "FOREIGN KEY (tenant_id) REFERENCES tenant (id)"
+"membership" }o--|| "user" : "FOREIGN KEY (user_id) REFERENCES user (id)"
 "question" }o--|| "survey" : "FOREIGN KEY (survey_id) REFERENCES survey (id)"
 "question_option" }o--|| "question" : "FOREIGN KEY (question_id) REFERENCES question (id)"
 "refresh_token" }o--|| "user" : "FOREIGN KEY (user_id) REFERENCES user (id)"
@@ -41,6 +45,13 @@ erDiagram
 "answer_options" {
   int answer_id PK
   int option_id PK
+}
+"membership" {
+  int id PK
+  enum__OWNER___ADMIN___EDITOR___VIEWER__ role
+  timestamp_6_ created_at
+  int user_id FK
+  int tenant_id FK
 }
 "migrations" {
   int id PK
@@ -94,10 +105,18 @@ erDiagram
   timestamp_6_ created_at
   int survey_id FK
 }
+"tenant" {
+  int id PK
+  varchar_63_ slug
+  varchar_100_ name
+  timestamp_6_ created_at
+  timestamp_6_ updated_at
+}
 "user" {
   int id PK
   varchar_255_ username
   varchar_255_ password
+  varchar_100_ display_name
 }
 ```
 

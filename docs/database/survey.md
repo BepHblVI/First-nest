@@ -97,6 +97,7 @@ erDiagram
   int id PK
   varchar_255_ username
   varchar_255_ password
+  varchar_100_ display_name
 }
 ```
 
