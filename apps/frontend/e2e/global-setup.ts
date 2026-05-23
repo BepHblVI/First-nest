@@ -4,7 +4,7 @@ import * as path from 'node:path';
 
 const API_URL = 'http://localhost:3001/graphql';
 const APP_URL = 'http://localhost:3000';
-const USER = { username: 'e2e_user', password: 'e2e_pass' };
+const USER = { username: 'e2e-user', password: 'e2e-pass' };
 const AUTH_FILE = path.resolve('e2e/.auth/user.json');
 
 async function gql<T = any>(query: string, variables: any, token?: string) {
@@ -79,6 +79,8 @@ export default async function globalSetup(_config: FullConfig) {
 }
 
 async function seedSurveys(token: string) {
+  // 既存のE2Eデータを削除
+  await cleanupE2ESurveys(token);
   const surveys = [
     {
       title: 'E2E アンケートA',
@@ -111,6 +113,31 @@ async function seedSurveys(token: string) {
     const res = await gql(m, { input }, token);
     if (res.errors) {
       throw new Error(`シード失敗: ${JSON.stringify(res.errors)}`);
+    }
+  }
+  async function cleanupE2ESurveys(token: string) {
+    // まず一覧を取得
+    type SurveyListItem = { id: number; title: string };
+
+    const listRes = await gql<{ getSurvey: SurveyListItem[] }>(
+      // eslint-disable-next-line no-restricted-syntax
+      `query GetSurveys { getSurvey { id title }}`,
+      {},
+      token,
+    );
+
+    const surveys = listRes.data?.getSurvey ?? [];
+    const e2eSurveys = surveys.filter((s) => s.title.startsWith('E2E '));
+
+    // E2E で始まるものを削除
+    const deleteMutation = `
+    mutation($id: Int!) {
+      deleteSurvey(id: $id)
+    }
+  `;
+
+    for (const survey of e2eSurveys) {
+      await gql(deleteMutation, { id: survey.id }, token);
     }
   }
 }

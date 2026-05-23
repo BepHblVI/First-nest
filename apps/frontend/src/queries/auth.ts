@@ -10,8 +10,8 @@ export const LoginMutation = graphql(`
 `);
 
 export const SignUpMutation = graphql(`
-  mutation SignUp($username: String!, $password: String!) {
-    signUp(username: $username, password: $password) {
+  mutation SignUp($username: String!, $displayname: String, $password: String!) {
+    signUp(input: { username: $username, displayName: $displayname, password: $password }) {
       id
       username
     }

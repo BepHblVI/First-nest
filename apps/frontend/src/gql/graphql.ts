@@ -36,6 +36,17 @@ export enum AnswerState {
   Unanswered = 'UNANSWERED'
 }
 
+/** クロス集計表の行/列ごとの合計情報 */
+export type AxisSummary = {
+  __typename?: 'AxisSummary';
+  /** この行/列の合計件数。MULTIPLEを含む場合は重複カウントを含む */
+  count: Scalars['Int']['output'];
+  /** 行または列の選択肢ID */
+  optionId: Scalars['Int']['output'];
+  /** grandTotalに対するこの行/列の割合(%) */
+  percentage: Scalars['Float']['output'];
+};
+
 export type CorrelationResult = {
   __typename?: 'CorrelationResult';
   coOccurrenceCount: Scalars['Int']['output'];
@@ -55,6 +66,72 @@ export type CreateSurveyInput = {
   title: Scalars['String']['input'];
   /** 生成する回答用トークン数(PRIVATE時のみ有効、0以上) */
   tokens?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/** クロス集計表の1セル。(rowOptionId, columnOptionId)の組合せごとに1つ存在し、回答0件のセルも含まれる */
+export type CrossTabCell = {
+  __typename?: 'CrossTabCell';
+  /** 列の選択肢ID */
+  columnOptionId: Scalars['Int']['output'];
+  /** 列内比率(%)。同じ列の合計に対するこのセルの割合。列合計が0なら0.0を返す */
+  columnPercentage: Scalars['Float']['output'];
+  /** 該当する回答件数。MULTIPLE質問が絡む場合、同一回答者が複数セルに加算されることがある */
+  count: Scalars['Int']['output'];
+  /** 行の選択肢ID */
+  rowOptionId: Scalars['Int']['output'];
+  /** 行内比率(%)。同じ行の合計に対するこのセルの割合。行合計が0なら0.0を返す */
+  rowPercentage: Scalars['Float']['output'];
+  /** 全体比率(%)。grandTotalに対するこのセルの割合。grandTotalが0なら0.0を返す */
+  totalPercentage: Scalars['Float']['output'];
+};
+
+/** 選択肢のメタ情報(クロス集計用) */
+export type CrossTabOptionMeta = {
+  __typename?: 'CrossTabOptionMeta';
+  /** 選択肢ID */
+  id: Scalars['Int']['output'];
+  /** 選択肢の表示テキスト */
+  text: Scalars['String']['output'];
+};
+
+/** クロス集計に使う質問のメタ情報 */
+export type CrossTabQuestionMeta = {
+  __typename?: 'CrossTabQuestionMeta';
+  /** 質問ID */
+  id: Scalars['Int']['output'];
+  /** 選択肢の一覧(orderの昇順) */
+  options: Array<CrossTabOptionMeta>;
+  /** 質問文(本文) */
+  qtext: Scalars['String']['output'];
+  /** 質問の形式(SINGLE/MULTIPLE)。MULTIPLEのとき同一回答者が複数セルに重複してカウントされうる */
+  type: QuestionType;
+};
+
+/** 2つの選択式質問のクロス集計 */
+export type CrossTabulationInput = {
+  /** 列に展開する質問ID */
+  columnQuestionId: Scalars['Int']['input'];
+  /** 行に展開する質問ID */
+  rowQuestionId: Scalars['Int']['input'];
+  /** 対象アンケートID */
+  surveyId: Scalars['Int']['input'];
+};
+
+/** 2つの選択式質問のクロス集計結果。行(rowQuestion) × 列(columnQuestion)の表形式データを返す */
+export type CrossTabulationResult = {
+  __typename?: 'CrossTabulationResult';
+  /** 集計表の全セル(0件セルも含む直積)。要素数 = rowOptions.length × columnOptions.length */
+  cells: Array<CrossTabCell>;
+  /** 列(横軸)に展開された質問の情報 */
+  columnQuestion: CrossTabQuestionMeta;
+  /** 各列の合計(columnQuestion.optionsの順序に対応) */
+  columnSummary: Array<AxisSummary>;
+  /** 集計対象の総件数。SINGLEのみなら回答者数と一致、MULTIPLEを含む場合は重複カウント込みとなる */
+  grandTotal: Scalars['Int']['output'];
+  /** 行(縦軸)に展開された質問の情報 */
+  rowQuestion: CrossTabQuestionMeta;
+  /** 各行の合計(rowQuestion.optionsの順序に対応) */
+  rowSummary: Array<AxisSummary>;
 };
 
 /** 日時の範囲指定。両方省略可 */
@@ -98,6 +175,7 @@ export type Mutation = {
   deleteSurvey: Scalars['Boolean']['output'];
   editSurvey: Survey;
   login: LoginResponse;
+  logout: Scalars['Boolean']['output'];
   refresh: LoginResponse;
   signUp: User;
   submitSurveyAnswer: Submission;
@@ -127,8 +205,7 @@ export type MutationLoginArgs = {
 
 
 export type MutationSignUpArgs = {
-  password: Scalars['String']['input'];
-  username: Scalars['String']['input'];
+  input: SignUpInput;
 };
 
 
@@ -160,10 +237,16 @@ export enum PublishState {
 
 export type Query = {
   __typename?: 'Query';
+  getCrossTabulationResults: CrossTabulationResult;
   getSurvey: Array<Survey>;
   getSurveyForAnswer: Survey;
   getSurveyResults: SurveyResult;
   searchSurvey: SearchSurveyResult;
+};
+
+
+export type QueryGetCrossTabulationResultsArgs = {
+  input: CrossTabulationInput;
 };
 
 
@@ -289,6 +372,12 @@ export type SearchSurveyResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type SignUpInput = {
+  displayName?: InputMaybe<Scalars['String']['input']>;
+  password: Scalars['String']['input'];
+  username: Scalars['String']['input'];
+};
+
 /** 並び順 */
 export enum SortOrder {
   /** 昇順 */
@@ -393,6 +482,7 @@ export type SurveyToken = {
 
 export type User = {
   __typename?: 'User';
+  displayName?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   surveys: Array<Survey>;
   username: Scalars['String']['output'];
@@ -402,6 +492,42 @@ export type GetSurveysQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetSurveysQuery = { __typename?: 'Query', getSurvey: Array<{ __typename?: 'Survey', id: number, title: string, published: boolean, auth: SurveyAuthType, shareId: string, submissionCount: number, owner: { __typename?: 'User', username: string }, questions: Array<{ __typename?: 'Question', id: number, qtext: string, type: QuestionType, required: boolean, options: Array<{ __typename?: 'QuestionOption', id: number, text: string }> }>, tokens: Array<{ __typename?: 'SurveyToken', token: string, isUsed: boolean, createdAt: any }> }> };
+
+export type GetSurveyForAnswerQueryVariables = Exact<{
+  shareId: Scalars['String']['input'];
+}>;
+
+
+export type GetSurveyForAnswerQuery = { __typename?: 'Query', getSurveyForAnswer: { __typename?: 'Survey', id: number, title: string, auth: SurveyAuthType, owner: { __typename?: 'User', username: string }, questions: Array<{ __typename?: 'Question', id: number, qtext: string, type: QuestionType, options: Array<{ __typename?: 'QuestionOption', id: number, text: string }> }> } };
+
+export type SubmitSurveyAnswerMutationVariables = Exact<{
+  input: SubmitSurveyAnswerInput;
+}>;
+
+
+export type SubmitSurveyAnswerMutation = { __typename?: 'Mutation', submitSurveyAnswer: { __typename?: 'Submission', id: number, submittedAt: any } };
+
+export type LoginMutationVariables = Exact<{
+  username: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+
+export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'LoginResponse', access_token: string } };
+
+export type SignUpMutationVariables = Exact<{
+  username: Scalars['String']['input'];
+  displayname?: InputMaybe<Scalars['String']['input']>;
+  password: Scalars['String']['input'];
+}>;
+
+
+export type SignUpMutation = { __typename?: 'Mutation', signUp: { __typename?: 'User', id: string, username: string } };
+
+export type RefreshMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RefreshMutation = { __typename?: 'Mutation', refresh: { __typename?: 'LoginResponse', access_token: string } };
 
 export type CreateSurveyMutationVariables = Exact<{
   input: CreateSurveyInput;
@@ -495,6 +621,59 @@ export const GetSurveysDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<GetSurveysQuery, GetSurveysQueryVariables>;
+export const GetSurveyForAnswerDocument = new TypedDocumentString(`
+    query GetSurveyForAnswer($shareId: String!) {
+  getSurveyForAnswer(shareId: $shareId) {
+    id
+    title
+    auth
+    owner {
+      username
+    }
+    questions {
+      id
+      qtext
+      type
+      options {
+        id
+        text
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<GetSurveyForAnswerQuery, GetSurveyForAnswerQueryVariables>;
+export const SubmitSurveyAnswerDocument = new TypedDocumentString(`
+    mutation SubmitSurveyAnswer($input: SubmitSurveyAnswerInput!) {
+  submitSurveyAnswer(input: $input) {
+    id
+    submittedAt
+  }
+}
+    `) as unknown as TypedDocumentString<SubmitSurveyAnswerMutation, SubmitSurveyAnswerMutationVariables>;
+export const LoginDocument = new TypedDocumentString(`
+    mutation Login($username: String!, $password: String!) {
+  login(username: $username, password: $password) {
+    access_token
+  }
+}
+    `) as unknown as TypedDocumentString<LoginMutation, LoginMutationVariables>;
+export const SignUpDocument = new TypedDocumentString(`
+    mutation SignUp($username: String!, $displayname: String, $password: String!) {
+  signUp(
+    input: {username: $username, displayName: $displayname, password: $password}
+  ) {
+    id
+    username
+  }
+}
+    `) as unknown as TypedDocumentString<SignUpMutation, SignUpMutationVariables>;
+export const RefreshDocument = new TypedDocumentString(`
+    mutation Refresh {
+  refresh {
+    access_token
+  }
+}
+    `) as unknown as TypedDocumentString<RefreshMutation, RefreshMutationVariables>;
 export const CreateSurveyDocument = new TypedDocumentString(`
     mutation CreateSurvey($input: CreateSurveyInput!) {
   createSurvey(input: $input) {

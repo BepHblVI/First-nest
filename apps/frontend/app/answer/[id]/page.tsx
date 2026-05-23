@@ -4,12 +4,12 @@ import { useParams } from 'next/navigation';
 import { graphqlFetch } from '../../../utils/gqlFetch';
 import { GetSurveyForAnswerQuery, SubmitSurveyAnswerMutation } from '../../../src/queries/answer';
 import type {
-  GetSurveysQuery as GetSurveyForAnswerQueryType,
+  GetSurveyForAnswerQuery as GetSurveyForAnswerQueryType,
   SubmitSurveyAnswerInput,
 } from '../../../src/gql/graphql';
 
 // Codegen 生成の型から派生 ── 手書き type を撤去
-type SurveyData = NonNullable<GetSurveyForAnswerQueryType['getSurvey']>;
+type SurveyData = NonNullable<GetSurveyForAnswerQueryType['getSurveyForAnswer']>;
 
 type AnswerState = {
   [questionId: number]: {
@@ -116,7 +116,7 @@ export default function AnswerPage() {
       const result = await graphqlFetch(SubmitSurveyAnswerMutation, { input });
 
       if (result.errors) {
-        alert(`送信エラー: ${result.errors[0].message}`);
+        alert(`送信エラー: ${result.errors[0]?.message}`);
         return;
       }
 

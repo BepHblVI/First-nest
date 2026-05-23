@@ -16,6 +16,11 @@ import * as types from './graphql';
  */
 type Documents = {
     "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissionCount\n    }\n  }\n": typeof types.GetSurveysDocument,
+    "\n  query GetSurveyForAnswer($shareId: String!) {\n    getSurveyForAnswer(shareId: $shareId) {\n      id\n      title\n      auth\n      owner {\n        username\n      }\n      questions {\n        id\n        qtext\n        type\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n": typeof types.GetSurveyForAnswerDocument,
+    "\n  mutation SubmitSurveyAnswer($input: SubmitSurveyAnswerInput!) {\n    submitSurveyAnswer(input: $input) {\n      id\n      submittedAt\n    }\n  }\n": typeof types.SubmitSurveyAnswerDocument,
+    "\n  mutation Login($username: String!, $password: String!) {\n    login(username: $username, password: $password) {\n      access_token\n    }\n  }\n": typeof types.LoginDocument,
+    "\n  mutation SignUp($username: String!, $displayname: String, $password: String!) {\n    signUp(input: { username: $username, displayName: $displayname, password: $password }) {\n      id\n      username\n    }\n  }\n": typeof types.SignUpDocument,
+    "\n  mutation Refresh {\n    refresh {\n      access_token\n    }\n  }\n": typeof types.RefreshDocument,
     "\n  mutation CreateSurvey($input: CreateSurveyInput!) {\n    createSurvey(input: $input) {\n      id\n      title\n      shareId\n      auth\n      published\n      tokens {\n        token\n        isUsed\n      }\n    }\n  }\n": typeof types.CreateSurveyDocument,
     "\n  mutation DeleteSurvey($id: Int!) {\n    deleteSurvey(id: $id)\n  }\n": typeof types.DeleteSurveyDocument,
     "\n  mutation EditSurvey($input: EditSurveyInput!) {\n    editSurvey(input: $input) {\n      id\n      title\n      auth\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n": typeof types.EditSurveyDocument,
@@ -25,6 +30,11 @@ type Documents = {
 };
 const documents: Documents = {
     "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissionCount\n    }\n  }\n": types.GetSurveysDocument,
+    "\n  query GetSurveyForAnswer($shareId: String!) {\n    getSurveyForAnswer(shareId: $shareId) {\n      id\n      title\n      auth\n      owner {\n        username\n      }\n      questions {\n        id\n        qtext\n        type\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n": types.GetSurveyForAnswerDocument,
+    "\n  mutation SubmitSurveyAnswer($input: SubmitSurveyAnswerInput!) {\n    submitSurveyAnswer(input: $input) {\n      id\n      submittedAt\n    }\n  }\n": types.SubmitSurveyAnswerDocument,
+    "\n  mutation Login($username: String!, $password: String!) {\n    login(username: $username, password: $password) {\n      access_token\n    }\n  }\n": types.LoginDocument,
+    "\n  mutation SignUp($username: String!, $displayname: String, $password: String!) {\n    signUp(input: { username: $username, displayName: $displayname, password: $password }) {\n      id\n      username\n    }\n  }\n": types.SignUpDocument,
+    "\n  mutation Refresh {\n    refresh {\n      access_token\n    }\n  }\n": types.RefreshDocument,
     "\n  mutation CreateSurvey($input: CreateSurveyInput!) {\n    createSurvey(input: $input) {\n      id\n      title\n      shareId\n      auth\n      published\n      tokens {\n        token\n        isUsed\n      }\n    }\n  }\n": types.CreateSurveyDocument,
     "\n  mutation DeleteSurvey($id: Int!) {\n    deleteSurvey(id: $id)\n  }\n": types.DeleteSurveyDocument,
     "\n  mutation EditSurvey($input: EditSurveyInput!) {\n    editSurvey(input: $input) {\n      id\n      title\n      auth\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n": types.EditSurveyDocument,
@@ -37,6 +47,26 @@ const documents: Documents = {
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query GetSurveys {\n    getSurvey {\n      id\n      title\n      published\n      auth\n      owner {\n        username\n      }\n      shareId\n      questions {\n        id\n        qtext\n        type\n        required\n        options {\n          id\n          text\n        }\n      }\n      tokens {\n        token\n        isUsed\n        createdAt\n      }\n      submissionCount\n    }\n  }\n"): typeof import('./graphql').GetSurveysDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetSurveyForAnswer($shareId: String!) {\n    getSurveyForAnswer(shareId: $shareId) {\n      id\n      title\n      auth\n      owner {\n        username\n      }\n      questions {\n        id\n        qtext\n        type\n        options {\n          id\n          text\n        }\n      }\n    }\n  }\n"): typeof import('./graphql').GetSurveyForAnswerDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation SubmitSurveyAnswer($input: SubmitSurveyAnswerInput!) {\n    submitSurveyAnswer(input: $input) {\n      id\n      submittedAt\n    }\n  }\n"): typeof import('./graphql').SubmitSurveyAnswerDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation Login($username: String!, $password: String!) {\n    login(username: $username, password: $password) {\n      access_token\n    }\n  }\n"): typeof import('./graphql').LoginDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation SignUp($username: String!, $displayname: String, $password: String!) {\n    signUp(input: { username: $username, displayName: $displayname, password: $password }) {\n      id\n      username\n    }\n  }\n"): typeof import('./graphql').SignUpDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation Refresh {\n    refresh {\n      access_token\n    }\n  }\n"): typeof import('./graphql').RefreshDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -155,8 +155,8 @@ test.describe('認証リフレッシュ / タイムアウト', () => {
     test('ログイン後、refresh cookie が正しいオリジンに設定される', async ({ page, context }) => {
       // ログイン画面から実際にログイン
       await page.goto('/login');
-      await page.getByPlaceholder(/ユーザー名|username/i).fill('e2e_user');
-      await page.getByPlaceholder(/パスワード|password/i).fill('e2e_pass');
+      await page.getByPlaceholder(/ユーザー名|username/i).fill('e2e-user');
+      await page.getByPlaceholder(/パスワード|password/i).fill('e2e-pass');
       await page.getByRole('button', { name: /ログイン/ }).click();
 
       await page.waitForURL('/');
@@ -175,8 +175,8 @@ test.describe('認証リフレッシュ / タイムアウト', () => {
     test('access_token を消してもページが動く（実 refresh が成功する）', async ({ page }) => {
       // 一度ログインして cookie を取得
       await page.goto('/login');
-      await page.getByPlaceholder(/ユーザー名/i).fill('e2e_user');
-      await page.getByPlaceholder(/パスワード/i).fill('e2e_pass');
+      await page.getByPlaceholder(/ユーザー名/i).fill('e2e-user');
+      await page.getByPlaceholder(/パスワード/i).fill('e2e-pass');
       await page.getByRole('button', { name: /ログイン/ }).click();
       await page.waitForURL('/');
 

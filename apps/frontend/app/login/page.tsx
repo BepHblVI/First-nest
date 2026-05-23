@@ -18,7 +18,7 @@ export default function LoginPage() {
         const result = await graphqlFetch(LoginMutation, { username, password });
 
         if (result.errors) {
-          alert(result.errors[0].message);
+          alert(result.errors[0]?.message);
           return;
         }
 
@@ -35,7 +35,7 @@ export default function LoginPage() {
         const result = await graphqlFetch(SignUpMutation, { username, password });
 
         if (result.errors) {
-          alert(result.errors[0].message);
+          alert(result.errors[0]?.message);
           return;
         }
 
