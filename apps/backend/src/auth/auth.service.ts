@@ -18,6 +18,7 @@ import { RESERVED_SLUGS } from '../tenant/constants/reserved-slug';
 import { Tenant } from '../tenant/models/tenant.model';
 import { Membership } from '../tenant/models/membership.model';
 import { Role } from '../tenant/constants/enums';
+import { JwtPayload } from './guards/jwt.strategy';
 
 const DUMMY_PASS = bcrypt.hashSync('Dummy-password', 10);
 const REFRESH_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -29,6 +30,8 @@ export class AuthService {
     private userRepo: Repository<User>,
     @InjectRepository(RefreshToken)
     private refreshTokenRepo: Repository<RefreshToken>,
+    @InjectRepository(Membership)
+    private membershipRepo: Repository<Membership>,
     private dataSource: DataSource,
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -71,13 +74,26 @@ export class AuthService {
   async login(
     username: string,
     pass: string,
+    tenantId: number,
   ): Promise<{ access_token: string; refresh_token: string }> {
     const user = await this.userRepo.findOne({ where: { username } });
     const isMatch = await bcrypt.compare(pass, user?.password ?? DUMMY_PASS);
     if (!user || !isMatch)
       throw new UnauthorizedException('ユーザー名またはパスワードが違います');
 
-    const payload = { sub: user.id, username: user.username };
+    const membership = await this.membershipRepo.findOne({
+      where: { user: { id: user.id }, tenant: { id: tenantId } },
+      relations: { tenant: true },
+    });
+    if (!membership)
+      throw new UnauthorizedException('このテナントに所属していません');
+
+    const payload = {
+      sub: user.id,
+      username: user.username,
+      tenantId: membership.tenant.id,
+      role: membership.role,
+    };
     const access_token = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('SECRET_KEY'),
       expiresIn: '15m',
@@ -105,7 +121,7 @@ export class AuthService {
   async refresh(
     refreshToken: string,
   ): Promise<{ access_token: string; refresh_token: string }> {
-    let payload: { sub: number; username: string };
+    let payload: JwtPayload;
     try {
       payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('REFRESH_KEY'),
@@ -128,6 +144,8 @@ export class AuthService {
       const newPayload = {
         sub: oldToken.user.id,
         username: oldToken.user.username,
+        tenantId: payload.tenantId, // ← 追加
+        role: payload.role, // ← 追加
       };
       const newToken = this.jwtService.sign(newPayload, {
         secret: this.configService.get<string>('REFRESH_KEY'),

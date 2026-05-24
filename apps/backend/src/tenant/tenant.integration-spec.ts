@@ -5,38 +5,32 @@ import { Repository } from 'typeorm';
 
 import { TenantService } from './tenant.service';
 import { Tenant } from './models/tenant.model';
+import { AppModule } from '../app.module';
+import { cleanDatabase } from '../../test/utils/db-cleaner';
 
 describe('TenantService', () => {
   let service: TenantService;
-  let tenantRepo: jest.Mocked<Repository<Tenant>>;
+  let tenantRepo: Repository<Tenant>;
+  let moduleFixture: TestingModule;
 
-  beforeEach(async () => {
-    const mockTenantRepo = {
-      findOne: jest.fn(),
-      create: jest.fn().mockImplementation((data) => data),
-      save: jest.fn().mockImplementation((data) =>
-        Promise.resolve({
-          id: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          ...data,
-        }),
-      ),
-    };
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TenantService,
-        { provide: getRepositoryToken(Tenant), useValue: mockTenantRepo },
-      ],
+  beforeAll(async () => {
+    process.env.NODE_ENV = 'test';
+    moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
     }).compile();
 
-    service = module.get(TenantService);
-    tenantRepo = module.get(getRepositoryToken(Tenant));
+    service = moduleFixture.get(TenantService);
+    tenantRepo = moduleFixture.get(getRepositoryToken(Tenant));
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  // ★ テストが終わったらDB接続をクローズする（これがないとテストが終了しない）
+  afterAll(async () => {
+    if (moduleFixture) await moduleFixture.close();
+  });
+
+  beforeEach(async () => {
+    // MySQLのデータを全削除してクリーンにする
+    await cleanDatabase(moduleFixture as any);
   });
 
   // ═════════════════════════════════════════
@@ -44,8 +38,6 @@ describe('TenantService', () => {
   // ═════════════════════════════════════════
   describe('createTenant', () => {
     it('正常入力でテナントが作成される', async () => {
-      tenantRepo.findOne.mockResolvedValue(null); // slug 衝突なし
-
       const result = await service.createTenant({
         slug: 'alice',
         name: 'Alice Workspace',
@@ -55,50 +47,33 @@ describe('TenantService', () => {
         slug: 'alice',
         name: 'Alice Workspace',
       });
-      expect(tenantRepo.save).toHaveBeenCalledTimes(1);
+      expect(result.id).toBeDefined(); // 本物のIDが採番されていること
+
+      // 2. 本当にDBに保存されたかを直接確認する
+      const savedTenant = await tenantRepo.findOne({
+        where: { slug: 'alice' },
+      });
+      expect(savedTenant).not.toBeNull();
+      expect(savedTenant?.name).toBe('Alice Workspace');
     });
 
-    it('保存時に slug と name がそのまま保存される', async () => {
-      tenantRepo.findOne.mockResolvedValue(null);
-
+    it('同じ slug が既に存在する場合 ConflictException', async () => {
       await service.createTenant({
         slug: 'alice',
         name: 'Alice Workspace',
       });
 
-      expect(tenantRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          slug: 'alice',
-          name: 'Alice Workspace',
-        }),
-      );
-    });
-
-    it('同じ slug が既に存在する場合 ConflictException', async () => {
-      // 既存テナントが見つかる
-      tenantRepo.findOne.mockResolvedValue({ id: 99, slug: 'alice' } as Tenant);
-
       await expect(
         service.createTenant({ slug: 'alice', name: 'Alice' }),
       ).rejects.toThrow(ConflictException);
-
-      // 保存は呼ばれない
-      expect(tenantRepo.save).not.toHaveBeenCalled();
     });
 
     it.each([['www'], ['api'], ['admin'], ['app']])(
       '予約 slug "%s" は ConflictException',
       async (reservedSlug) => {
-        // 予約語チェックはDB問い合わせ前に実行されるべき
-        tenantRepo.findOne.mockResolvedValue(null);
-
         await expect(
           service.createTenant({ slug: reservedSlug, name: 'Test' }),
         ).rejects.toThrow(ConflictException);
-
-        // 予約語ならDBに問い合わせる前にエラーを返す設計でもOK
-        // (findOne が呼ばれてもいいが、save は絶対呼ばれない)
-        expect(tenantRepo.save).not.toHaveBeenCalled();
       },
     );
   });
@@ -108,20 +83,23 @@ describe('TenantService', () => {
   // ═════════════════════════════════════════
   describe('findBySlug', () => {
     it('存在する slug でテナントが取得できる', async () => {
-      const stored = { id: 1, slug: 'alice', name: 'Alice' } as Tenant;
-      tenantRepo.findOne.mockResolvedValue(stored);
-
+      await service.createTenant({
+        slug: 'alice',
+        name: 'Alice Workspace',
+      });
       const result = await service.findBySlug('alice');
 
-      expect(result).toEqual(stored);
-      expect(tenantRepo.findOne).toHaveBeenCalledWith({
-        where: { slug: 'alice' },
+      expect(result).toMatchObject({
+        slug: 'alice',
+        name: 'Alice Workspace',
       });
     });
 
     it('存在しない slug は null を返す', async () => {
-      tenantRepo.findOne.mockResolvedValue(null);
-
+      await service.createTenant({
+        slug: 'alice',
+        name: 'Alice Workspace',
+      });
       const result = await service.findBySlug('nonexistent');
 
       expect(result).toBeNull();
@@ -133,20 +111,23 @@ describe('TenantService', () => {
   // ═════════════════════════════════════════
   describe('findById', () => {
     it('存在するIDでテナントが取得できる', async () => {
-      const stored = { id: 1, slug: 'alice', name: 'Alice' } as Tenant;
-      tenantRepo.findOne.mockResolvedValue(stored);
+      const created = await service.createTenant({
+        slug: 'alice',
+        name: 'Alice Workspace',
+      });
 
-      const result = await service.findById(1);
-
-      expect(result).toEqual(stored);
-      expect(tenantRepo.findOne).toHaveBeenCalledWith({
-        where: { id: 1 },
+      const result = await service.findById(created.id);
+      expect(result).toMatchObject({
+        slug: 'alice',
+        name: 'Alice Workspace',
       });
     });
 
     it('存在しないIDは null を返す', async () => {
-      tenantRepo.findOne.mockResolvedValue(null);
-
+      await service.createTenant({
+        slug: 'alice',
+        name: 'Alice Workspace',
+      });
       const result = await service.findById(999);
 
       expect(result).toBeNull();
