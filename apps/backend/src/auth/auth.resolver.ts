@@ -56,6 +56,7 @@ export class AuthResolver {
     const { access_token, refresh_token } = await this.authService.login(
       username,
       password,
+      context.req.tenantId,
     );
 
     this.setRefreshCookie(context, refresh_token);

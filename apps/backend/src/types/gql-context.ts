@@ -14,6 +14,7 @@ export type GqlContext = {
     cookies: Record<string, string>;
     headers: Record<string, string | string[] | undefined>;
     user?: Record<string, unknown>;
+    tenantId: number;
   };
   res: {
     setHeader: (name: string, value: string | string[]) => void;

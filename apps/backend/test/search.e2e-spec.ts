@@ -45,14 +45,16 @@ describe('Survey Search (e2e)', () => {
         `query Search($input: SearchSurveyInput!) {
            searchSurvey(input: $input) { totalCount }
          }`,
-        undefined,
         {
-          input: {
-            scope: 'TITLE_ONLY',
-            sortBy: 'CREATED_AT',
-            order: 'DESC',
-            limit: 20,
-            offset: 0,
+          token: undefined,
+          variables: {
+            input: {
+              scope: 'TITLE_ONLY',
+              sortBy: 'CREATED_AT',
+              order: 'DESC',
+              limit: 20,
+              offset: 0,
+            },
           },
         },
       );
@@ -123,15 +125,17 @@ describe('Survey Search (e2e)', () => {
         `query Search($input: SearchSurveyInput!) {
            searchSurvey(input: $input) { totalCount }
          }`,
-        tokenA,
         {
-          input: {
-            keyword: 'あ'.repeat(101),
-            scope: 'TITLE_ONLY',
-            sortBy: 'CREATED_AT',
-            order: 'DESC',
-            limit: 20,
-            offset: 0,
+          token: tokenA,
+          variables: {
+            input: {
+              keyword: 'あ'.repeat(101),
+              scope: 'TITLE_ONLY',
+              sortBy: 'CREATED_AT',
+              order: 'DESC',
+              limit: 20,
+              offset: 0,
+            },
           },
         },
       );
@@ -388,13 +392,15 @@ describe('Survey Search (e2e)', () => {
         `query Search($input: SearchSurveyInput!) {
            searchSurvey(input: $input) { totalCount }
          }`,
-        tokenA,
         {
-          input: {
-            scope: 'TITLE_ONLY',
-            sortBy: 'CREATED_AT',
-            order: 'DESC',
-            ...input,
+          token: tokenA,
+          variables: {
+            input: {
+              scope: 'TITLE_ONLY',
+              sortBy: 'CREATED_AT',
+              order: 'DESC',
+              ...input,
+            },
           },
         },
       );

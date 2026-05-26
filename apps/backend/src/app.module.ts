@@ -10,11 +10,14 @@ import { SurveyModule } from './survey/survey.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import cookieParser = require('cookie-parser');
 import { ThrottlerModule } from '@nestjs/throttler';
 import * as fs from 'fs';
 import * as path from 'path';
 import { TenantModule } from './tenant/tenant.module';
+import { TenantMiddleware } from './tenant/middleware/tenant.middleware';
+import { RequestMethod } from '@nestjs/common';
 
 function findWorkspaceRoot(start: string = __dirname): string {
   let dir = start;
@@ -94,5 +97,9 @@ export class AppModule implements NestModule {
   // ★ 追加: middleware を設定
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(cookieParser()).forRoutes('*');
+    consumer
+      .apply(TenantMiddleware)
+      .exclude({ path: 'health', method: RequestMethod.GET })
+      .forRoutes('*');
   }
 }

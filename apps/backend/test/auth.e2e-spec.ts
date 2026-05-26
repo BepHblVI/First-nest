@@ -12,7 +12,6 @@ import {
   refreshAccessToken,
   refreshWithNewCookie,
   logout,
-  sendGqlWithCookie,
 } from './utils/auth-client';
 import { cleanDatabase } from './utils/db-cleaner';
 
@@ -170,11 +169,9 @@ describe('Auth GraphQL API (e2e)', () => {
     });
 
     test('不正な値のrefresh_tokenでrefreshを呼ぶとエラーになる', async () => {
-      const res = await sendGqlWithCookie(
-        app,
-        `mutation { refresh { access_token } }`,
-        { cookie: 'refresh_token=this.is.invalid.jwt' },
-      );
+      const res = await sendGql(app, `mutation { refresh { access_token } }`, {
+        cookie: 'refresh_token=this.is.invalid.jwt',
+      });
       expect(res.body.errors).toBeDefined();
     });
 
@@ -182,11 +179,9 @@ describe('Auth GraphQL API (e2e)', () => {
       // 署名検証で弾かれる
       const fakeJwt =
         'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiaGFja2VyIn0.invalid_signature';
-      const res = await sendGqlWithCookie(
-        app,
-        `mutation { refresh { access_token } }`,
-        { cookie: `refresh_token=${fakeJwt}` },
-      );
+      const res = await sendGql(app, `mutation { refresh { access_token } }`, {
+        cookie: `refresh_token=${fakeJwt}`,
+      });
       expect(res.body.errors).toBeDefined();
     });
 
@@ -202,7 +197,9 @@ describe('Auth GraphQL API (e2e)', () => {
       const refreshRes = await refreshAccessToken(app, validCookie);
       const newToken = refreshRes.body.data.refresh.access_token;
 
-      const res = await sendGql(app, `query { getSurvey { id } }`, newToken);
+      const res = await sendGql(app, `query { getSurvey { id } }`, {
+        token: newToken,
+      });
       expect(res.body.errors).toBeUndefined();
       expect(Array.isArray(res.body.data?.getSurvey)).toBe(true);
     });
@@ -285,7 +282,7 @@ describe('Auth GraphQL API (e2e)', () => {
     test('無効な値のrefresh_tokenでlogoutを呼んでも成功する(冪等性)', async () => {
       // セキュリティ: 「無効なトークンです」と教えるとattackerの探索を助けるので
       // 常に成功扱いにする
-      const res = await sendGqlWithCookie(app, `mutation { logout }`, {
+      const res = await sendGql(app, `mutation { logout }`, {
         cookie: 'refresh_token=invalid.token.here',
       });
 
@@ -304,11 +301,9 @@ describe('Auth GraphQL API (e2e)', () => {
     });
 
     test('不正なaccess_tokenで認証必須APIにアクセスするとエラー', async () => {
-      const res = await sendGql(
-        app,
-        `query { getSurvey { id } }`,
-        'invalid.token.here',
-      );
+      const res = await sendGql(app, `query { getSurvey { id } }`, {
+        token: 'invalid.token.here',
+      });
       expect(res.body.errors).toBeDefined();
     });
   });

@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './../src/app.module';
-import { sendGql, expectGqlError } from './utils/gql-client';
+import { expectGqlError } from './utils/gql-client';
 import { signUpAndLogin } from './utils/auth-client';
 import { cleanDatabase } from './utils/db-cleaner';
 import { createTestSurvey, submitAnswer } from './utils/survey-helpers';

@@ -8,6 +8,6 @@ import { MembershipService } from './membership.service';
 @Module({
   imports: [TypeOrmModule.forFeature([Tenant, Membership])],
   providers: [TenantService, MembershipService],
-  exports: [TenantService, MembershipService],
+  exports: [TenantService, MembershipService, TypeOrmModule],
 })
 export class TenantModule {}
