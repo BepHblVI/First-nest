@@ -306,6 +306,37 @@ describe('Auth GraphQL API (e2e)', () => {
       });
       expect(res.body.errors).toBeDefined();
     });
+    test('有効だが、別の秘密鍵で署名された偽造access_tokenは拒否される', async () => {
+      // 署名は通らないが、中身はもっともらしい偽のJWT
+      const fakeJwt =
+        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiaGFja2VyIn0.invalid_signature';
+      const res = await sendGql(app, `query { getSurvey { id } }`, {
+        token: fakeJwt,
+      });
+      expect(res.body.errors).toBeDefined();
+    });
+
+    test('【重要】ユーザーAのトークンで、ユーザーBのデータを取得・改ざんできないこと（認可の検証）', async () => {
+      // 1. ユーザーaliceとbobをそれぞれ作成・ログイン
+      const alice = await signUpAndLogin(app, 'alice', 'password123');
+      const bob = await signUpAndLogin(app, 'bob', 'password123');
+
+      // 2. aliceのトークンを使って「私のアンケート(getSurvey)」をリクエストする
+      const res = await sendGql(app, `query { getSurvey { id owner{id} } }`, {
+        token: alice.accessToken,
+      });
+
+      expect(res.body.errors).toBeUndefined();
+
+      // 3. 💡【ここで答え合わせ】
+      // 返ってきたデータの作成者が、bobではなく、ちゃんとトークンの持ち主である「alice」のものであることを検証する
+      // (もしバックエンドのロジックがバグっていて、全ユーザーのデータを返していたらここで検知できる)
+      const surveys = res.body.data.getSurvey;
+      surveys.forEach((survey: any) => {
+        expect(survey.owner.id).toBe(alice.userId); // ユーザーとデータの一致を保証
+        expect(survey.owner.id).not.toBe(bob.userId);
+      });
+    });
   });
 
   // ─────────────────────────────────────────

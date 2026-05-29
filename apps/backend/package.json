@@ -30,7 +30,8 @@
     "m:run": "npm run typeorm -- migration:run -d src/data-source.ts",
     "m:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
     "generate:schema": "ts-node -r tsconfig-paths/register src/generate-schema.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "index": "npx ts-node --project tsconfig.script.json -r tsconfig-paths/register test-index.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -53,7 +54,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.12.4",
     "@types/supertest": "^7.0.0",
     "cross-env": "^10.1.0",
     "eslint": "^9.18.0",
